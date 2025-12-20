@@ -1,0 +1,5 @@
+_pycache_/
+.ipynb.checkpoints/
+*.joblib
+*.db
+.env

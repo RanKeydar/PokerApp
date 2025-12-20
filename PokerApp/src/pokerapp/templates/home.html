@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>דף הבית</title>
+
+  <style>
+    :root{
+      --felt-1:#0b3d2e;
+      --felt-2:#052b21;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#64748b;
+      --line:rgba(15, 23, 42, 0.10);
+      --shadow:0 10px 24px rgba(0,0,0,.18);
+      --shadow-soft:0 8px 18px rgba(0,0,0,.10);
+      --btn:#111827;
+      --btn2:#0f766e;
+      --danger:#b91c1c;
+      --ok:#15803d;
+      --warn:#b45309;
+      --chip:#0b1220;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(900px 500px at 80% 0%, rgba(255,255,255,.08), transparent 55%),
+        linear-gradient(135deg, var(--felt-1), var(--felt-2));
+      min-height:100vh;
+    }
+
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 14px 28px;
+    }
+
+    /* Header */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(6px);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#fff;
+    }
+    .brand .logo{
+      width:38px; height:38px;
+      border-radius:12px;
+      background:linear-gradient(135deg, rgba(255,255,255,.22), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.18);
+      display:grid;
+      place-items:center;
+      box-shadow: 0 8px 16px rgba(0,0,0,.18);
+      font-size:18px;
+    }
+    .brand h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .brand .sub{
+      margin:2px 0 0;
+      font-size:12px;
+      color:rgba(255,255,255,.75);
+    }
+
+    .userbox{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#fff;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .badge{
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:bold;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      color:#fff;
+    }
+    .badge.admin{ background: rgba(168, 85, 247, .30); }
+    .badge.magician{ background: rgba(34, 197, 94, .25); }
+    .badge.player{ background: rgba(59, 130, 246, .25); }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(17,24,39,.85);
+      color:#fff;
+      text-decoration:none;
+      font-weight:bold;
+      font-size:13px;
+      transition:.15s transform, .15s opacity, .15s background;
+    }
+    .btn:hover{ transform: translateY(-1px); opacity:.95; }
+    .btn.secondary{ background:rgba(15,118,110,.85); }
+    .btn.ghost{ background:rgba(255,255,255,.10); }
+    .btn.danger{ background:rgba(185,28,28,.85); }
+
+    /* Layout */
+    .grid{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      .topbar{ flex-direction:column; align-items:flex-start; }
+      .userbox, .actions{ width:100%; justify-content:space-between; }
+    }
+
+    /* Game Card */
+    .game-card{
+      background:var(--card);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(15,23,42,.08);
+      overflow:hidden;
+    }
+    .game-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      background:
+        radial-gradient(600px 120px at 20% 0%, rgba(15,118,110,.18), transparent 60%),
+        linear-gradient(180deg, rgba(2,6,23,.03), transparent);
+    }
+    .game-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .chip{
+      width:34px; height:34px;
+      border-radius:50%;
+      background:conic-gradient(from 45deg, rgba(255,255,255,.85), rgba(255,255,255,.15), rgba(255,255,255,.85));
+      border:1px solid rgba(15,23,42,.10);
+      display:grid;
+      place-items:center;
+      color:var(--chip);
+      font-weight:900;
+      box-shadow: 0 10px 18px rgba(0,0,0,.12);
+    }
+    .game-title h2{
+      margin:0;
+      font-size:18px;
+    }
+    .game-title .note{
+      margin:2px 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .game-body{
+      padding:14px;
+      display:grid;
+      gap:12px;
+    }
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(2,6,23,.02), transparent);
+    }
+    .panel h3{
+      margin:0 0 8px;
+      font-size:14px;
+      color:#111827;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .panel h3 small{
+      color:var(--muted);
+      font-weight:normal;
+      font-size:12px;
+    }
+
+    /* Tables */
+    .table-wrap{
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+    }
+    table{
+        width:100%;
+        border-collapse: collapse;
+        min-width:0;           /* חשוב: שלא יכפה רוחב */
+        table-layout: fixed;   /* חלוקה יציבה של עמודות */
+    }
+
+    th, td{
+        padding:10px 10px;
+        border-bottom:1px solid var(--line);
+        font-size:13px;
+        overflow:hidden;
+        text-overflow: ellipsis; /* ... כשצר */
+        white-space: nowrap;
+    }
+    /* חלוקת רוחב עמודות בדף הבית */
+    .leaders-table th:nth-child(1),
+    .leaders-table td:nth-child(1){
+    width: 48px; /* # */
+    }
+
+    .leaders-table th:nth-child(3),
+    .leaders-table td:nth-child(3){
+    width: 150px; /* רווח */
+    }
+
+    .recent-table th:nth-child(1),
+    .recent-table td:nth-child(1){
+    width: 120px; /* תאריך */
+    }
+
+    .recent-table th:nth-child(3),
+    .recent-table td:nth-child(3){
+    width: 90px; /* פעולות */
+    }
+
+    th{
+      text-align:right;
+      background: rgba(15,23,42,.04);
+      color:#111827;
+      font-weight:bold;
+    }
+    tbody tr:nth-child(even){ background: rgba(2,6,23,.02); }
+
+    .num{
+      text-align:left; /* גם ב-RTL: מספרים נוחים יותר שמאלה */
+      font-variant-numeric: tabular-nums;
+    }
+    .profit.pos{ color: var(--ok); font-weight:bold; }
+    .profit.neg{ color: var(--danger); font-weight:bold; }
+
+    .empty{
+      color:var(--muted);
+      font-size:13px;
+      padding:8px 2px;
+    }
+
+    .link{
+      color:#0f766e;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    .link:hover{ text-decoration: underline; }
+
+    /* Footer note */
+    .footer-note{
+      margin-top:12px;
+      color:rgba(255,255,255,.75);
+      font-size:12px;
+      text-align:center;
+    }
+    /* Recent games as cards */
+    .recent-cards{
+    display:grid;
+    gap:10px;
+    }
+
+    .recent-card{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        padding:12px;
+        border-radius:14px;
+        border:1px solid var(--line);
+        background: linear-gradient(180deg, rgba(2,6,23,.02), #fff);
+    }
+
+    .recent-info{
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+    }
+
+    .recent-date{
+        font-weight:bold;
+        font-size:14px;
+    }
+
+    .recent-location{
+        font-size:12px;
+        color:var(--muted);
+    }
+
+    .recent-action a{
+        padding:8px 12px;
+        border-radius:10px;
+        background:rgba(15,118,110,.90);
+        color:#fff;
+        text-decoration:none;
+        font-weight:bold;
+        font-size:12px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">♠</div>
+        <div>
+          <h1>לוח תוצאות פוקר</h1>
+          <div class="sub">דשבורד — קאש / חרבו</div>
+        </div>
+      </div>
+
+      <div class="userbox">
+        <div class="pill">
+          👤 {{ session.get("username","") }}
+          {% set r = session.get("role","player") %}
+          <span class="badge {{ r }}">{{ r }}</span>
+        </div>
+        <div class="actions">
+          <a class="btn ghost" href="{{ url_for('main.games_list') }}">📋 כל המשחקים</a>
+
+          {% if session.get("role") in ["admin","magician"] %}
+            <a class="btn secondary" href="{{ url_for('main.add_game') }}">➕ הוסף משחק</a>
+          {% endif %}
+
+          <a class="btn ghost" href="{{ url_for('main.players_list') }}">👤 שחקנים</a>
+
+          {% if session.get("role") == "admin" %}
+            <a class="btn ghost" href="{{ url_for('main.admin_users') }}">🛠 ניהול משתמשים</a>
+          {% endif %}
+
+          <a class="btn danger" href="{{ url_for('auth.logout') }}">🚪 התנתקות</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- CASH -->
+      <section class="game-card">
+        <div class="game-header">
+          <div class="game-title">
+            <div class="chip">₪</div>
+            <div>
+              <h2>קאש</h2>
+              <div class="note">טופ 5 שחקנים + 5 משחקים אחרונים</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-body">
+          <div class="panel">
+            <h3>שחקנים מובילים <small>(לפי רווח מצטבר)</small></h3>
+            {% if cash_top_players and cash_top_players|length > 0 %}
+              <div class="table-wrap">
+                <table class="leaders-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>שחקן</th>
+                      <th class="num">רווח מצטבר (₪)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in cash_top_players %}
+                      {% set val = row["total_profit"] %}
+                      <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row["player_name"] }}</td>
+                        <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="empty">אין עדיין תוצאות קאש כדי לחשב מובילים.</div>
+            {% endif %}
+          </div>
+
+          <div class="panel">
+            <h3>5 המשחקים האחרונים</h3>
+            {% if cash_recent_games and cash_recent_games|length > 0 %}
+                <div class="recent-cards">
+                    {% for g in cash_recent_games %}
+                        <div class="recent-card">
+                            <div class="recent-info">
+                                <div class="recent-date">{{ g["date"] }}</div>
+                                <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
+                            </div>
+                            <div class="recent-action">
+                                <a href="{{ url_for('main.game_results', game_id=g['id']) }}">🎯 תוצאות</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty">אין משחקי קאש עדיין.</div>
+            {% endif %}
+        </div>
+    </div>
+
+         
+      </section>
+
+      <!-- HARBO -->
+      <section class="game-card">
+        <div class="game-header">
+          <div class="game-title">
+            <div class="chip">★</div>
+            <div>
+              <h2>חרבו</h2>
+              <div class="note">טופ 5 שחקנים + 5 משחקים אחרונים</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-body">
+          <div class="panel">
+            <h3>שחקנים מובילים <small>(לפי רווח מצטבר)</small></h3>
+            {% if harbo_top_players and harbo_top_players|length > 0 %}
+              <div class="table-wrap">
+                <table class="leaders-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>שחקן</th>
+                      <th class="num">רווח מצטבר (₪)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in harbo_top_players %}
+                      {% set val = row["total_profit"] %}
+                      <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row["player_name"] }}</td>
+                        <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="empty">אין עדיין תוצאות חרבו כדי לחשב מובילים.</div>
+            {% endif %}
+        </div>
+
+        <div class="panel">
+            <h3>5 המשחקים האחרונים</h3>
+            {% if harbo_recent_games and harbo_recent_games|length > 0 %}
+                <div class="recent-cards">
+                    {% for g in harbo_recent_games %}
+                        <div class="recent-card">
+                            <div class="recent-info">
+                                <div class="recent-date">{{ g["date"] }}</div>
+                                <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
+                        </div>
+                        <div class="recent-action">
+                            <a href="{{ url_for('main.game_results', game_id=g['id']) }}">🎯 תוצאות</a>
+                        </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty">אין משחקי חרבו עדיין.</div>
+    {% endif %}
+    </div>
+
+    <div class="footer-note">
+      ♣ טיפ: במסך “תוצאות” רווחים מוצגים בצבע ירוק והפסדים באדום.
+    </div>
+
+  </div>
+</body>
+</html>

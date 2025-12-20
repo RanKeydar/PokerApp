@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>הוספת משחק חדש</title>
+    <style>
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, button {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>הוספת משחק חדש</h1>
+
+    <form method="POST">
+        <label>תאריך:</label>
+        <input type="date" name="date" required>
+
+        <label>מיקום:</label>
+        <input type="text" name="location" placeholder="לדוגמה: בית של דני">
+
+        <label>סוג משחק:</label>
+        <select name="game_type" required>
+            <option value="cash">קאש</option>
+            <option value="harbo">חרבו</option>
+        </select>
+
+        <button type="submit">שמור משחק</button>
+    </form>
+
+    <a href="{{ url_for('main.games_list') }}">← חזרה לרשימת המשחקים</a>
+</body>
+</html>

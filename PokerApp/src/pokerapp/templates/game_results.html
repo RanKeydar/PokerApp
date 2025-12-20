@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>תוצאות משחק</title>
+    <style>
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 800px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        input {
+            width: 90px;
+        }
+        .summary {
+            margin-top: 15px;
+        }
+        .warning {
+            color: darkred;
+            font-weight: bold;
+        }
+        .ok {
+            color: darkgreen;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>תוצאות למשחק - {{ game["date"] }} ({{ game["location"] or "ללא מיקום" }})</h1>
+
+    <p>
+        סוג משחק:
+        {% if game["game_type"] == "cash" %}
+            קאש
+        {% elif game["game_type"] == "harbo" %}
+            חרבו
+        {% endif %}
+    </p>
+
+    <form method="POST">
+        <table>
+            <thead>
+                <tr>
+                    <th>שחקן</th>
+                    <th>סכום קנייה</th>
+                    <th>סכום יציאה</th>
+                    <th>רווח / הפסד</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in players %}
+                    {% set res = results.get(p["id"]) %}
+                    <tr>
+                        <td>{{ p["name"] }}</td>
+                        <td>
+                            <input type="number" step="0.01" name="buyin_{{ p['id'] }}"
+                                   value="{{ res['buyin'] if res is not none else '' }}">
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" name="cashout_{{ p['id'] }}"
+                                   value="{{ res['cashout'] if res is not none else '' }}">
+                        </td>
+                        <td>
+                            {% if res is not none %}
+                                {{ "%.2f"|format(res["profit"]) }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit" style="margin-top: 10px;">שמור תוצאות</button>
+    </form>
+
+    <div class="summary">
+        <p>סך כל הקניות: {{ "%.2f"|format(total_buyin) }} ₪</p>
+        <p>סך כל היציאות: {{ "%.2f"|format(total_cashout) }} ₪</p>
+
+        {% set diff_rounded = "%.2f"|format(diff) %}
+        {% if diff == 0 %}
+            <p class="ok">הקופה מאוזנת (אין חוסר או עודף).</p>
+        {% elif diff > 0 %}
+            <p class="warning">
+                יש עודף יציאות לעומת קניות: {{ diff_rounded }} ₪  
+                (כנראה חסר כסף בקופה).
+            </p>
+        {% else %}
+            <p class="warning">
+                יש עודף קניות לעומת יציאות: {{ diff_rounded }}- ₪  
+                (כנראה רשומה קנייה שלא מגובה בכסף אצל שחקן).
+            </p>
+        {% endif %}
+    </div>
+
+    <p>
+        <a href="{{ url_for('main.games_list') }}">← חזרה לרשימת המשחקים</a>
+    </p>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+...
+</head>
+<body>
+
+    <p>
+      <a href="{{ url_for('main.home') }}">🏠 דף הבית</a>
+      <a href="{{ url_for('auth.logout') }}">🚪 התנתקות</a>
+    </p>
+
+
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>המשחקים שלנו</title>
+    <style>
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px 10px;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .no-games {
+            margin-top: 20px;
+            color: #666;
+        }
+        .top-links a {
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>המשחקים שלנו</h1>
+
+  <div class="top-links">
+
+    {% if session.get("role") in ["admin", "magician"] %}
+        <a href="{{ url_for('main.add_game') }}">➕ הוסף משחק חדש</a>
+    {% endif %}
+
+    {% if session.get("role") == "admin" %}
+        <a href="{{ url_for('main.players_list') }}">👤 ניהול שחקנים</a>
+    {% endif %}
+
+</div>
+
+
+
+    {% if games and games|length > 0 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>תאריך</th>
+                    <th>מיקום</th>
+                    <th>סוג משחק</th>
+                    <th>תוצאות</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in games %}
+                    <tr>
+                        <td>{{ game["date"] }}</td>
+                        <td>{{ game["location"] or "-" }}</td>
+                        <td>
+                            {% if game["game_type"] == "cash" %}
+                                קאש
+                            {% elif game["game_type"] == "harbo" %}
+                                חרבו
+                            {% else %}
+                                ?
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('main.game_results', game_id=game['id']) }}">
+                                הזנת תוצאות
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="no-games">עדיין אין משחקים. השתמש ב"הוסף משחק חדש".</p>
+    {% endif %}
+</body>
+</html>

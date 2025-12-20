@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>הרשמה</title>
+  <style>
+    body { direction: rtl; text-align: right; font-family: Arial, sans-serif; margin: 20px; }
+    form { max-width: 360px; margin-top: 20px; }
+    label { display:block; margin: 10px 0 5px; }
+    input, select, button { width: 100%; padding: 8px; }
+    .err { color: darkred; margin-top: 10px; }
+    .ok { color: darkgreen; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>הרשמה</h1>
+
+  <form method="POST">
+    <label>שם משתמש</label>
+    <input name="username" required>
+
+    <label>סיסמה</label>
+    <input name="password" type="password" required>
+
+    <label>מבקש תפקיד</label>
+    <select name="requested_role">
+      <option value="player">שחקן (צפייה בלבד)</option>
+      <option value="magician">קוסם (עריכת תוצאות)</option>
+    </select>
+
+    <button type="submit">שלח בקשה</button>
+
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    {% if success %}<div class="ok">{{ success }}</div>{% endif %}
+  </form>
+
+  <p style="margin-top:14px;">
+    <a href="{{ url_for('login') }}">כבר יש לך משתמש? התחבר</a>
+  </p>
+</body>
+</html>
