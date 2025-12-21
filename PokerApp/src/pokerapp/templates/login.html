@@ -1,17 +1,8 @@
-<!doctype html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="utf-8">
-  <title>התחברות</title>
-  <style>
-    body { direction: rtl; text-align: right; font-family: Arial, sans-serif; margin: 20px; }
-    form { max-width: 320px; margin-top: 20px; }
-    label { display:block; margin: 10px 0 5px; }
-    input, button { width: 100%; padding: 8px; }
-    .err { color: darkred; margin-top: 10px; }
-  </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+{% block subtitle %}{% endblock %}
+
   <h1>התחברות</h1>
 
   <form method="POST">
@@ -32,5 +23,5 @@
   <a href="{{ url_for('auth.signup') }}">אין לך משתמש? שלח בקשת הרשמה</a>
 </p>
 
-</body>
-</html>
+{% endblock %}
+

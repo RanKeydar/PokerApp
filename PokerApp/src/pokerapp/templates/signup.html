@@ -1,18 +1,8 @@
-<!doctype html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="utf-8">
-  <title>הרשמה</title>
-  <style>
-    body { direction: rtl; text-align: right; font-family: Arial, sans-serif; margin: 20px; }
-    form { max-width: 360px; margin-top: 20px; }
-    label { display:block; margin: 10px 0 5px; }
-    input, select, button { width: 100%; padding: 8px; }
-    .err { color: darkred; margin-top: 10px; }
-    .ok { color: darkgreen; margin-top: 10px; }
-  </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+{% block subtitle %}{% endblock %}
+
   <h1>הרשמה</h1>
 
   <form method="POST">
@@ -35,7 +25,7 @@
   </form>
 
   <p style="margin-top:14px;">
-    <a href="{{ url_for('login') }}">כבר יש לך משתמש? התחבר</a>
+    <a href="{{ url_for('auth.login') }}">כבר יש לך משתמש? התחבר</a>
   </p>
-</body>
-</html>
+
+  {% endblock %}

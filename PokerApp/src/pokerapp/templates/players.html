@@ -1,57 +1,35 @@
-<!doctype html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="utf-8">
-    <title>שחקנים</title>
-    <style>
-        body {
-            direction: rtl;
-            text-align: right;
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 500px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px 10px;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        a {
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>שחקנים</h1>
+{% extends "base.html" %}
 
-    <p>
-        <a href="{{ url_for('main.add_player') }}">➕ הוסף שחקן חדש</a>
-        <a href="{{ url_for('main.games_list') }}">← חזרה למשחקים</a>
-    </p>
+{% block title %}שחקנים{% endblock %}
+{% block subtitle %}שחקנים{% endblock %}
 
-    {% if players and players|length > 0 %}
-        <table>
-            <thead>
-                <tr>
-                    <th>שם שחקן</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in players %}
-                    <tr>
-                        <td>{{ p["name"] }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>עדיין אין שחקנים.</p>
-    {% endif %}
-</body>
-</html>
+{% block content %}
+
+<div class="top-links">
+  {% if session.get("role") == "admin" %}
+    <a class="btn secondary" href="{{ url_for('main.add_player') }}">➕ הוסף שחקן</a>
+  {% endif %}
+</div>
+
+{% if players and players|length > 0 %}
+  <table class="players-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>שם שחקן</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in players %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ p["name"] }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="no-games">עדיין אין שחקנים.</p>
+{% endif %}
+
+{% endblock %}

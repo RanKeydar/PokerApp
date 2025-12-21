@@ -1,44 +1,7 @@
-<!doctype html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="utf-8">
-    <title>תוצאות משחק</title>
-    <style>
-        body {
-            direction: rtl;
-            text-align: right;
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 800px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 6px 8px;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        input {
-            width: 90px;
-        }
-        .summary {
-            margin-top: 15px;
-        }
-        .warning {
-            color: darkred;
-            font-weight: bold;
-        }
-        .ok {
-            color: darkgreen;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+
     <h1>תוצאות למשחק - {{ game["date"] }} ({{ game["location"] or "ללא מיקום" }})</h1>
 
     <p>
@@ -111,5 +74,5 @@
     <p>
         <a href="{{ url_for('main.games_list') }}">← חזרה לרשימת המשחקים</a>
     </p>
-</body>
-</html>
+{% endblock %}
+

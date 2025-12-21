@@ -1,35 +1,7 @@
-<!doctype html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="utf-8">
-    <title>הוספת שחקן</title>
-    <style>
-        body {
-            direction: rtl;
-            text-align: right;
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        form {
-            max-width: 400px;
-            margin-top: 20px;
-        }
-        label {
-            display: block;
-            margin: 10px 0 5px;
-        }
-        input, button {
-            padding: 8px;
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        a {
-            display: inline-block;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+
     <h1>הוספת שחקן חדש</h1>
 
     <form method="POST">
@@ -40,5 +12,4 @@
     </form>
 
     <a href="{{ url_for('main.players_list') }}">← חזרה לרשימת השחקנים</a>
-</body>
-</html>
+{% endblock %}
