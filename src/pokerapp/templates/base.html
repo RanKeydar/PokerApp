@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}פנקס הקטן{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">♠</div>
+        <div>
+          <h1>
+            <a href="{{ url_for('main.home') }}" class="brand-link">לוח תוצאות פוקר</a>
+          </h1>
+          <div class="sub">{% block subtitle %}{% endblock %}</div>
+        </div>
+      </div>
+
+      <div class="userbox">
+        <div class="pill">
+          👤 {{ session.get("username","") }}
+          {% set r = session.get("role","player") %}
+          <span class="badge {{ r }}">{{ r }}</span>
+        </div>
+
+        <div class="actions">
+          <!-- ניווט קבוע בכל הדפים -->
+          <a class="btn ghost" href="{{ url_for('main.games_list') }}">📋 כל המשחקים</a>
+
+          {% if session.get("role") in ["admin","magician"] %}
+            <a class="btn secondary" href="{{ url_for('main.add_game') }}">➕ הוסף משחק</a>
+          {% endif %}
+
+          <a class="btn ghost" href="{{ url_for('main.players_list') }}">👤 שחקנים</a>
+
+          {% if session.get("role") == "admin" %}
+            <a class="btn ghost" href="{{ url_for('main.admin_users') }}">🛠 ניהול משתמשים</a>
+          {% endif %}
+
+          <a class="btn danger" href="{{ url_for('auth.logout') }}">🚪 התנתקות</a>
+
+          <!-- פעולות ייחודיות לדף (רשות) -->
+          {% block topbar_actions %}{% endblock %}
+        </div>
+      </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+  </div>
+
+</body>
+</html>

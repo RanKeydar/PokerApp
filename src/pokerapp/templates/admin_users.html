@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+{% block subtitle %}{% endblock %}
+
+  <h1>ניהול משתמשים (Admin)</h1>
+
+  <div class="nav">
+    <a href="{{ url_for('main.home') }}">🏠 דף הבית</a>
+    <a href="{{ url_for('auth.logout') }}">🚪 התנתקות</a>
+  </div>
+
+  <h2>בקשות ממתינות לאישור</h2>
+  {% if pending and pending|length > 0 %}
+    <table>
+      <thead>
+        <tr>
+          <th>שם משתמש</th>
+          <th>תפקיד מבוקש</th>
+          <th>פעולות</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in pending %}
+          <tr>
+            <td>{{ u["username"] }}</td>
+            <td>{{ u["role"] }}</td>
+            <td>
+              <form method="POST" style="display:inline;">
+                <input type="hidden" name="user_id" value="{{ u['id'] }}">
+                <input type="hidden" name="action" value="approve">
+                <select name="new_role">
+                  <option value="player" {% if u["role"]=="player" %}selected{% endif %}>player</option>
+                  <option value="magician" {% if u["role"]=="magician" %}selected{% endif %}>magician</option>
+                  <option value="admin">admin</option>
+                </select>
+                <button type="submit">אשר</button>
+              </form>
+
+              <form method="POST" style="display:inline;">
+                <input type="hidden" name="user_id" value="{{ u['id'] }}">
+                <input type="hidden" name="action" value="reject">
+                <button type="submit">דחה</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>אין בקשות ממתינות.</p>
+  {% endif %}
+
+  <h2>משתמשים פעילים</h2>
+  {% if active and active|length > 0 %}
+    <table>
+      <thead>
+        <tr>
+          <th>שם משתמש</th>
+          <th>תפקיד</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in active %}
+          <tr>
+            <td>{{ u["username"] }}</td>
+            <td>{{ u["role"] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>אין משתמשים פעילים.</p>
+  {% endif %}
+{% endblock %}
+

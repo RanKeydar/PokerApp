@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+
+    <h1>הוספת שחקן חדש</h1>
+
+    <form method="POST">
+        <label>שם שחקן:</label>
+        <input type="text" name="name" required>
+
+        <button type="submit">שמור שחקן</button>
+    </form>
+
+    <a href="{{ url_for('main.players_list') }}">← חזרה לרשימת השחקנים</a>
+{% endblock %}

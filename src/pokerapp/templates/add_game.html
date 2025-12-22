@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+{% block subtitle %}{% endblock %}
+
+    <h1>הוספת משחק חדש</h1>
+
+    <form method="POST">
+        <label>תאריך:</label>
+        <input type="date" name="date" required>
+
+        <label>מיקום:</label>
+        <input type="text" name="location" placeholder="לדוגמה: אצל קסטון">
+
+        <label>סוג משחק:</label>
+        <select name="game_type" required>
+            <option value="cash">קאש</option>
+            <option value="harbo">חרבו</option>
+        </select>
+
+        <button type="submit">שמור משחק</button>
+    </form>
+
+    <a href="{{ url_for('main.games_list') }}">← חזרה לרשימת המשחקים</a>
+{% endblock %}

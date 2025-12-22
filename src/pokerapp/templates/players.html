@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}שחקנים{% endblock %}
+{% block subtitle %}שחקנים{% endblock %}
+
+{% block content %}
+
+<div class="top-links">
+  {% if session.get("role") == "admin" %}
+    <a class="btn secondary" href="{{ url_for('main.add_player') }}">➕ הוסף שחקן</a>
+  {% endif %}
+</div>
+
+{% if players and players|length > 0 %}
+  <table class="players-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>שם שחקן</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in players %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ p["name"] }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="no-games">עדיין אין שחקנים.</p>
+{% endif %}
+
+{% endblock %}

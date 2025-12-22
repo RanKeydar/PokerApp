@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}כותרת הדף{% endblock %}
+{% block content %}
+{% block subtitle %}{% endblock %}
+
+  <h1>התחברות</h1>
+
+  <form method="POST">
+    <label>שם משתמש</label>
+    <input name="username" required>
+
+    <label>סיסמה</label>
+    <input name="password" type="password" required>
+
+    <button type="submit">כניסה</button>
+
+    {% if error %}
+      <div class="err">{{ error }}</div>
+    {% endif %}
+  </form>
+
+  <p style="margin-top:14px;">
+  <a href="{{ url_for('auth.signup') }}">אין לך משתמש? שלח בקשת הרשמה</a>
+</p>
+
+{% endblock %}
+
