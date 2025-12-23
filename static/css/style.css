@@ -515,3 +515,94 @@ a:hover, .link:hover{
 .players-table tr:hover{
   background:rgba(255,255,255,.06);
 }
+/* טבלה גדולה יותר בדשבורד כשמציגים משחק אחד */
+.table-wrap.big{
+  width: 100%;
+  overflow-x: auto;
+}
+
+.leaders-table.big{
+  width: 100%;
+  font-size: 18px;
+}
+
+.leaders-table.big th,
+.leaders-table.big td{
+  padding: 12px 14px;
+}
+
+.leaders-table.big th{
+  font-size: 16x;
+  opacity: .85;
+}
+
+.leaders-table.big td.num{
+  font-variant-numeric: tabular-nums;
+}
+
+.leaders-table th,
+.leaders-table td{
+  text-align: center;
+}
+
+.table-wrap.big{
+  width: 100%;
+  overflow-x: auto;
+}
+
+.leaders-table.big{
+  width: 100%;
+  min-width: 1000px;   /* מונע חיתוך כותרות */
+  font-size: 20px;     /* מגדיל את הכל */
+  table-layout: auto;
+}
+
+.leaders-table.big th,
+.leaders-table.big td{
+  padding: 14px 16px;
+}
+
+.leaders-table.big th{
+  white-space: normal; /* מאפשר לשבור שורה בכותרת במקום להיחתך */
+  line-height: 1.2;
+}
+
+/* 1) לבטל חיתוך של ההורים (הבעיה הכי נפוצה) */
+.game-card,
+.game-body,
+.panel{
+  overflow: visible;   /* אם יש אצלך hidden – זה מה שחותך */
+}
+
+/* 2) עטיפה שמאפשרת גלילה אופקית אמיתית */
+.table-wrap,
+.table-wrap.big{
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  display: block;
+}
+
+/* 3) טבלה גדולה + שלא תידחס */
+.leaders-table,
+.leaders-table.big{
+  width: 100%;
+  min-width: 720px;     /* תוריד/תעלה לפי הטעם (למשל 800) */
+  border-collapse: collapse;
+}
+
+/* 4) כותרות לא נחתכות */
+.leaders-table th{
+  white-space: nowrap;  /* כותרת בשורה אחת */
+}
+
+/* 5) יישור למרכז (כמו שביקשת) */
+.leaders-table th,
+.leaders-table td{
+  text-align: center;
+}
+
+.game-card, .game-body, .panel { overflow: visible; }
+.table-wrap.big { overflow-x: auto; max-width: 100%; }

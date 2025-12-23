@@ -5,6 +5,8 @@ from pokerapp.services.game_queries import get_top_players, get_recent_games
 from datetime import date
 import os
 import pandas as pd
+import unicodedata
+
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 RAW_DIR = os.path.abspath(
@@ -13,6 +15,96 @@ RAW_DIR = os.path.abspath(
 
 
 bp = Blueprint("main", __name__)
+
+def _get_player_stats(conn, game_type: str, year: str, player_id: int) -> tuple[int, int]:
+    cur = conn.cursor()
+
+    # נספור רק תאריכים תקינים בפורמט YYYY-MM-DD
+    iso_filter = "g.date LIKE '____-__-__'"
+
+    # games_count: אם year == 'all' => בלי פילטר שנה
+    if str(year) == "all":
+        cur.execute(
+            f"""
+            SELECT COUNT(DISTINCT g.id) AS games_count
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE gr.player_id = ?
+              AND g.game_type = ?
+              AND {iso_filter};
+            """,
+            (player_id, game_type),
+        )
+    else:
+        cur.execute(
+            f"""
+            SELECT COUNT(DISTINCT g.id) AS games_count
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE gr.player_id = ?
+              AND g.game_type = ?
+              AND {iso_filter}
+              AND substr(g.date, 1, 4) = ?;
+            """,
+            (player_id, game_type, str(year)),
+        )
+
+    games_count = cur.fetchone()["games_count"] or 0
+
+    # years_count: נספור שנים שונות רק מתוך תאריכים תקינים
+    cur.execute(
+        f"""
+        SELECT COUNT(DISTINCT substr(g.date, 1, 4)) AS years_count
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        WHERE gr.player_id = ?
+          AND g.game_type = ?
+          AND {iso_filter};
+        """,
+        (player_id, game_type),
+    )
+    years_count = cur.fetchone()["years_count"] or 0
+
+    return int(games_count), int(years_count)
+
+
+def enrich_players(conn, players, game_type: str, year: str):
+    enriched = []
+    for p in players:
+        # sqlite3.Row -> dict (כדי שיהיה get())
+        p = dict(p)
+
+        pid = p.get("player_id") or p.get("id")
+
+        # אם אין id – ננסה לפי שם
+        if not pid:
+            name = p.get("player_name") or p.get("name")
+            if name:
+                cur = conn.cursor()
+                cur.execute("SELECT id FROM players WHERE name = ? LIMIT 1;", (name,))
+                row = cur.fetchone()
+                pid = row["id"] if row else None
+
+        total = p.get("total_profit")
+        if total is None:
+            total = 0
+
+        if pid:
+            games_count, years_count = _get_player_stats(conn, game_type, year, int(pid))
+        else:
+            games_count, years_count = 0, 0
+
+        p["games_count"] = games_count
+        p["years_count"] = years_count
+        p["avg_per_game"] = int(round(float(total) / games_count)) if games_count else 0
+        p["avg_per_year"] = int(round(float(total) / years_count)) if years_count else 0
+
+
+        enriched.append(p)
+
+    return enriched
+
+
 
 # ------------------------------
 # מסך ראשי
@@ -25,21 +117,37 @@ def home():
     cash_year = request.args.get("cash_year") or current_year
     harbo_year = request.args.get("harbo_year") or current_year
 
-    # חדש: מצב תצוגה לטבלת שחקנים
+    # איזה מסך מציגים: cash / harbo
+    view = request.args.get("view", "cash")
+
+    # מצב תצוגה לטבלת שחקנים (טופ/הכל) – נשמור, אבל רק לטבלה שמוצגת בפועל
     cash_players_view = request.args.get("cash_players", "top")  # "top" / "all"
     harbo_players_view = request.args.get("harbo_players", "top")
 
     cash_limit = 5 if cash_players_view != "all" else 9999
     harbo_limit = 5 if harbo_players_view != "all" else 9999
 
-    cash_top_players = get_top_players("cash", cash_limit, year=cash_year)
-    cash_recent_games = get_recent_games("cash", 5, year=cash_year)
+    # ברירת מחדל ריקה לצד שלא מוצג
+    cash_top_players, cash_recent_games = [], []
+    harbo_top_players, harbo_recent_games = [], []
 
-    harbo_top_players = get_top_players("harbo", harbo_limit, year=harbo_year)
-    harbo_recent_games = get_recent_games("harbo", 5, year=harbo_year)  
+    conn = get_db_connection()
+
+    if view == "cash":
+        cash_top_players = get_top_players("cash", cash_limit, year=cash_year)
+        cash_recent_games = get_recent_games("cash", 5, year=cash_year)
+        cash_top_players = enrich_players(conn, cash_top_players, "cash", cash_year)
+
+    else:
+        harbo_top_players = get_top_players("harbo", harbo_limit, year=harbo_year)
+        harbo_recent_games = get_recent_games("harbo", 5, year=harbo_year)
+        harbo_top_players = enrich_players(conn, harbo_top_players, "harbo", harbo_year)
+
+    conn.close()
 
     return render_template(
         "home.html",
+        view=view,
         cash_year=cash_year,
         harbo_year=harbo_year,
         cash_players_view=cash_players_view,
@@ -251,40 +359,62 @@ def _read_csv_hebrew(path: str) -> pd.DataFrame:
         return pd.read_csv(path, encoding="utf-8")
 
 def _parse_date_to_iso(s: str) -> str:
-    """
-    הופך '06/01/2022' ל-'2022-01-06' (כמו שמקובל ב-DB).
-    אם כבר ISO - מחזיר כמו שהוא.
-    """
     s = (s or "").strip()
     if not s:
         return ""
-    # כבר ISO?
+
+    # אם כבר ISO
     if len(s) >= 10 and s[4] == "-" and s[7] == "-":
         return s[:10]
-    # dd/mm/yyyy
+
+    # ננסה פרסור חכם עם pandas (תומך גם 06.01.2024 / 06-01-2024 / 6/1/2024 וכו')
     try:
-        d, m, y = s.split("/")
-        return f"{y.zfill(4)}-{m.zfill(2)}-{d.zfill(2)}"
+        dt = pd.to_datetime(s, dayfirst=True, errors="coerce")
+        if pd.isna(dt):
+            return ""  # תאריך לא תקין -> נדלג על השורה
+        return dt.strftime("%Y-%m-%d")
     except Exception:
-        return s  # fallback
+        return ""
+
+
+def _norm_name(s: str) -> str:
+    s = (s or "")
+    s = s.replace("\ufeff", "")  # BOM
+    s = s.strip()
+    s = unicodedata.normalize("NFKC", s)
+    return s
 
 def import_csv_year_to_db(game_type: str, year: int) -> dict:
     """
     game_type: 'cash' / 'harbo'
+    year: int (למשל 2024)
     """
     filename = f"TH_{game_type}_{year}.csv"
     path = os.path.join(RAW_DIR, filename)
+
     if not os.path.exists(path):
-        return {"game_type": game_type, "year": year, "status": "missing", "imported_games": 0, "imported_results": 0}
+        return {
+            "game_type": game_type,
+            "year": year,
+            "status": "missing",
+            "imported_games": 0,
+            "imported_results": 0,
+        }
 
     df = _read_csv_hebrew(path)
     df = df.loc[:, [c for c in df.columns if c and not str(c).startswith("Unnamed")]]
 
     if df.shape[1] < 2:
-        return {"game_type": game_type, "year": year, "status": "bad_format", "imported_games": 0, "imported_results": 0}
+        return {
+            "game_type": game_type,
+            "year": year,
+            "status": "bad_format",
+            "imported_games": 0,
+            "imported_results": 0,
+        }
 
     date_col = df.columns[0]
-    player_cols = list(df.columns[1:])
+    player_cols_raw = list(df.columns[1:])
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -293,12 +423,26 @@ def import_csv_year_to_db(game_type: str, year: int) -> dict:
     imported_results = 0
 
     cur.execute("SELECT id, name FROM players;")
-    players_map = {row["name"]: row["id"] for row in cur.fetchall()}
+    players_map = {_norm_name(row["name"]): row["id"] for row in cur.fetchall()}
 
     for _, row in df.iterrows():
         game_date_raw = str(row.get(date_col, "")).strip()
+
+        # דילוג על שורות ריקות / NaN / סיכומים (כמו "סה״כ")
+        if not game_date_raw:
+            continue
+        if game_date_raw.lower() == "nan":
+            continue
+        if "סה" in game_date_raw:  # "סה״כ" / "סהכ" וכו'
+            continue
+
         game_date = _parse_date_to_iso(game_date_raw)
         if not game_date:
+            continue
+
+        # סף בטיחות: השנה בקובץ חייבת להתאים לשנה של התאריך
+        # (מונע מצב ש-TH_harbo_2024.csv מכיל תאריכי 2025)
+        if len(game_date) >= 4 and game_date[:4] != str(year):
             continue
 
         # משחק קיים? (תאריך + סוג משחק)
@@ -307,6 +451,7 @@ def import_csv_year_to_db(game_type: str, year: int) -> dict:
             (game_date, game_type),
         )
         existing = cur.fetchone()
+
         if existing:
             game_id = existing["id"]
             cur.execute("DELETE FROM game_results WHERE game_id = ?;", (game_id,))
@@ -318,21 +463,26 @@ def import_csv_year_to_db(game_type: str, year: int) -> dict:
             game_id = cur.lastrowid
             imported_games += 1
 
-        for player_name in player_cols:
-            val = row.get(player_name, None)
+        for player_name_raw in player_cols_raw:
+            clean_name = _norm_name(str(player_name_raw))
+            val = row.get(player_name_raw, None)
+
             if val is None or (isinstance(val, float) and pd.isna(val)):
                 continue
+
             try:
                 profit = float(val)
             except Exception:
                 continue
+
             if abs(profit) < 1e-12:
                 continue
 
-            if player_name not in players_map:
-                cur.execute("INSERT INTO players (name) VALUES (?);", (player_name,))
-                players_map[player_name] = cur.lastrowid
-            pid = players_map[player_name]
+            if clean_name not in players_map:
+                cur.execute("INSERT INTO players (name) VALUES (?);", (clean_name,))
+                players_map[clean_name] = cur.lastrowid
+
+            pid = players_map[clean_name]
 
             if profit >= 0:
                 buyin = 0.0
@@ -353,9 +503,13 @@ def import_csv_year_to_db(game_type: str, year: int) -> dict:
     conn.commit()
     conn.close()
 
-    return {"game_type": game_type, "year": year, "status": "ok", "imported_games": imported_games, "imported_results": imported_results}
-
-
+    return {
+        "game_type": game_type,
+        "year": year,
+        "status": "ok",
+        "imported_games": imported_games,
+        "imported_results": imported_results,
+    }
 
 @bp.route("/admin/import_raw_all")
 @login_required
@@ -378,3 +532,134 @@ def admin_import_raw_all():
     lines.append('<p><a href="/">חזרה לדף הבית</a></p>')
     return "\n".join(lines)
 
+@bp.route("/admin/reset_harbo")
+@login_required
+@role_required("admin", "magician")
+def admin_reset_harbo():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # מוחקים תוצאות של משחקי חרבו
+    cur.execute("""
+    DELETE FROM game_results
+    WHERE game_id IN (SELECT id FROM games WHERE game_type='harbo');
+    """)
+
+    # מוחקים משחקי חרבו
+    cur.execute("DELETE FROM games WHERE game_type='harbo';")
+
+    conn.commit()
+    conn.close()
+
+    # מייבאים מחדש
+    summaries = []
+    for y in HARBO_IMPORT_YEARS:
+        summaries.append(import_csv_year_to_db("harbo", y))
+
+    lines = ["<h2>RESET HARBO - סיכום</h2>", "<ul>"]
+    for s in summaries:
+        lines.append(
+            f"<li>{s['game_type']} {s['year']}: {s['status']} | games: {s['imported_games']} | results: {s['imported_results']}</li>"
+        )
+    lines.append("</ul>")
+    lines.append('<p><a href="/">חזרה לדף הבית</a></p>')
+    return "\n".join(lines)
+@bp.route("/admin/debug_harbo_2025_dates")
+@login_required
+@role_required("admin", "magician")
+def debug_harbo_2025_dates():
+    import os
+    import pandas as pd
+
+    path = os.path.join(RAW_DIR, "TH_harbo_2025.csv")
+    df = _read_csv_hebrew(path)
+    df = df.loc[:, [c for c in df.columns if c and not str(c).startswith("Unnamed")]]
+
+    date_col = df.columns[0]
+    dates = []
+    for x in df[date_col].head(15).tolist():
+        iso = _parse_date_to_iso(str(x))
+        dates.append((str(x), iso))
+
+    # סיכום שנים
+    years = {}
+    for _, iso in dates:
+        if iso and len(iso) >= 4:
+            years[iso[:4]] = years.get(iso[:4], 0) + 1
+
+    return "<pre>" + "\n".join([f"{a}  ->  {b}" for a,b in dates]) + "\n\nYears in first 15 rows: " + str(years) + "</pre>"
+@bp.route("/admin/debug_harbo_2024")
+@login_required
+@role_required("admin", "magician")
+def debug_harbo_2024():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # 1) משחקי חרבו לפי שנה (תאריכים תקינים בלבד)
+    cur.execute("""
+    SELECT substr(date,1,4) AS y, COUNT(*) AS games
+    FROM games
+    WHERE game_type='harbo' AND date LIKE '____-__-__'
+    GROUP BY y
+    ORDER BY y;
+    """)
+    games_by_year = [dict(r) for r in cur.fetchall()]
+
+    # 2) כמות שורות תוצאות לפי שנה
+    cur.execute("""
+    SELECT substr(g.date,1,4) AS y, COUNT(*) AS results_rows
+    FROM game_results gr
+    JOIN games g ON g.id = gr.game_id
+    WHERE g.game_type='harbo' AND g.date LIKE '____-__-__'
+    GROUP BY y
+    ORDER BY y;
+    """)
+    results_by_year = [dict(r) for r in cur.fetchall()]
+
+    # 3) דוגמה של 10 משחקים מ-2024
+    cur.execute("""
+    SELECT id, date, location
+    FROM games
+    WHERE game_type='harbo'
+      AND date LIKE '____-__-__'
+      AND substr(date,1,4)='2024'
+    ORDER BY date
+    LIMIT 10;
+    """)
+    sample_2024 = [dict(r) for r in cur.fetchall()]
+
+    conn.close()
+
+    html = []
+    html.append("<h2>DEBUG HARBO 2024</h2>")
+    html.append("<h3>Games by year</h3><pre>" + str(games_by_year) + "</pre>")
+    html.append("<h3>Results rows by year</h3><pre>" + str(results_by_year) + "</pre>")
+    html.append("<h3>Sample games from 2024</h3><pre>" + str(sample_2024) + "</pre>")
+    html.append('<p><a href="/">חזרה לדף הבית</a></p>')
+    return "\n".join(html)
+
+@bp.route("/admin/debug_import_harbo/<int:year>")
+@login_required
+@role_required("admin", "magician")
+def debug_import_harbo(year):
+    path = os.path.join(RAW_DIR, f"TH_harbo_{year}.csv")
+    df = _read_csv_hebrew(path)
+    df = df.loc[:, [c for c in df.columns if c and not str(c).startswith("Unnamed")]]
+
+    date_col = df.columns[0]
+    bad = []
+    mismatch = []
+
+    for raw in df[date_col].tolist():
+        iso = _parse_date_to_iso(str(raw))
+        if not iso:
+            bad.append(str(raw))
+            continue
+        if iso[:4] != str(year):
+            mismatch.append((str(raw), iso))
+
+    html = []
+    html.append(f"<h2>DEBUG IMPORT HARBO {year}</h2>")
+    html.append(f"<p>Bad dates (unparsed): {len(bad)}</p><pre>" + "\n".join(bad[:30]) + "</pre>")
+    html.append(f"<p>Year mismatch: {len(mismatch)}</p><pre>" + "\n".join([f"{a} -> {b}" for a,b in mismatch[:30]]) + "</pre>")
+    return "\n".join(html)
