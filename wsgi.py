@@ -1,3 +1,3 @@
-from pokerapp import create_app
+from pokerapp.app import create_app
 
 app = create_app()
