@@ -1,5 +1,7 @@
 from flask import Flask
 from pathlib import Path
+from pokerapp.db.init_db import init_db   # ⬅️ הוספה
+
 
 def create_app():
     project_root = Path(__file__).resolve().parents[2]
@@ -16,6 +18,9 @@ def create_app():
 
     app.config["SECRET_KEY"] = "Donluka77"
     app.config["DB_PATH"] = str(instance_path / "poker.db")
+
+    schema_path = Path(__file__).resolve().parent / "db" / "schema.sql"
+    init_db(app.config["DB_PATH"], str(schema_path))
 
     from pokerapp.routes.auth import bp as auth_bp
     from pokerapp.routes.main import bp as main_bp
