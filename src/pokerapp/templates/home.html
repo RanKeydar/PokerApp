@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}דף הבית{% endblock %}
+{% block title %}פנקס הקטן | דף הבית{% endblock %}
 {% block subtitle %}דשבורד — קאש / חרבו{% endblock %}
 
 {% block content %}
@@ -120,9 +120,23 @@
                   <div class="recent-date">{{ g["date_il"] or g["date"] }}</div>
                   <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
                 </div>
-                <div class="recent-action">
-                  <a href="{{ url_for('main.game_results', game_id=g['id']) }}">🎯 תוצאות</a>
+                <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
+                 <!-- צפייה: כולם -->
+                  <a class="btn ghost"
+                    href="{{ url_for('main.game_results', game_id=g['id']) }}">
+                    👁 צפייה
+                  </a>
+
+                <!-- עריכה: ADMIN בלבד -->
+                {% if current_user and current_user["role"] == "admin" %}
+                  <a class="btn primary"
+                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}">
+                    ✏️ עריכה
+                  </a>
+                {% endif %}
+
                 </div>
+
               </div>
             {% endfor %}
           </div>
@@ -163,7 +177,31 @@
       </div>
 
       <div class="panel">
-        <h3>שחקנים מובילים <small>(לפי רווח מצטבר)</small></h3>
+        <h3> שחקנים מובילים <small>(לפי רווח מצטבר)</small>
+
+        {% if harbo_players_view == "all" %}
+          <a class="link" style="margin-right:auto"
+            href="{{ url_for('main.home',
+                       view='harbo',
+                       cash_year=cash_year,
+                       harbo_year=harbo_year,
+                       cash_players=cash_players_view,
+                       harbo_players='top') }}">
+            צמצם
+          </a>
+        {% else %}
+          <a class="link" style="margin-right:auto"
+            href="{{ url_for('main.home',
+                       view='harbo',
+                       cash_year=cash_year,
+                       harbo_year=harbo_year,
+                       cash_players=cash_players_view,
+                       harbo_players='all') }}">
+            הצג הכל
+          </a>
+        {% endif %}
+      </h3>
+
 
         {% if harbo_top_players and harbo_top_players|length > 0 %}
           <div class="table-wrap big">
@@ -218,9 +256,24 @@
                   <div class="recent-date">{{ g["date_il"] or g["date"] }}</div>
                   <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
                 </div>
-                <div class="recent-action">
-                  <a href="{{ url_for('main.game_results', game_id=g['id']) }}">🎯 תוצאות</a>
+                <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
+
+                <!-- צפייה: כולם -->
+                  <a class="btn ghost"
+                    href="{{ url_for('main.game_results', game_id=g['id']) }}">
+                    👁 צפייה
+                  </a>
+
+                <!-- עריכה: ADMIN בלבד -->
+                {% if current_user and current_user["role"] == "admin" %}
+                  <a class="btn primary"
+                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}">
+                    ✏️ עריכה
+                  </a>
+                {% endif %}
+
                 </div>
+
               </div>
             {% endfor %}
           </div>

@@ -218,6 +218,9 @@ a:hover, .link:hover{
     .btn.secondary{ background:rgba(15,118,110,.85); }
     .btn.ghost{ background:rgba(255,255,255,.10); }
     .btn.danger{ background:rgba(185,28,28,.85); }
+    .btn.success:hover{background: rgba(22,101,52,.9);
+    }
+
 
     /* Layout */
     .grid{
@@ -606,3 +609,21 @@ a:hover, .link:hover{
 
 .game-card, .game-body, .panel { overflow: visible; }
 .table-wrap.big { overflow-x: auto; max-width: 100%; }
+
+/* מסך משחקים – ניגודיות */
+.games-page .btn.ghost {
+  color: #0f172a;        /* טקסט כהה */
+  border-color: #0f172a;
+}
+
+.games-page .btn.primary {
+  color: #ffffff;        /* לבן על כהה */
+}
+
+.games-page h2,
+.games-page h3,
+.games-page th,
+.games-page td {
+  color: #0f172a;
+}
+

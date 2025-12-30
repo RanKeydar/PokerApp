@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort
+from flask import Blueprint, render_template, request, redirect, url_for, abort, flash
 from pokerapp.services.auth import login_required, role_required, get_current_user
 from pokerapp.db.connection import get_db_connection
 from pokerapp.services.game_queries import get_top_players, get_recent_games
@@ -6,7 +6,6 @@ from datetime import date
 import os
 import pandas as pd
 import unicodedata
-
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 RAW_DIR = os.path.abspath(
@@ -147,6 +146,7 @@ def home():
 
     return render_template(
         "home.html",
+        current_user=get_current_user(),   # <-- להוסיף
         view=view,
         cash_year=cash_year,
         harbo_year=harbo_year,
@@ -165,12 +165,24 @@ def home():
 @bp.route("/games")
 @login_required
 def games_list():
+    view = request.args.get("view", "cash")  # cash / harbo
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM games ORDER BY date DESC;")
+
+    cur.execute(
+        "SELECT * FROM games WHERE game_type = ? ORDER BY date DESC;",
+        (view,),
+    )
     games = cur.fetchall()
     conn.close()
-    return render_template("games.html", games=games)
+
+    return render_template(
+        "games.html",
+        view=view,
+        games=games,
+        current_user=get_current_user(),
+    )
 
 
 # ------------------------------
@@ -216,7 +228,7 @@ def players_list():
 # הוספת שחקן חדש
 @bp.route("/add_player", methods=["GET", "POST"])
 @login_required
-@role_required("admin")
+@role_required("admin", "magician")
 def add_player():
     if request.method == "POST":
         name = request.form.get("name")
@@ -272,7 +284,7 @@ def admin_users():
 # ------------------------------
 # תוצאות למשחק מסוים
 # ------------------------------
-@bp.route("/game/<int:game_id>/results", methods=["GET", "POST"])
+@bp.route("/game/<int:game_id>/results", methods=["GET"])
 @login_required
 def game_results(game_id):
     conn = get_db_connection()
@@ -284,11 +296,63 @@ def game_results(game_id):
         conn.close()
         return "המשחק לא נמצא", 404
 
-    if request.method == "POST":
-        user = get_current_user()
-        if user["role"] not in ("admin", "magician"):
-            abort(403)
+    # מביא רק שחקנים שיש להם שורה ב-game_results (כלומר יש תוצאה),
+    # וממיין אלפביתית לפי שם
+    cur.execute(
+        """
+        SELECT
+        p.name AS player_name,
+        gr.buyin,
+        gr.cashout,
+        gr.profit
+        FROM game_results gr
+        JOIN players p ON p.id = gr.player_id
+        WHERE gr.game_id = ?
+        AND gr.profit IS NOT NULL
+        ORDER BY gr.profit DESC, p.name COLLATE NOCASE;
+        """,
+        (game_id,),
+    )
+    players = cur.fetchall()
 
+
+
+    # סכומים לפי השורות שבאמת מוצגות
+    total_buyin = sum(row["buyin"] for row in players) if players else 0
+    total_cashout = sum(row["cashout"] for row in players) if players else 0
+    diff = total_cashout - total_buyin
+
+    conn.close()
+
+    return render_template(
+        "game_results.html",
+        game=game,
+        players=players,   # שים לב: עכשיו זה "רק מי שיש לו תוצאה"
+        total_buyin=total_buyin,
+        total_cashout=total_cashout,
+        diff=diff,
+        mode="view",
+        current_user=get_current_user(),   # ← זה החסר
+    )
+
+
+@bp.route("/game/<int:game_id>/results/edit", methods=["GET", "POST"])
+@login_required
+def game_results_edit(game_id):
+    user = get_current_user()
+    if user["role"] not in ("admin", "magician"):
+        abort(403)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM games WHERE id = ?;", (game_id,))
+    game = cur.fetchone()
+    if game is None:
+        conn.close()
+        return "המשחק לא נמצא", 404
+
+    if request.method == "POST":
         cur.execute("DELETE FROM game_results WHERE game_id = ?;", (game_id,))
 
         cur.execute("SELECT * FROM players ORDER BY name;")
@@ -342,7 +406,10 @@ def game_results(game_id):
         total_buyin=total_buyin,
         total_cashout=total_cashout,
         diff=diff,
+        mode="edit", 
+        current_user=get_current_user(),
     )
+
 
 # ------------------------------
 # Import RAW cash CSV -> DB (admin/magician)
@@ -663,3 +730,31 @@ def debug_import_harbo(year):
     html.append(f"<p>Bad dates (unparsed): {len(bad)}</p><pre>" + "\n".join(bad[:30]) + "</pre>")
     html.append(f"<p>Year mismatch: {len(mismatch)}</p><pre>" + "\n".join([f"{a} -> {b}" for a,b in mismatch[:30]]) + "</pre>")
     return "\n".join(html)
+@bp.route("/game/<int:game_id>/delete", methods=["POST"])
+@login_required
+@role_required("admin")
+def delete_game(game_id):
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+
+        # ודא שהמשחק קיים
+        cur.execute("SELECT id FROM games WHERE id = ?;", (game_id,))
+        if cur.fetchone() is None:
+            flash("המשחק לא נמצא", "error")
+            return redirect(url_for("main.games_list"))
+
+        # מחיקה בטוחה: קודם התוצאות ואז המשחק
+        cur.execute("DELETE FROM game_results WHERE game_id = ?;", (game_id,))
+        cur.execute("DELETE FROM games WHERE id = ?;", (game_id,))
+
+        conn.commit()
+        flash("המשחק נמחק בהצלחה", "ok")
+        return redirect(url_for("main.games_list"))
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"שגיאה במחיקה: {e}", "error")
+        return redirect(url_for("main.games_list"))
+    finally:
+        conn.close()
