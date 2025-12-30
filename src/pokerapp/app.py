@@ -22,6 +22,10 @@ def create_app():
     schema_path = Path(__file__).resolve().parent / "db" / "schema.sql"
     init_db(app.config["DB_PATH"], str(schema_path))
 
+    from pokerapp.db.seed_admin import ensure_admin
+    ensure_admin(app.config["DB_PATH"])
+
+
     from pokerapp.routes.auth import bp as auth_bp
     from pokerapp.routes.main import bp as main_bp
     app.register_blueprint(auth_bp)
