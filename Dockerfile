@@ -7,6 +7,7 @@ FROM python:${PYTHON_VERSION}-slim
 LABEL fly_launch_runtime="flask"
 
 WORKDIR /code
+ENV PYTHONPATH=/code/src
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
