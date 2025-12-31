@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from pathlib import Path
 from pokerapp.db.init_db import init_db   # ⬅️ הוספה
