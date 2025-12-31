@@ -16,8 +16,8 @@ def create_app():
         static_url_path="/static"                     # (אופציונלי, אבל נחמד)
     )
 
-    app.config["SECRET_KEY"] = "Donluka77"
-    app.config["DB_PATH"] = str(instance_path / "poker.db")
+    app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
+    app.config["DB_PATH"] = "/data/poker.db"
 
     schema_path = Path(__file__).resolve().parent / "db" / "schema.sql"
     init_db(app.config["DB_PATH"], str(schema_path))
