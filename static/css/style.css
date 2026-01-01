@@ -687,3 +687,49 @@ a:hover, .link:hover{
     font-size: 16px;
   }
 }
+
+/* =========================
+   MOBILE: STOP HORIZONTAL OVERFLOW
+   ========================= */
+@media (max-width: 760px){
+
+  /* 1) שום דבר לא יוצא מהרוחב */
+  *, *::before, *::after{
+    box-sizing: border-box;
+  }
+
+  /* 2) הכרטיס הלבן חייב להיכנס למסך */
+  .game-card{
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* 3) ה-grid לא נותן לילדים לדחוף החוצה */
+  .grid{
+    min-width: 0;
+  }
+  .grid > *{
+    min-width: 0;
+  }
+
+  /* 4) כל עטיפה של טבלה יכולה לגלול פנימה במקום לדחוף את הדף */
+  .table-wrap{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* 5) שנה-סלקטור שלא יברח */
+  .year-selector{
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+  .year-selector .btn{
+    flex: 0 0 auto;
+  }
+}
