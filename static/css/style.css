@@ -677,3 +677,32 @@ html, body{
     min-width: 560px;   /* אם עדיין “נחתך” תוריד ל-520 */
   }
 }
+
+/* === FORCE CENTER (fix right green strip) === */
+html, body{
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.container{
+  width: 100vw;              /* במקום להסתמך על max-width בלבד */
+  max-width: 1100px;
+  margin: 0 auto !important; /* מרכז אמיתי */
+  padding-left: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+.topbar,
+.game-card{
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto !important; /* מרכז גם אותם */
+  box-sizing: border-box;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important; /* מבטל הזזות ישנות */
+  position: relative;         /* שלא “יתקע” absolute/translate */
+}
+
