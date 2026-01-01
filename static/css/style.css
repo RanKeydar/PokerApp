@@ -37,7 +37,7 @@ body{
   color: var(--ink);
 }
 
-..panel h3{
+.panel h3{
   margin:0 0 10px;
   display:flex;
   align-items:center;
@@ -627,3 +627,165 @@ a:hover, .link:hover{
   color: #0f172a;
 }
 
+/* =========================
+   MOBILE FIXES (Home cards)
+   ========================= */
+
+/* אל תאפשר גלישה רוחבית של כל הדף */
+html, body{
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+/* גריד רספונסיבי: ברירת מחדל שתי עמודות, אבל לא “קשיח” */
+.grid{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* כבר בטאבלט/מובייל – עמודה אחת (מוקדם יותר מ-900px) */
+@media (max-width: 760px){
+  .grid{
+    grid-template-columns: 1fr;
+  }
+
+  /* כרטיסיות קצת יותר קומפקטיות */
+  .game-header{
+    padding: 12px 12px 8px;
+  }
+  .game-body{
+    padding: 12px;
+    gap: 10px;
+  }
+  .panel{
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  /* כותרות בכרטיס לא “מנפחות” */
+  .game-title h2{
+    font-size: 16px;
+  }
+}
+
+/* חשוב ב-grid: תן לכרטיס להצטמצם במקום לדחוף החוצה */
+.game-card{
+  min-width:0;
+}
+
+/* טבלאות בתוך כרטיס: לא לשבור מסך – תן גלילה אופקית רק לטבלה */
+.table-wrap{
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+}
+
+/* במובייל – תבטל את המינימום המופרז של 1000px */
+@media (max-width: 760px){
+  .leaders-table.big{
+    min-width: 720px;   /* במקום 1000px */
+    font-size: 16px;    /* במקום 20px */
+  }
+
+  .leaders-table.big th,
+  .leaders-table.big td{
+    padding: 10px 10px;
+  }
+}
+
+/* =========================
+   MOBILE FIXES – FINAL
+   ========================= */
+
+@media (max-width: 760px){
+
+  /* 1️⃣ למרכז ולנעול רוחב */
+  .game-card,
+  .panel,
+  .topbar,
+  .container > *{
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* 2️⃣ כרטיס עליון (admin / actions) */
+  .topbar{
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+  }
+
+  .userbox,
+  .actions{
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .actions .btn{
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* 3️⃣ מניעת גלישה רוחבית */
+  *{
+    max-width: 100%;
+  }
+
+  /* 4️⃣ טבלאות – גלילה רק פנימית */
+  .table-wrap{
+    overflow-x: auto;
+  }
+
+  table{
+    min-width: 100%;
+  }
+}
+/* FIX: כרטיס עליון שזז ימינה במובייל */
+@media (max-width: 760px){
+
+  .topbar{
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+
+    align-self: stretch;
+  }
+}
+/* FORCE: ליישר את הכרטיס העליון למרכז במובייל */
+@media (max-width: 760px){
+
+  /* ההורה של הטופבר (כנראה מצמיד לימין) */
+  .site-header{
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px 12px !important;
+  }
+
+  /* הטופבר עצמו */
+  .site-header .topbar{
+    display: flex !important;
+    width: calc(100vw - 24px) !important;   /* רוחב מסך פחות פדינג */
+    max-width: calc(100vw - 24px) !important;
+    margin: 0 auto !important;
+
+    position: static !important;
+    float: none !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+}
+@media (max-width: 760px){
+  .topbar{ outline:4px solid red !important; }
+}
+
+/* FORCE TEST – SHOULD TURN SCREEN PINK */
+body{
+  background-color: #ff00ff !important;

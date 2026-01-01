@@ -7,10 +7,13 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <meta name="theme-color" content="#0b3d2e">
   <link rel="icon" href="/static/icons/icon-192.png">
+  <meta name="build" content="BASE_20260101_1135">
 
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260101a">
 </head>
+
+<!-- Service Worker disabled temporarily for CSS debugging 
 
 <script>
   if ("serviceWorker" in navigator) {
@@ -19,7 +22,7 @@
     });
   }
 </script>
-
+-->
 
 <body>
 
@@ -71,3 +74,5 @@
 
 </body>
 </html>
+
+}
