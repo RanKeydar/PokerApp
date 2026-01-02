@@ -10,7 +10,8 @@
   <meta name="build" content="BASE_20260101_1135">
 
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20260101b">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css', v=config.STATIC_VER) }}">
 </head>
 
 <!-- Service Worker disabled temporarily for CSS debugging 
