@@ -11,7 +11,7 @@
 
 
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css', v=config.STATIC_VER) }}">
+      href="{{ url_for('static', filename='css/style.css') }}?v={{ config.get('STATIC_VER', 1) }}">
 </head>
 
 <!-- Service Worker disabled temporarily for CSS debugging 
