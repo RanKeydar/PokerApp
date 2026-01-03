@@ -685,10 +685,12 @@ a:hover, .link:hover{
     overflow-x: auto;
     justify-content: flex-start;
     gap: 6px;
+    max-width: 100%;   /* חשוב */
   }
 
   .year-selector .btn{
     flex: 0 0 auto;
+    max-width: 72px;   /* או אפילו 72px */
     min-width: 62px;
     padding: 6px 8px;
     font-size: 12px;
@@ -709,8 +711,13 @@ a:hover, .link:hover{
   .table-wrap table{
     direction: rtl;              /* תוכן בעברית */
     table-layout: auto;          /* מבטל fixed במובייל */
-    min-width: 0;            /* אם צריך: 680/640 */
+    min-width: 0 !important;     /* חובה */
+    width: 100%;                 /* חובה */
   }
 
+  .leaders-table.big{
+    min-width: 0 !important;     /* חובה */
+    width: 100%;
+  }
 }
 
