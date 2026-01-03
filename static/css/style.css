@@ -237,13 +237,16 @@ a:hover, .link:hover{
     }
 
     /* Game Card */
-    .game-card{
-      background:var(--card);
-      border-radius:18px;
+   .game-card{
+      background: var(--card);
+      border-radius: 18px;
       box-shadow: var(--shadow);
-      border:1px solid rgba(15,23,42,.08);
-      overflow:hidden;
+      border: 1px solid rgba(15,23,42,.08);
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
     }
+
 
     .game-card, .panel, .table-wrap{
         color:#0f172a;
@@ -339,7 +342,7 @@ a:hover, .link:hover{
       display: block;
 
     /* חשוב ב-RTL: שלא ייראה כאילו "בורח" */
-    direction: rtl;
+    direction: ltr;
     }
 
     .table-wrap table{
@@ -569,7 +572,7 @@ a:hover, .link:hover{
 
 .leaders-table.big{
   width: 100%;
-  min-width: 1000px;   /* מונע חיתוך כותרות */
+    /* min-width: 1000px; */
   font-size: 20px;     /* מגדיל את הכל */
   table-layout: auto;
 }
@@ -595,7 +598,6 @@ a:hover, .link:hover{
 .leaders-table,
 .leaders-table.big{
   width: 100%;
-  min-width: 720px;     /* תוריד/תעלה לפי הטעם (למשל 800) */
   border-collapse: collapse;
 }
 
@@ -636,14 +638,7 @@ a:hover, .link:hover{
 
 @media (max-width: 900px){
 
-  /* Prevent any sideways overflow */
-  html, body{
-    max-width: 100%;
-    overflow-x: hidden;   /* העמוד לא יגלוש הצידה */
-  }
-
-
-  /* Container must be truly fluid on mobile */
+   /* Container must be truly fluid on mobile */
   .container{
     width: 100%;
     max-width: 100%;
@@ -699,23 +694,22 @@ a:hover, .link:hover{
     font-size: 12px;
   }
 
-  /* Table: scroll inside wrapper, keep RTL, no page shift */
+    /* Table: scroll inside wrapper (LTR wrapper), table content stays RTL */
   .table-wrap{
+    width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 
-    width: 100%;
-    max-width: 100%;
-
-    direction: rtl;              /* מונע "בריחה" שמאלה ב-RTL */
+    direction: ltr;              /* חשוב: wrapper LTR = גלילה "נורמלית" */
     overscroll-behavior-x: contain;
   }
 
   .table-wrap table{
-    direction: rtl;
+    direction: rtl;              /* תוכן בעברית */
     table-layout: auto;          /* מבטל fixed במובייל */
-    min-width: 720px;            /* אם עדיין גדול מדי אפשר להוריד ל-680 */
+    min-width: 0;            /* אם צריך: 680/640 */
   }
 
 }
