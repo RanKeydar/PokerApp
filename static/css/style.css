@@ -722,34 +722,24 @@ a:hover, .link:hover{
 }
 
 /* פתרון סופי למובייל - חוסם כל חריגה */
+/* פתרון סופי מובייל - בסוף הקובץ בלבד */
 @media (max-width: 900px) {
-  /* הטבלה יכולה להיות רחבה, אבל הגלילה רק בתוכה */
+  .game-card {
+    overflow: visible !important;
+  }
+  
   .table-wrap {
     overflow-x: auto !important;
     max-width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   
-  .table-wrap table {
-    min-width: 720px;  /* או 640px */
-    width: auto !important;
-  }
-  
-  /* הכרטיסים נשארים צרים */
-  .game-card,
-  .game-body {
-    max-width: 100% !important;
-    overflow-x: hidden;
-  }
-}
-
-/* גלילה רק בטבלאות מובייל */
-@media (max-width: 900px) {
   .leaders-table.big {
     min-width: 720px !important;
   }
   
-  .table-wrap {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
+  .game-body {
+    max-width: 100% !important;
   }
 }
+
