@@ -80,11 +80,7 @@
                   <th class="num">רווח מצטבר (₪)</th>
                    <th class="num">משחקים</th>
                   <th class="num">ממוצע למשחק</th>
-                  <!--{% if cash_year == 'all' %}
-                    <th class="num">שנים ששיחק</th>
-                    <th class="num">ממוצע שנתי</th>
-                  {% endif %}-->
-
+                 
                 </tr>
               </thead>
               <tbody>
@@ -96,12 +92,7 @@
                     <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
                     <td class="num">{{ row["games_count"] or 0 }}</td>
                     <td class="num">{{ (row["avg_per_game"] or 0) | round | int }}</td>
-                    <!--{% if cash_year == 'all' %}
-                      <td class="num">{{ row["years_count"] or 0 }}</td>
-                      <td class="num">{{ (row["avg_per_year"] or 0) | round | int }}</td>
-                    {% endif %}-->
-
-
+                   
                   </tr>
                 {% endfor %}
               </tbody>
@@ -238,11 +229,7 @@
                   <th class="num">רווח מצטבר (₪)</th>
                   <th class="num">משחקים</th>
                   <th class="num">ממוצע למשחק</th>
-                  <!--f harbo_year == 'all' %}
-                    <th class="num">שנים ששיחק</th>
-                    <th class="num">ממוצע שנתי</th>
-                  {% endif %}-->
-
+              
                 </tr>
               </thead>
               <tbody>
@@ -254,12 +241,7 @@
                     <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
                     <td class="num">{{ row["games_count"] or 0 }}</td>
                     <td class="num">{{ (row["avg_per_game"] or 0) | round | int }}</td>
-                    <!--f harbo_year == 'all' %}
-                      <td class="num">{{ row["years_count"] or 0 }}</td>
-                      <td class="num">{{ (row["avg_per_year"] or 0) | round | int }}</td>
-                    {% endif %}-->
-
-
+                  
                   </tr>
                 {% endfor %}
               </tbody>
