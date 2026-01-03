@@ -213,7 +213,7 @@ def home():
             limit=complete_limit
         )
 
-        complete_recent_games = merge_recent_games_rows(cash_rg, harbo_rg, limit=5)
+        complete_recent_games = merge_recent_games_rows(cash_rg, harbo_rg, limit=complete_limit)
 
     conn.close()
 
@@ -233,6 +233,7 @@ def home():
         complete_top_players=complete_top_players,
         complete_recent_games=complete_recent_games,
         complete_players_view=complete_players_view,
+        complete_year=complete_year,
     )
 
 

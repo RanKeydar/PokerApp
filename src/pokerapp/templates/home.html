@@ -365,6 +365,37 @@
 
       <div class="panel">
         <h3>שחקנים מובילים <small>(רווח מצטבר בקאש+חרבו)</small></h3>
+        
+          <div class="table-actions">
+            {% if complete_players_view == "all" %}
+              <a class="link"
+                href="{{ url_for('main.home',
+                  view='complete',
+                  complete_year=complete_year,
+                  complete_players='top',
+                  cash_year=cash_year,
+                  harbo_year=harbo_year,
+                  cash_players=cash_players_view,
+                  harbo_players=harbo_players_view
+                ) }}">
+                צמצם
+              </a>
+            {% else %}
+              <a class="link"
+                href="{{ url_for('main.home',
+                  view='complete',
+                  complete_year=complete_year,
+                  complete_players='all',
+                  cash_year=cash_year,
+                  harbo_year=harbo_year,
+                  cash_players=cash_players_view,
+                  harbo_players=harbo_players_view
+                ) }}">
+                הצג הכל
+              </a>
+            {% endif %}
+          </div>
+
 
         {% if complete_top_players %}
           <div class="table-wrap big">
