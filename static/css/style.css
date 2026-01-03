@@ -327,12 +327,25 @@ a:hover, .link:hover{
 
     /* Tables */
     .table-wrap{
-      overflow:auto;
+      overflow-x: auto;
+      overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
       border-radius:12px;
       border:1px solid var(--line);
       background:#fff;
+
+      width: 100%;
+      max-width: 100%;
+      display: block;
+
+    /* חשוב ב-RTL: שלא ייראה כאילו "בורח" */
+    direction: rtl;
     }
+
+    .table-wrap table{
+      direction: rtl;
+    }
+
 
     table{
         width:100%;
@@ -578,17 +591,6 @@ a:hover, .link:hover{
   overflow: visible;   /* אם יש אצלך hidden – זה מה שחותך */
 }
 
-/* 2) עטיפה שמאפשרת גלילה אופקית אמיתית */
-.table-wrap,
-.table-wrap.big{
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  display: block;
-}
-
 /* 3) טבלה גדולה + שלא תידחס */
 .leaders-table,
 .leaders-table.big{
@@ -637,8 +639,9 @@ a:hover, .link:hover{
   /* Prevent any sideways overflow */
   html, body{
     max-width: 100%;
-    overflow-x: clip;
+    overflow-x: hidden;   /* העמוד לא יגלוש הצידה */
   }
+
 
   /* Container must be truly fluid on mobile */
   .container{
@@ -696,17 +699,24 @@ a:hover, .link:hover{
     font-size: 12px;
   }
 
-  /* Table: scroll inside wrapper, table stays RTL */
+  /* Table: scroll inside wrapper, keep RTL, no page shift */
   .table-wrap{
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    direction: ltr;        /* wrapper LTR for sane scrolling */
+
+    width: 100%;
+    max-width: 100%;
+
+    direction: rtl;              /* מונע "בריחה" שמאלה ב-RTL */
+    overscroll-behavior-x: contain;
   }
 
   .table-wrap table{
-    direction: rtl;        /* content RTL */
-    table-layout: auto;    /* override desktop fixed */
-    min-width: 720px;      /* wide tables scroll instead of breaking layout */
+    direction: rtl;
+    table-layout: auto;          /* מבטל fixed במובייל */
+    min-width: 720px;            /* אם עדיין גדול מדי אפשר להוריד ל-680 */
   }
+
 }
+
