@@ -799,3 +799,37 @@ a:hover, .link:hover{
   font-size:20px;     /* הגדלת האייקון עצמו */
   line-height:1;
 }
+
+/* מונע גלישה אופקית כללית */
+html, body{
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* חשוב כשיש flex/grid: מאפשר לילדים "להתכווץ" */
+.grid, .game-card, .game-body, .panel{
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* הטבלה תמיד בתוך גלילה אופקית אם צריך */
+.table-wrap{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* שהטבלה לא תכריח רוחב גדול מהמסך */
+.leaders-table{
+  width: 100%;
+  max-width: 100%;
+}
+
+/* מובייל: קצת מקטינים טקסט/ריווח בטבלה */
+@media (max-width: 520px){
+  .leaders-table th,
+  .leaders-table td{
+    padding: 8px 8px;
+    font-size: 13px;
+  }
+}
