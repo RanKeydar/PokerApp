@@ -333,6 +333,7 @@ a:hover, .link:hover{
       border:1px solid var(--line);
       background:#fff;
     }
+    
     table{
         width:100%;
         border-collapse: collapse;
@@ -728,5 +729,25 @@ a:hover, .link:hover{
     font-size: 12px;
   }
 }
-/* DEBUG_VISUAL */
-.topbar { outline: 4px solid #ff00ff !important; }
+
+@media (max-width: 760px){
+
+  /* MOBILE: tables scroll nicely, no "escape" */
+  .table-wrap{
+    direction: ltr;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-wrap table{
+    direction: rtl;
+    table-layout: auto;
+    min-width: 720px;
+  }
+
+  .table-wrap th,
+  .table-wrap td{
+    max-width: 160px;
+  }
+}
