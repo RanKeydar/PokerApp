@@ -652,9 +652,20 @@ a:hover, .link:hover{
     padding: 8px 10px;
   }
 
-  .userbox, .actions{
+  .userbox{
     width: 100%;
     justify-content: space-between;
+  }
+
+  .actions{
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .actions .btn{
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
   .grid{
@@ -688,8 +699,18 @@ a:hover, .link:hover{
   table{
     min-width: 520px;
   }
-}
+  /* year selector – prevent cut on mobile */
+  .year-selector{
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 6px;
+  }
 
-html, body{
-  overflow-x: hidden;
+  .year-selector .btn{
+    flex: 0 0 auto;
+    min-width: 74px;
+  }
+
 }

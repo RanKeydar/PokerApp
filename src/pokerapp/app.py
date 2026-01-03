@@ -17,6 +17,9 @@ def create_app():
         static_url_path="/static"                     # (אופציונלי, אבל נחמד)
     )
 
+    css_path = project_root / "static" / "css" / "style.css"
+    app.config["STATIC_VER"] = int(css_path.stat().st_mtime) if css_path.exists() else 1
+
     app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
     app.config["DB_PATH"] = "/data/poker.db"
 

@@ -14,17 +14,6 @@
       href="{{ url_for('static', filename='css/style.css') }}?v={{ config.get('STATIC_VER', 1) }}">
 </head>
 
-<!-- Service Worker disabled temporarily for CSS debugging 
-
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}");
-    });
-  }
-</script>
--->
-
 <body>
   <div class="container">
 
@@ -71,8 +60,22 @@
     {% block content %}{% endblock %}
 
   </div>
+ <!-- DEV: remove Service Worker + cache -->
+  <script>
+  (async () => {
+    if (!('serviceWorker' in navigator)) return;
+
+    // Unregister all Service Workers
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const reg of regs) await reg.unregister();
+
+    // Clear Cache Storage
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (const k of keys) await caches.delete(k);
+    }
+  })();
+  </script>
 
 </body>
 </html>
-
-}
