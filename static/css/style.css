@@ -626,6 +626,7 @@ a:hover, .link:hover{
 .games-page td {
   color: #0f172a;
 }
+
 /* =========================
    MOBILE – SINGLE SOURCE OF TRUTH
    ========================= */
@@ -633,6 +634,7 @@ a:hover, .link:hover{
 
   .site-header{
     position: static;
+    padding: 6px 8px;
   }
 
   .container{
@@ -687,6 +689,7 @@ a:hover, .link:hover{
     margin: 0 auto;
   }
 
+  /* TABLE: scroll inside, RTL-friendly */
   .table-wrap{
     width: 100%;
     max-width: 100%;
@@ -694,12 +697,16 @@ a:hover, .link:hover{
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     display: block;
+    direction: rtl;
   }
 
-  table{
-    min-width: 520px;
+  .table-wrap table{
+    direction: rtl;
+    min-width: 720px;
+    table-layout: auto;
   }
-  /* year selector – prevent cut on mobile */
+
+  /* Year selector: compact + scroll */
   .year-selector{
     justify-content: flex-start;
     flex-wrap: nowrap;
@@ -710,7 +717,16 @@ a:hover, .link:hover{
 
   .year-selector .btn{
     flex: 0 0 auto;
-    min-width: 74px;
+    min-width: 64px;
+    padding: 6px 8px;
+    font-size: 12px;
   }
 
+  .year-selector .total-btn{
+    min-width: 56px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
 }
+/* DEBUG_VISUAL */
+.topbar { outline: 4px solid #ff00ff !important; }
