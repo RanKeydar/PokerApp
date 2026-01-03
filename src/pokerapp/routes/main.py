@@ -177,7 +177,7 @@ def home():
     # ברירת מחדל ריקה לצד שלא מוצג
     cash_top_players, cash_recent_games = [], []
     harbo_top_players, harbo_recent_games = [], []
-        complete_top_players, complete_recent_games = [], []
+    complete_top_players, complete_recent_games = [], []
 
     conn = get_db_connection()
 
