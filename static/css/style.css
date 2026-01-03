@@ -723,16 +723,22 @@ a:hover, .link:hover{
 
 /* פתרון סופי למובייל - חוסם כל חריגה */
 @media (max-width: 900px) {
-  .leaders-table,
-  .leaders-table.big,
-  .table-wrap table {
-    min-width: 0 !important;
+  /* הטבלה יכולה להיות רחבה, אבל הגלילה רק בתוכה */
+  .table-wrap {
+    overflow-x: auto !important;
     max-width: 100% !important;
-    width: 100% !important;
   }
   
+  .table-wrap table {
+    min-width: 720px;  /* או 640px */
+    width: auto !important;
+  }
+  
+  /* הכרטיסים נשארים צרים */
   .game-card,
   .game-body {
-    overflow-x: hidden !important;
+    max-width: 100% !important;
+    overflow-x: hidden;
   }
 }
+
