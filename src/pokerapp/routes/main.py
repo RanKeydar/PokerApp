@@ -103,6 +103,54 @@ def enrich_players(conn, players, game_type: str, year: str):
 
     return enriched
 
+from collections import defaultdict
+from datetime import datetime
+
+def _parse_dt(s: str) -> datetime:
+    s = (s or "").strip()
+    try:
+        return datetime.fromisoformat(s[:10])
+    except Exception:
+        return datetime.min
+
+def merge_players_rows(cash_rows, harbo_rows, limit=5):
+    agg = defaultdict(lambda: {"player_name": None, "total_profit": 0.0})
+
+    for r in (cash_rows or []):
+        rr = dict(r)
+        name = (rr.get("player_name") or "").strip()
+        if not name:
+            continue
+        agg[name]["player_name"] = name
+        agg[name]["total_profit"] += float(rr.get("total_profit") or 0)
+
+    for r in (harbo_rows or []):
+        rr = dict(r)
+        name = (rr.get("player_name") or "").strip()
+        if not name:
+            continue
+        agg[name]["player_name"] = name
+        agg[name]["total_profit"] += float(rr.get("total_profit") or 0)
+
+    out = list(agg.values())
+    out.sort(key=lambda x: x["total_profit"], reverse=True)
+    return out[:limit]
+
+def merge_recent_games_rows(cash_games, harbo_games, limit=5):
+    merged = []
+
+    for g in (cash_games or []):
+        gg = dict(g)
+        gg["game_type_label"] = "קאש"
+        merged.append(gg)
+
+    for g in (harbo_games or []):
+        gg = dict(g)
+        gg["game_type_label"] = "חרבו"
+        merged.append(gg)
+
+    merged.sort(key=lambda x: _parse_dt(x.get("date")), reverse=True)
+    return merged[:limit]
 
 
 # ------------------------------
@@ -115,8 +163,8 @@ def home():
 
     cash_year = request.args.get("cash_year") or current_year
     harbo_year = request.args.get("harbo_year") or current_year
+    complete_year = request.args.get("complete_year") or str(date.today().year)
 
-    # איזה מסך מציגים: cash / harbo
     view = request.args.get("view", "cash")
 
     # מצב תצוגה לטבלת שחקנים (טופ/הכל) – נשמור, אבל רק לטבלה שמוצגת בפועל
@@ -129,6 +177,7 @@ def home():
     # ברירת מחדל ריקה לצד שלא מוצג
     cash_top_players, cash_recent_games = [], []
     harbo_top_players, harbo_recent_games = [], []
+        complete_top_players, complete_recent_games = [], []
 
     conn = get_db_connection()
 
@@ -137,10 +186,27 @@ def home():
         cash_recent_games = get_recent_games("cash", 5, year=cash_year)
         cash_top_players = enrich_players(conn, cash_top_players, "cash", cash_year)
 
-    else:
+    elif view == "harbo":
         harbo_top_players = get_top_players("harbo", harbo_limit, year=harbo_year)
         harbo_recent_games = get_recent_games("harbo", 5, year=harbo_year)
         harbo_top_players = enrich_players(conn, harbo_top_players, "harbo", harbo_year)
+
+    elif view == "complete":
+        # שנה אחת לקאש + חרבו (או all)
+        y = complete_year
+
+        cash_tp = get_top_players("cash", 9999, year=y)
+        harbo_tp = get_top_players("harbo", 9999, year=y)
+
+        cash_rg = get_recent_games("cash", 5, year=y)
+        harbo_rg = get_recent_games("harbo", 5, year=y)
+
+        cash_tp = enrich_players(conn, cash_tp, "cash", y)
+        harbo_tp = enrich_players(conn, harbo_tp, "harbo", y)
+
+        # טופ 5 מאוחד (אפשר להפוך ל"הצג הכל" בהמשך)
+        complete_top_players = merge_players_rows(cash_tp, harbo_tp, limit=5)
+        complete_recent_games = merge_recent_games_rows(cash_rg, harbo_rg, limit=5)
 
     conn.close()
 
@@ -156,6 +222,9 @@ def home():
         cash_recent_games=cash_recent_games,
         harbo_top_players=harbo_top_players,
         harbo_recent_games=harbo_recent_games,
+        complete_year=complete_year,
+        complete_top_players=complete_top_players,
+        complete_recent_games=complete_recent_games,
     )
 
 
