@@ -233,7 +233,6 @@ def home():
         complete_top_players=complete_top_players,
         complete_recent_games=complete_recent_games,
         complete_players_view=complete_players_view,
-        complete_year=complete_year,
     )
 
 
