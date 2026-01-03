@@ -732,3 +732,43 @@ a:hover, .link:hover{
   .leaders-table.big {
     min
   }
+
+  /* בסוף הקובץ */
+@media (max-width: 900px) {
+  .leaders-table.big + .btn,
+  .btn[onclick*="צמצם"] {
+    white-space: nowrap !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .year-selector .btn {
+    padding: 4px 6px !important;
+    font-size: 10px !important;
+    min-width: 44px !important;
+  }
+  .year-selector {
+    gap: 3px !important;
+  }
+}
+/* --- Fix: כפתור "הצג הכל / צמצם" לא נחתך --- */
+
+.table-actions{
+  display: flex;
+  justify-content: flex-start; /* אפשר center אם תרצה */
+  padding: 10px 0 0;
+}
+
+/* מאפשר גלילה אופקית לטבלה בלי לחתוך תוכן */
+.table-wrap{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* מונע חיתוך של אלמנטים פנימיים (כפתורים) */
+.panel{
+  overflow: visible;
+}
