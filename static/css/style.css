@@ -721,18 +721,15 @@ a:hover, .link:hover{
   }
 }
 
-/* גלילה רק לטבלת סה"כ במובייל */
 @media (max-width: 900px) {
+  /* סה"כ - גלילה */
   .leaders-table.big {
     min-width: 720px !important;
   }
   
+  /* רק table-wrap של סה"כ */
+  .leaders-table.big ~ .table-wrap,
   .table-wrap:has(.leaders-table.big) {
     overflow-x: auto !important;
-    max-width: 100% !important;
-  }
-  
-  .game-card {
-    max-width: 100% !important;
-  }
-}
+    max-width
+
