@@ -36,6 +36,8 @@
 
     <div class="game-body">
       <div class="year-selector">
+        <a class="btn ghost {% if cash_year == '2026' %}active{% endif %}"
+          href="{{ url_for('main.home', view='cash', cash_year='2026', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2026</a>
         <a class="btn ghost {% if cash_year == '2025' %}active{% endif %}"
           href="{{ url_for('main.home', view='cash', cash_year='2025', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2025</a>
         <a class="btn ghost {% if cash_year == '2024' %}active{% endif %}"
@@ -139,17 +141,21 @@
                 </div>
                 <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
                  <!-- צפייה: כולם -->
-                  <a class="btn ghost"
-                    href="{{ url_for('main.game_results', game_id=g['id']) }}">
-                    👁 צפייה
+                  <a class="btn ghost icon-btn"
+                    href="{{ url_for('main.game_results', game_id=g['id']) }}"
+                    aria-label="צפייה" title="צפייה">
+                    👁
                   </a>
+
 
                 <!-- עריכה: ADMIN בלבד -->
                 {% if current_user and current_user["role"] == "admin" %}
-                  <a class="btn primary"
-                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}">
-                    ✏️ עריכה
+                  <a class="btn primary icon-btn"
+                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}"
+                    aria-label="עריכה" title="עריכה">
+                    ✏️
                   </a>
+
                 {% endif %}
 
                 </div>
@@ -180,6 +186,8 @@
 
     <div class="game-body">
       <div class="year-selector">
+        <a class="btn ghost {% if harbo_year == '2026' %}active{% endif %}"
+          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2026', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2026</a>
         <a class="btn ghost {% if harbo_year == '2025' %}active{% endif %}"
           href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2025', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2025</a>
         <a class="btn ghost {% if harbo_year == '2024' %}active{% endif %}"
@@ -301,17 +309,21 @@
                 <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
 
                 <!-- צפייה: כולם -->
-                  <a class="btn ghost"
-                    href="{{ url_for('main.game_results', game_id=g['id']) }}">
-                    👁 צפייה
+                  <a class="btn ghost icon-btn"
+                    href="{{ url_for('main.game_results', game_id=g['id']) }}"
+                    aria-label="צפייה" title="צפייה">
+                    👁
                   </a>
+
 
                 <!-- עריכה: ADMIN בלבד -->
                 {% if current_user and current_user["role"] == "admin" %}
-                  <a class="btn primary"
-                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}">
-                    ✏️ עריכה
+                  <a class="btn primary icon-btn"
+                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}"
+                    aria-label="עריכה" title="עריכה">
+                    ✏️
                   </a>
+
                 {% endif %}
 
                 </div>

@@ -772,3 +772,30 @@ a:hover, .link:hover{
 .panel{
   overflow: visible;
 }
+
+/* שנים – קצת יותר גדול, ועדיין נשבר יפה במובייל */
+.year-selector{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.year-selector .btn{
+  padding:8px 12px;   /* היה קטן מדי */
+  font-size:14px;     /* קצת יותר גדול */
+  line-height:1;
+  border-radius:12px;
+}
+
+/* כפתורי אייקון לעין/עט – גדולים יותר */
+.icon-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  padding:0;          /* חשוב כדי שלא יהיה "כפתור שמן" */
+  font-size:20px;     /* הגדלת האייקון עצמו */
+  line-height:1;
+}
