@@ -17,6 +17,8 @@ def create_app():
         static_url_path="/static"                     # (אופציונלי, אבל נחמד)
     )
 
+    app.config['STATIC_VER'] = 2  
+
     css_path = project_root / "static" / "css" / "style.css"
     app.config["STATIC_VER"] = int(css_path.stat().st_mtime) if css_path.exists() else 1
 
