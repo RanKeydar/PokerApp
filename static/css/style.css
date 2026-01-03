@@ -721,3 +721,18 @@ a:hover, .link:hover{
   }
 }
 
+/* פתרון סופי למובייל - חוסם כל חריגה */
+@media (max-width: 900px) {
+  .leaders-table,
+  .leaders-table.big,
+  .table-wrap table {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  
+  .game-card,
+  .game-body {
+    overflow-x: hidden !important;
+  }
+}
