@@ -721,22 +721,17 @@ a:hover, .link:hover{
   }
 }
 
-/* פתרון סופי למובייל - חוסם כל חריגה */
-/* פתרון סופי מובייל - בסוף הקובץ בלבד */
+/* גלילה רק לטבלת סה"כ במובייל */
 @media (max-width: 900px) {
-  /* רק לטבלאות סה"כ */
   .leaders-table.big {
     min-width: 720px !important;
   }
   
-  /* גלילה רק בתוך המסגרת */
-  .table-wrap {
+  .table-wrap:has(.leaders-table.big) {
     overflow-x: auto !important;
     max-width: 100% !important;
-    -webkit-overflow-scrolling: touch !important;
   }
   
-  /* הכל נשאר צר */
   .game-card {
     max-width: 100% !important;
   }
