@@ -724,22 +724,20 @@ a:hover, .link:hover{
 /* פתרון סופי למובייל - חוסם כל חריגה */
 /* פתרון סופי מובייל - בסוף הקובץ בלבד */
 @media (max-width: 900px) {
-  .game-card {
-    overflow: visible !important;
+  /* רק לטבלאות סה"כ */
+  .leaders-table.big {
+    min-width: 720px !important;
   }
   
+  /* גלילה רק בתוך המסגרת */
   .table-wrap {
     overflow-x: auto !important;
     max-width: 100% !important;
     -webkit-overflow-scrolling: touch !important;
   }
   
-  .leaders-table.big {
-    min-width: 720px !important;
-  }
-  
-  .game-body {
+  /* הכל נשאר צר */
+  .game-card {
     max-width: 100% !important;
   }
 }
-
