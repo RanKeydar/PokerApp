@@ -742,3 +742,14 @@ a:hover, .link:hover{
   }
 }
 
+/* גלילה רק בטבלאות מובייל */
+@media (max-width: 900px) {
+  .leaders-table.big {
+    min-width: 720px !important;
+  }
+  
+  .table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
