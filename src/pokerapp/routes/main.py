@@ -170,7 +170,9 @@ def home():
     # מצב תצוגה לטבלת שחקנים (טופ/הכל) – נשמור, אבל רק לטבלה שמוצגת בפועל
     cash_players_view = request.args.get("cash_players", "top")  # "top" / "all"
     harbo_players_view = request.args.get("harbo_players", "top")
-
+    complete_players_view = request.args.get("complete_players", "top")  # top / all
+    
+    complete_limit = 5 if complete_players_view != "all" else 9999
     cash_limit = 5 if cash_players_view != "all" else 9999
     harbo_limit = 5 if harbo_players_view != "all" else 9999
 
@@ -205,7 +207,12 @@ def home():
         harbo_tp = enrich_players(conn, harbo_tp, "harbo", y)
 
         # טופ 5 מאוחד (אפשר להפוך ל"הצג הכל" בהמשך)
-        complete_top_players = merge_players_rows(cash_tp, harbo_tp, limit=5)
+        complete_top_players = merge_players_rows(
+            cash_tp,
+            harbo_tp,
+            limit=complete_limit
+        )
+
         complete_recent_games = merge_recent_games_rows(cash_rg, harbo_rg, limit=5)
 
     conn.close()
@@ -225,6 +232,7 @@ def home():
         complete_year=complete_year,
         complete_top_players=complete_top_players,
         complete_recent_games=complete_recent_games,
+        complete_players_view=complete_players_view,
     )
 
 
