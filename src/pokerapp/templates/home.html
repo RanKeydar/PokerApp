@@ -405,6 +405,9 @@
                   <th>#</th>
                   <th>שחקן</th>
                   <th class="num">רווח מצטבר (₪)</th>
+                  <th class="num">משחקים</th>
+                  <th class="num">ממוצע למשחק</th>
+                  <th class="num">שנות פעילות</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,6 +417,9 @@
                     <td>{{ loop.index }}</td>
                     <td>{{ row["player_name"] }}</td>
                     <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
+                    <td class="num">{{ row["games_played"] or 0 }}</td>
+                    <td class="num">{{ (row["avg_profit_per_game"] or 0) | round | int }}</td>
+                    <td class="num">{{ row["years_played"] or 0 }}</td>
                   </tr>
                 {% endfor %}
               </tbody>

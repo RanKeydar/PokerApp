@@ -163,7 +163,7 @@ def home():
 
     cash_year = request.args.get("cash_year") or current_year
     harbo_year = request.args.get("harbo_year") or current_year
-    complete_year = request.args.get("complete_year") or str(date.today().year)
+    complete_year = request.args.get("complete_year") or current_year
 
     view = request.args.get("view", "cash")
 
@@ -172,7 +172,7 @@ def home():
     harbo_players_view = request.args.get("harbo_players", "top")
     complete_players_view = request.args.get("complete_players", "top")  # top / all
     
-    complete_limit = 5 if complete_players_view != "all" else 9999
+    complete_limit = None if complete_players_view == "all" else 5
     cash_limit = 5 if cash_players_view != "all" else 9999
     harbo_limit = 5 if harbo_players_view != "all" else 9999
 
@@ -207,13 +207,9 @@ def home():
         harbo_tp = enrich_players(conn, harbo_tp, "harbo", y)
 
         # טופ 5 מאוחד (אפשר להפוך ל"הצג הכל" בהמשך)
-        complete_top_players = merge_players_rows(
-            cash_tp,
-            harbo_tp,
-            limit=complete_limit
-        )
+        complete_top_players = get_complete_top_players(conn, year=complete_year, limit=complete_limit)
+        complete_recent_games = get_complete_recent_games(conn, year=complete_year, limit=5)
 
-        complete_recent_games = merge_recent_games_rows(cash_rg, harbo_rg, limit=complete_limit)
 
     conn.close()
 
@@ -223,16 +219,16 @@ def home():
         view=view,
         cash_year=cash_year,
         harbo_year=harbo_year,
+        complete_year=complete_year,
         cash_players_view=cash_players_view,
         harbo_players_view=harbo_players_view,
-        cash_top_players=cash_top_players,
-        cash_recent_games=cash_recent_games,
-        harbo_top_players=harbo_top_players,
-        harbo_recent_games=harbo_recent_games,
-        complete_year=complete_year,
-        complete_top_players=complete_top_players,
-        complete_recent_games=complete_recent_games,
         complete_players_view=complete_players_view,
+        cash_top_players=cash_top_players,
+        harbo_top_players=harbo_top_players,
+        complete_top_players=complete_top_players,
+        cash_recent_games=cash_recent_games,
+        harbo_recent_games=harbo_recent_games,
+        complete_recent_games=complete_recent_games,
     )
 
 
