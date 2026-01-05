@@ -17,6 +17,15 @@ def create_app():
         static_url_path="/static"                     # (אופציונלי, אבל נחמד)
     )
 
+    @app.template_filter("int0")
+    def int0(v):
+        if v is None:
+            return 0
+        try:
+            return int(round(float(v)))
+        except Exception:
+            return v
+
     app.config['STATIC_VER'] = 2  
 
     css_path = project_root / "static" / "css" / "style.css"
