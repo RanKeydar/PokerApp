@@ -1,31 +1,42 @@
 {% extends "base.html" %}
-{% block title %}כותרת הדף{% endblock %}
+{% block title %}הרשמה{% endblock %}
+{% block subtitle %}בקשת גישה למערכת{% endblock %}
+
 {% block content %}
-{% block subtitle %}{% endblock %}
+<section class="auth-card">
+  <h1 class="page-title">הרשמה</h1>
 
-  <h1>הרשמה</h1>
+  {% if error %}
+  <div class="flash flash-error" role="alert">{{ error }}</div>
+  {% endif %}
+  {% if success %}
+  <div class="flash flash-success" role="status">{{ success }}</div>
+  {% endif %}
 
-  <form method="POST">
-    <label>שם משתמש</label>
-    <input name="username" required>
+  <form method="POST" class="app-form auth-form">
+    <div class="form-row">
+      abel for="username">שם משתמש</label>
+      <input id="username" name="username" type="text" autocomplete="username" required>
+    </div>
 
-    <label>סיסמה</label>
-    <input name="password" type="password" required>
+    <div class="form-row">
+      abel for="password">סיסמה</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" required>
+    </div>
 
-    <label>מבקש תפקיד</label>
-    <select name="requested_role">
-      <option value="player">שחקן (צפייה בלבד)</option>
-      <option value="magician">קוסם (עריכת תוצאות)</option>
-    </select>
+    <div class="form-row">
+      abel for="requested_role">תפקיד מבוקש</label>
+      <select id="requested_role" name="requested_role">
+        <option value="player">שחקן (צפייה בלבד)</option>
+        <option value="magician">קוסם (עריכת תוצאות)</option>
+      </select>
+    </div>
 
-    <button type="submit">שלח בקשה</button>
-
-    {% if error %}<div class="err">{{ error }}</div>{% endif %}
-    {% if success %}<div class="ok">{{ success }}</div>{% endif %}
+    <button type="submit" class="btn primary">שלח בקשה</button>
   </form>
 
-  <p style="margin-top:14px;">
+  <p class="auth-alt">
     <a href="{{ url_for('auth.login') }}">כבר יש לך משתמש? התחבר</a>
   </p>
-
-  {% endblock %}
+</section>
+{% endblock %}

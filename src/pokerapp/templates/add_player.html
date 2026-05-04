@@ -3,14 +3,14 @@
 {% block content %}
 {% block subtitle %}{% endblock %}
 
-    <h1>הוספת שחקן חדש</h1>
+<h1>הוספת שחקן חדש</h1>
 
-    <form method="POST">
-        <label>שם שחקן:</label>
-        <input type="text" name="name" required>
+<form method="POST">
+    <label>שם שחקן:</label>
+    <input type="text" name="name" required>
 
-        <button type="submit">שמור שחקן</button>
-    </form>
+    <button type="submit">שמור שחקן</button>
+</form>
 
-    <a href="{{ url_for('main.players_list') }}">← חזרה לרשימת השחקנים</a>
+<a href="{{ url_for('main.players') }}">← חזרה לרשימת השחקנים</a>
 {% endblock %}

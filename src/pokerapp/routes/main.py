@@ -1,19 +1,56 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort, flash
+from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app
 from pokerapp.services.auth import login_required, role_required, get_current_user
 from pokerapp.db.connection import get_db_connection
-from pokerapp.services.game_queries import get_top_players, get_recent_games
+from pokerapp.services.game_queries import (
+    get_top_players,
+    get_recent_games,
+    get_complete_top_players,
+    get_complete_recent_games,
+)
 from datetime import date
 import os
 import pandas as pd
 import unicodedata
+from pathlib import Path
+import re
+
+from pokerapp.db.backup import backup_database
+from pokerapp.db.connection import log_admin_action
+from pokerapp.services.admin_tools import get_admin_tools_status, run_backup_now
+from pokerapp.services.import_service import run_import_raw_all, run_import_raw_one 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 RAW_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "raw")
 )
 
-
 bp = Blueprint("main", __name__)
+
+def discover_import_files():
+    raw_path = Path(RAW_DIR)
+    found = []
+
+    if not raw_path.exists():
+        return found
+
+        pattern = re.compile(r"^TH_(cash|harbo)_(\d{4})\.csv$", re.IGNORECASE)
+
+        for file_path in sorted(raw_path.glob("TH_*.csv")):
+            m = pattern.match(file_path.name)
+            if not m:
+                continue
+
+            game_type = m.group(1).lower()
+            year = int(m.group(2))
+
+            found.append({
+                "game_type": game_type,
+                "year": year,
+                "path": str(file_path),
+                "filename": file_path.name,
+            })
+
+        return found
 
 def _get_player_stats(conn, game_type: str, year: str, player_id: int) -> tuple[int, int]:
     cur = conn.cursor()
@@ -207,9 +244,8 @@ def home():
         harbo_tp = enrich_players(conn, harbo_tp, "harbo", y)
 
         # טופ 5 מאוחד (אפשר להפוך ל"הצג הכל" בהמשך)
-        complete_top_players = get_complete_top_players(conn, year=complete_year, limit=complete_limit)
-        complete_recent_games = get_complete_recent_games(conn, year=complete_year, limit=5)
-
+        complete_top_players = get_complete_top_players(limit=complete_limit, year=complete_year)
+        complete_recent_games = get_complete_recent_games(limit=5, year=complete_year)
 
     conn.close()
 
@@ -289,34 +325,107 @@ def add_game():
 # ------------------------------
 @bp.route("/players")
 @login_required
-def players_list():
+def players():
+    current_year = date.today().year
+
+    sort = request.args.get("sort", "total_profit", type=str).strip().lower()
+    direction = request.args.get("dir", "desc", type=str).strip().lower()
+
+    allowed_sorts = {
+        "name": "p.name COLLATE NOCASE",
+        "total_profit": "total_profit",
+        "year_profit": "year_profit",
+        "year_avg": "year_avg",
+        "year_games": "year_games",
+        "last_result": "last_result",
+        "last_position": "last_position_sort",
+        "last_game_date": "last_game_date",
+    }
+
+    sort_sql = allowed_sorts.get(sort, "total_profit")
+    dir_sql = "ASC" if direction == "asc" else "DESC"
+
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM players ORDER BY name;")
+
+    cur.execute(
+        """
+        WITH totals AS (
+            SELECT
+                player_id,
+                ROUND(COALESCE(SUM(profit), 0), 2) AS total_profit,
+                COUNT(*) AS total_games
+            FROM game_results
+            GROUP BY player_id
+        ),
+        year_stats AS (
+            SELECT
+                gr.player_id,
+                ROUND(COALESCE(SUM(gr.profit), 0), 2) AS year_profit,
+                ROUND(COALESCE(AVG(gr.profit), 0), 2) AS year_avg,
+                COUNT(*) AS year_games
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE substr(g.date, 1, 4) = ?
+            GROUP BY gr.player_id
+        ),
+        ranked_last AS (
+            SELECT
+                gr.player_id,
+                ROUND(gr.profit, 2) AS last_result,
+                g.date AS last_game_date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY gr.player_id
+                    ORDER BY g.date DESC, g.id DESC
+                ) AS rn,
+                ROW_NUMBER() OVER (
+                    PARTITION BY gr.game_id
+                    ORDER BY gr.profit DESC, p.name COLLATE NOCASE ASC
+                ) AS position_in_game,
+                COUNT(*) OVER (
+                    PARTITION BY gr.game_id
+                ) AS players_in_game
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            JOIN players p ON p.id = gr.player_id
+        )
+        SELECT
+            p.id,
+            p.name,
+            COALESCE(t.total_profit, 0) AS total_profit,
+            COALESCE(t.total_games, 0) AS total_games,
+            COALESCE(y.year_profit, 0) AS year_profit,
+            COALESCE(y.year_avg, 0) AS year_avg,
+            COALESCE(y.year_games, 0) AS year_games,
+            rl.last_result,
+            rl.last_game_date,
+            CASE
+                WHEN rl.position_in_game IS NOT NULL
+                THEN CAST(rl.position_in_game AS TEXT) || ' מתוך ' || CAST(rl.players_in_game AS TEXT)
+                ELSE '—'
+            END AS last_position,
+            CASE
+                WHEN rl.position_in_game IS NOT NULL THEN rl.position_in_game
+                ELSE 9999
+            END AS last_position_sort
+        FROM players p
+        LEFT JOIN totals t ON t.player_id = p.id
+        LEFT JOIN year_stats y ON y.player_id = p.id
+        LEFT JOIN ranked_last rl ON rl.player_id = p.id AND rl.rn = 1
+        ORDER BY """ + sort_sql + f" {dir_sql}, p.name COLLATE NOCASE ASC"
+        ,
+        (str(current_year),)
+    )
     players = cur.fetchall()
     conn.close()
-    return render_template("players.html", players=players)
 
-
-# הוספת שחקן חדש
-@bp.route("/add_player", methods=["GET", "POST"])
-@login_required
-@role_required("admin", "magician")
-def add_player():
-    if request.method == "POST":
-        name = request.form.get("name")
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO players (name) VALUES (?);", (name,))
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for("main.players_list"))
-
-    return render_template("add_player.html")
-
-
+    return render_template(
+        "players.html",
+        players=players,
+        year=current_year,
+        sort=sort,
+        direction=direction,
+    )
 # ------------------------------
 # מסך אדמין לאישור משתמשים
 # ------------------------------
@@ -351,6 +460,9 @@ def admin_users():
     active = cur.fetchall()
 
     conn.close()
+
+    print("CURRENT YEAR:", current_year)
+    print("FIRST PLAYER ROW:", dict(players[0]) if players else "NO PLAYERS")
     return render_template("admin_users.html", pending=pending, active=active)
 
 
@@ -488,8 +600,8 @@ def game_results_edit(game_id):
 # Import RAW cash CSV -> DB (admin/magician)
 # ------------------------------
 
-CASH_IMPORT_YEARS = [2022, 2023, 2025]
-HARBO_IMPORT_YEARS = [2023, 2024, 2025]
+CASH_IMPORT_YEARS = [2022, 2023,2024, 2025, 2026]
+HARBO_IMPORT_YEARS = [2022, 2023, 2024, 2025, 2026]
 
 def _read_csv_hebrew(path: str) -> pd.DataFrame:
     # Excel בעברית לרוב = cp1255
@@ -651,27 +763,13 @@ def import_csv_year_to_db(game_type: str, year: int) -> dict:
         "imported_results": imported_results,
     }
 
-@bp.route("/admin/import_raw_all")
+@bp.route("/admin/import/raw-all", methods=["POST"])
 @login_required
 @role_required("admin", "magician")
 def admin_import_raw_all():
-    summaries = []
-
-    for y in CASH_IMPORT_YEARS:
-        summaries.append(import_csv_year_to_db("cash", y))
-
-    for y in HARBO_IMPORT_YEARS:
-        summaries.append(import_csv_year_to_db("harbo", y))
-
-    lines = ["<h2>Import RAW - סיכום</h2>", "<ul>"]
-    for s in summaries:
-        lines.append(
-            f"<li>{s['game_type']} {s['year']}: {s['status']} | games: {s['imported_games']} | results: {s['imported_results']}</li>"
-        )
-    lines.append("</ul>")
-    lines.append('<p><a href="/">חזרה לדף הבית</a></p>')
-    return "\n".join(lines)
-
+    result = run_import_raw_all()
+    flash(result["message"], result["flash_category"])
+    return redirect(url_for("main.admin_tools"))
 @bp.route("/admin/reset_harbo")
 @login_required
 @role_required("admin", "magician")
@@ -803,6 +901,7 @@ def debug_import_harbo(year):
     html.append(f"<p>Bad dates (unparsed): {len(bad)}</p><pre>" + "\n".join(bad[:30]) + "</pre>")
     html.append(f"<p>Year mismatch: {len(mismatch)}</p><pre>" + "\n".join([f"{a} -> {b}" for a,b in mismatch[:30]]) + "</pre>")
     return "\n".join(html)
+
 @bp.route("/game/<int:game_id>/delete", methods=["POST"])
 @login_required
 @role_required("admin")
@@ -831,3 +930,177 @@ def delete_game(game_id):
         return redirect(url_for("main.games_list"))
     finally:
         conn.close()
+
+@bp.route("/admin/import/<game_type>/<int:year>", methods=["POST"])
+@login_required
+@role_required("admin", "magician")
+def admin_import_raw_one(game_type, year):
+    result = run_import_raw_one(game_type, year)
+    flash(result["message"], result["flash_category"])
+    return redirect(url_for("main.admin_tools"))
+@bp.route("/admin/backup_now", methods=["POST"])
+@login_required
+@role_required("admin", "magician")
+def admin_backup_now():
+    result = run_backup_now()
+    flash(result["message"], result["flash_category"])
+    return redirect(url_for("main.admin_tools"))
+    
+@bp.route("/admin/tools")
+@login_required
+@role_required("admin")
+def admin_tools():
+    status = get_admin_tools_status()
+    return render_template(
+        "admin_tools.html",
+        latest_backup=status["latest_backup"],
+        backup_count=status["backup_count"],
+        import_files=status["import_files"],
+        import_count=status["import_count"],
+    )
+
+@bp.route("/players/<int:player_id>")
+@login_required
+def player_detail(player_id):
+    current_year = date.today().year
+
+    sort = request.args.get("sort", "date", type=str).strip().lower()
+    direction = request.args.get("dir", "desc", type=str).strip().lower()
+
+    allowed_sorts = {
+        "date": "g.date",
+        "location": "g.location",
+        "game_type": "g.game_type",
+        "buyin": "gr.buyin",
+        "cashout": "gr.cashout",
+        "profit": "gr.profit",
+    }
+    sort_sql = allowed_sorts.get(sort, "g.date")
+    dir_sql = "ASC" if direction == "asc" else "DESC"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT id, name
+        FROM players
+        WHERE id = ?;
+        """,
+        (player_id,),
+    )
+    player = cur.fetchone()
+
+    if player is None:
+        conn.close()
+        return "השחקן לא נמצא", 404
+
+    cur.execute(
+        """
+        WITH ranked_results AS (
+            SELECT
+                gr.player_id,
+                gr.game_id,
+                gr.profit,
+                g.date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY gr.player_id
+                    ORDER BY g.date DESC, g.id DESC
+                ) AS player_last_game_rn,
+                ROW_NUMBER() OVER (
+                    PARTITION BY gr.game_id
+                    ORDER BY gr.profit DESC, p.name COLLATE NOCASE ASC
+                ) AS position_in_game,
+                COUNT(*) OVER (
+                    PARTITION BY gr.game_id
+                ) AS players_in_game
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            JOIN players p ON p.id = gr.player_id
+        ),
+        totals AS (
+            SELECT
+                player_id,
+                ROUND(COALESCE(SUM(profit), 0), 2) AS total_profit,
+                COUNT(*) AS total_games
+            FROM game_results
+            WHERE player_id = ?
+            GROUP BY player_id
+        ),
+        year_stats AS (
+            SELECT
+                gr.player_id,
+                ROUND(COALESCE(SUM(gr.profit), 0), 2) AS year_profit,
+                ROUND(COALESCE(AVG(gr.profit), 0), 2) AS year_avg,
+                COUNT(*) AS year_games
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE gr.player_id = ?
+              AND substr(g.date, 1, 4) = ?
+            GROUP BY gr.player_id
+        ),
+        last_game AS (
+            SELECT
+                rr.player_id,
+                ROUND(rr.profit, 2) AS last_result,
+                rr.position_in_game,
+                rr.players_in_game
+            FROM ranked_results rr
+            WHERE rr.player_id = ?
+              AND rr.player_last_game_rn = 1
+        )
+        SELECT
+            p.id,
+            p.name,
+            COALESCE(t.total_profit, 0) AS total_profit,
+            COALESCE(t.total_games, 0) AS total_games,
+            COALESCE(y.year_profit, 0) AS year_profit,
+            COALESCE(y.year_avg, 0) AS year_avg,
+            COALESCE(y.year_games, 0) AS year_games,
+            lg.last_result,
+            CASE
+                WHEN lg.position_in_game IS NOT NULL
+                THEN CAST(lg.position_in_game AS TEXT) || ' מתוך ' || CAST(lg.players_in_game AS TEXT)
+                ELSE '—'
+            END AS last_position
+        FROM players p
+        LEFT JOIN totals t ON t.player_id = p.id
+        LEFT JOIN year_stats y ON y.player_id = p.id
+        LEFT JOIN last_game lg ON lg.player_id = p.id
+        WHERE p.id = ?;
+        """,
+        (player_id, player_id, str(current_year), player_id, player_id),
+    )
+    summary = cur.fetchone()
+
+    games_sql = f"""
+        SELECT
+            g.id AS game_id,
+            g.date,
+            g.location,
+            g.game_type,
+            gr.buyin,
+            gr.cashout,
+            gr.profit
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        WHERE gr.player_id = ?
+        ORDER BY {sort_sql} {dir_sql}, g.id DESC
+    """
+    cur.execute(games_sql, (player_id,))
+    games = cur.fetchall()
+
+    conn.close()
+
+    subtitle = f'{summary["total_games"]} משחקים סה"כ · {summary["year_games"]} משחקים ב־{current_year}'
+
+    return render_template(
+        "player_detail.html",
+        player=player,
+        summary=summary,
+        games=games,
+        year=current_year,
+        subtitle=subtitle,
+        sort=sort,
+        direction=direction,
+    )

@@ -7,79 +7,83 @@
 
 <div class="grid games-page">
 
-  <!-- SWITCH: קאש / חרבו -->
-  <div class="toggle-row" style="grid-column: 1 / -1; display:flex; gap:8px; margin-bottom:12px;">
-    <a class="btn {% if view=='cash' %}primary{% else %}ghost{% endif %}"
-       href="{{ url_for('main.games_list', view='cash') }}">
+  <div class="toggle-row">
+    <a class="btn {% if view == 'cash' %}primary{% else %}ghost{% endif %}"
+      href="{{ url_for('main.games_list', view='cash') }}">
       קאש
     </a>
 
-    <a class="btn {% if view=='harbo' %}primary{% else %}ghost{% endif %}"
-       href="{{ url_for('main.games_list', view='harbo') }}">
+    <a class="btn {% if view == 'harbo' %}primary{% else %}ghost{% endif %}"
+      href="{{ url_for('main.games_list', view='harbo') }}">
       חרבו
     </a>
   </div>
 
-  <!-- CARD -->
-  <section class="game-card" style="grid-column: 1 / -1;">
+  <section class="game-card game-card-full">
     <div class="game-header">
       <div class="game-title">
-        <div class="chip">{% if view=='cash' %}₪{% else %}★{% endif %}</div>
+        <div class="chip">{% if view == 'cash' %}₪{% else %}★{% endif %}</div>
         <div>
-          <h2>{% if view=='cash' %}קאש{% else %}חרבו{% endif %}</h2>
+          <h2>{% if view == 'cash' %}קאש{% else %}חרבו{% endif %}</h2>
           <div class="note">רשימת משחקים</div>
         </div>
       </div>
 
-      <div style="margin-right:auto; display:flex; gap:10px;">
+      <div class="header-actions">
         {% if current_user and current_user["role"] in ["admin", "magician"] %}
-          <a class="btn ghost" href="{{ url_for('main.add_game') }}">➕ הוסף משחק חדש</a>
+        <a class="btn ghost" href="{{ url_for('main.add_game') }}">
+          הוסף משחק חדש
+        </a>
         {% endif %}
+
         {% if current_user and current_user["role"] == "admin" %}
-          <a class="btn ghost" href="{{ url_for('main.players_list') }}">👤 ניהול שחקנים</a>
+        <a class="btn ghost" href="{{ url_for('main.players') }}">
+          ניהול שחקנים
+        </a>
         {% endif %}
       </div>
     </div>
 
     <div class="game-body">
-
       {% if games and games|length > 0 %}
-        <div class="table-wrap big">
-          <table class="games-table">
-            <thead>
-              <tr>
-                <th>תאריך</th>
-                <th>מיקום</th>
-                <th>תוצאות</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for game in games %}
-                <tr>
-                  <td>{{ game["date_il"] or game["date"] }}</td>
-                  <td>{{ game["location"] or "-" }}</td>
-                  <td style="display:flex; gap:8px; align-items:center;">
-                    <a class="btn ghost"
-                       href="{{ url_for('main.game_results', game_id=game['id']) }}">
-                      👁 צפייה
-                    </a>
+      <div class="table-wrap big">
+        <table class="games-table">
+          <caption class="sr-only">
+            רשימת משחקים מסוג {{ 'קאש' if view == 'cash' else 'חרבו' }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">תאריך</th>
+              <th scope="col">מיקום</th>
+              <th scope="col">פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for game in games %}
+            <tr>
+              <td>{{ game["date_il"] or game["date"] }}</td>
+              <td>{{ game["location"] or "-" }}</td>
+              <td class="row-actions">
+                <a class="btn ghost" href="{{ url_for('main.game_results', game_id=game['id']) }}"
+                  aria-label="צפייה בתוצאות משחק מתאריך {{ game['date_il'] or game['date'] }}">
+                  צפייה
+                </a>
 
-                    {% if current_user and current_user["role"] == "admin" %}
-                      <a class="btn primary"
-                         href="{{ url_for('main.game_results_edit', game_id=game['id']) }}">
-                        ✏️ עריכה
-                      </a>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+                {% if current_user and current_user["role"] == "admin" %}
+                <a class="btn primary" href="{{ url_for('main.game_results_edit', game_id=game['id']) }}"
+                  aria-label="עריכת תוצאות משחק מתאריך {{ game['date_il'] or game['date'] }}">
+                  עריכה
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
       {% else %}
-        <div class="empty">עדיין אין משחקים מסוג זה.</div>
+      <div class="empty">עדיין אין משחקים מסוג זה.</div>
       {% endif %}
-
     </div>
   </section>
 

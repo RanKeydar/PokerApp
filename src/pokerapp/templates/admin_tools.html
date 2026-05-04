@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}כלי ניהול{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>כלי ניהול</h1>
+
+    <div class="admin-status-grid">
+        <article class="admin-stat-card">
+            <div class="admin-stat-label">גיבוי אחרון</div>
+            <div class="admin-stat-value">
+                {% if latest_backup %}
+                {{ latest_backup.name }}
+                {% else %}
+                אין עדיין
+                {% endif %}
+            </div>
+            <div class="admin-stat-meta">
+                {% if latest_backup %}
+                גובו {{ backup_count }} קבצים
+                {% else %}
+                עדיין לא נוצר גיבוי
+                {% endif %}
+            </div>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-label">קבצי ייבוא שזוהו</div>
+            <div class="admin-stat-value">{{ import_count }}</div>
+            <div class="admin-stat-meta">קבצים זמינים בתיקיית המקור</div>
+        </article>
+    </div>
+
+    <section class="admin-section">
+        <h2>גיבוי</h2>
+        <form method="post" action="{{ url_for('main.admin_backup_now') }}" data-busy-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn secondary" data-busy-text="יוצר גיבוי...">צור גיבוי עכשיו</button>
+        </form>
+    </section>
+
+    <section class="admin-section">
+        <h2>ייבוא מלא</h2>
+        <form method="post" action="{{ url_for('main.admin_import_raw_all') }}" data-busy-form
+            onsubmit="return confirm('להריץ ייבוא מלא מכל קבצי המקור? לפני הפעולה ייווצר גיבוי.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn ghost" data-busy-text="מריץ ייבוא מלא...">הרץ ייבוא מלא מקבצי
+                המקור</button>
+        </form>
+        <p class="form-hint">הפעולה תיצור גיבוי לפני הייבוא ותנסה לעדכן את כל השנים הזמינות.</p>
+    </section>
+
+    <section class="admin-section">
+        <h2>ייבוא לפי שנה</h2>
+
+        {% if import_files %}
+        <div class="admin-import-grid">
+            {% for item in import_files %}
+            <form method="post"
+                action="{{ url_for('main.admin_import_raw_one', game_type=item.game_type, year=item.year) }}"
+                data-busy-form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn ghost" data-busy-text="מריץ ייבוא...">
+                    ייבוא {{ item.label }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="form-hint">לא זוהו כרגע קבצי ייבוא בתיקיית המקור.</p>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("form[data-busy-form]").forEach(function (form) {
+            form.addEventListener("submit", function () {
+                const button = form.querySelector('button[type="submit"]');
+                if (!button) return;
+
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.textContent = button.dataset.busyText || "מריץ...";
+                form.classList.add("is-submitting");
+            });
+        });
+    });
+</script>
+{% endblock %}

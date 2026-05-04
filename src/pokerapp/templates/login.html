@@ -1,27 +1,31 @@
 {% extends "base.html" %}
-{% block title %}כותרת הדף{% endblock %}
+{% block title %}התחברות{% endblock %}
+{% block subtitle %}כניסה למערכת{% endblock %}
+
 {% block content %}
-{% block subtitle %}{% endblock %}
+<section class="auth-card">
+  <h1 class="page-title">התחברות</h1>
 
-  <h1>התחברות</h1>
+  {% if error %}
+  <div class="flash flash-error" role="alert">{{ error }}</div>
+  {% endif %}
 
-  <form method="POST">
-    <label>שם משתמש</label>
-    <input name="username" required>
+  <form method="POST" class="app-form auth-form">
+    <div class="form-row">
+      <label for="username">שם משתמש</label>
+      <input id="username" name="username" type="text" autocomplete="username" required>
+    </div>
 
-    <label>סיסמה</label>
-    <input name="password" type="password" required>
+    <div class="form-row">
+      <label for="password">סיסמה</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
 
-    <button type="submit">כניסה</button>
-
-    {% if error %}
-      <div class="err">{{ error }}</div>
-    {% endif %}
+    <button type="submit" class="btn primary">כניסה</button>
   </form>
 
-  <p style="margin-top:14px;">
-  <a href="{{ url_for('auth.signup') }}">אין לך משתמש? שלח בקשת הרשמה</a>
-</p>
-
+  <p class="auth-alt">
+    <a href="{{ url_for('auth.signup') }}">אין לך משתמש? שלח בקשת הרשמה</a>
+  </p>
+</section>
 {% endblock %}
-

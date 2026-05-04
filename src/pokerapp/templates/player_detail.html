@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player["name"] }}{% endblock %}
+{% block subtitle %}{{ player["name"] }}{% endblock %}
+
+{% block content %}
+
+<p class="table-meta">{{ subtitle }}</p>
+
+<div class="player-stats-grid">
+    <div class="panel stat-card">
+        <h3>רווח/הפסד כולל</h3>
+        <div
+            class="stat-value {% if summary['total_profit'] > 0 %}profit pos{% elif summary['total_profit'] < 0 %}profit neg{% endif %}">
+            {{ "%.2f"|format(summary["total_profit"]) }}
+        </div>
+    </div>
+
+    <div class="panel stat-card">
+        <h3>רווח/הפסד {{ year }}</h3>
+        <div
+            class="stat-value {% if summary['year_profit'] > 0 %}profit pos{% elif summary['year_profit'] < 0 %}profit neg{% endif %}">
+            {{ "%.2f"|format(summary["year_profit"]) }}
+        </div>
+    </div>
+
+    <div class="panel stat-card">
+        <h3>ממוצע {{ year }}</h3>
+        <div
+            class="stat-value {% if summary['year_avg'] > 0 %}profit pos{% elif summary['year_avg'] < 0 %}profit neg{% endif %}">
+            {{ "%.2f"|format(summary["year_avg"]) }}
+        </div>
+    </div>
+
+    <div class="panel stat-card">
+        <h3>משחקים {{ year }}</h3>
+        <div class="stat-value">{{ summary["year_games"] }}</div>
+    </div>
+
+    <div class="panel stat-card">
+        <h3>תוצאה אחרונה</h3>
+        <div
+            class="stat-value {% if summary['last_result'] is not none and summary['last_result'] > 0 %}profit pos{% elif summary['last_result'] is not none and summary['last_result'] < 0 %}profit neg{% endif %}">
+            {% if summary["last_result"] is not none %}
+            {{ "%.2f"|format(summary["last_result"]) }}
+            {% else %}
+            —
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="panel stat-card">
+        <h3>מיקום אחרון</h3>
+        <div class="stat-value">{{ summary["last_position"] }}</div>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table class="players-table">
+        <thead>
+            <tr>
+                <th>
+                    <a class="sort-link"
+                        href="{{ url_for('main.player_detail', player_id=player['id'], sort='date', dir='asc' if sort != 'date' or direction == 'desc' else 'desc') }}">תאריך</a>
+                </th>
+                <th>
+                    <a class="sort-link"
+                        href="{{ url_for('main.player_detail', player_id=player['id'], sort='location', dir='asc' if sort != 'location' or direction == 'desc' else 'desc') }}">מקום</a>
+                </th>
+                <th>
+                    <a class="sort-link"
+                        href="{{ url_for('main.player_detail', player_id=player['id'], sort='game_type', dir='asc' if sort != 'game_type' or direction == 'desc' else 'desc') }}">סוג
+                        משחק</a>
+                </th>
+                <th>
+                    <a class="sort-link"
+                        href="{{ url_for('main.player_detail', player_id=player['id'], sort='buyin', dir='asc' if sort != 'buyin' or direction == 'desc' else 'desc') }}">כניסה</a>
+                </th>
+                <th>
+                    <a class="sort-link"
+                        href="{{ url_for('main.player_detail', player_id=player['id'], sort='cashout', dir='asc' if sort != 'cashout' or direction == 'desc' else 'desc') }}">יציאה</a>
+                </th>
+                <th>
+                    <a class="sort-link"
+                        href="{{ url_for('main.player_detail', player_id=player['id'], sort='profit', dir='asc' if sort != 'profit' or direction == 'desc' else 'desc') }}">רווח/הפסד</a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for g in games %}
+            <tr>
+                <td>{{ g["date"] | hedate }}</td>
+                <td>{{ g["location"] or "—" }}</td>
+                <td>
+                    {% if g["game_type"] == "cash" %}
+                    קאש
+                    {% elif g["game_type"] == "harbo" %}
+                    חרבו
+                    {% else %}
+                    {{ g["game_type"] }}
+                    {% endif %}
+                </td>
+                <td class="num">{{ "%.2f"|format(g["buyin"]) }}</td>
+                <td class="num">{{ "%.2f"|format(g["cashout"]) }}</td>
+                <td class="num {% if g['profit'] > 0 %}profit pos{% elif g['profit'] < 0 %}profit neg{% endif %}">
+                    {{ "%.2f"|format(g["profit"]) }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

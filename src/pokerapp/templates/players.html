@@ -5,31 +5,111 @@
 
 {% block content %}
 
-<div class="top-links">
-  {% if session.get("role") == "admin" %}
-    <a class="btn secondary" href="{{ url_for('main.add_player') }}">➕ הוסף שחקן</a>
-  {% endif %}
+<p class="table-meta">{{ subtitle }}</p>
+
+<div class="top-links players-toolbar">
+  <div class="players-filter-toggle">
+    <a class="players-tab {% if show == 'active' %}is-active{% else %}is-inactive{% endif %}"
+      href="{{ url_for('main.players', show='active') }}">
+      פעילים
+    </a>
+
+    <a class="players-tab {% if show == 'all' %}is-active{% else %}is-inactive{% endif %}"
+      href="{{ url_for('main.players', show='all') }}">
+      כולם
+    </a>
+  </div>
 </div>
 
 {% if players and players|length > 0 %}
+<div class="table-wrap">
   <table class="players-table">
     <thead>
       <tr>
-        <th>#</th>
-        <th>שם שחקן</th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='name', dir='asc' if sort != 'name' or direction == 'desc' else 'desc') }}">
+            שם
+          </a>
+        </th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='total_profit', dir='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}">
+            רווח/הפסד כולל
+          </a>
+        </th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='year_profit', dir='asc' if sort != 'year_profit' or direction == 'desc' else 'desc') }}">
+            רווח/הפסד {{ year }}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='year_avg', dir='asc' if sort != 'year_avg' or direction == 'desc' else 'desc') }}">
+            ממוצע {{ year }}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='year_games', dir='asc' if sort != 'year_games' or direction == 'desc' else 'desc') }}">
+            משחקים {{ year }}
+          </a>
+        </th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='last_result', dir='asc' if sort != 'last_result' or direction == 'desc' else 'desc') }}">
+            תוצאה אחרונה
+          </a>
+        </th>
+        <th>
+          <a class="sort-link"
+            href="{{ url_for('main.players', sort='last_position', dir='asc' if sort != 'last_position' or direction == 'desc' else 'desc') }}">
+            מיקום אחרון
+          </a>
+        </th>
       </tr>
     </thead>
     <tbody>
       {% for p in players %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ p["name"] }}</td>
-        </tr>
+      <tr>
+        <td>
+          <a class="link" href="{{ url_for('main.player_detail', player_id=p['id']) }}">
+            {{ p["name"] }}
+          </a>
+        </td>
+        <td class="num {% if p['total_profit'] > 0 %}profit pos{% elif p['total_profit'] < 0 %}profit neg{% endif %}">
+          {{ "%.2f"|format(p["total_profit"]) }}
+        </td>
+        <td class="num {% if p['year_profit'] > 0 %}profit pos{% elif p['year_profit'] < 0 %}profit neg{% endif %}">
+          {{ "%.2f"|format(p["year_profit"]) }}
+        </td>
+        <td class="num {% if p['year_avg'] > 0 %}profit pos{% elif p['year_avg'] < 0 %}profit neg{% endif %}">
+          {{ "%.2f"|format(p["year_avg"]) }}
+        </td>
+        <td class="num">{{ p["year_games"] }}</td>
+        <td
+          class="num {% if p['last_result'] is not none and p['last_result'] > 0 %}profit pos{% elif p['last_result'] is not none and p['last_result'] < 0 %}profit neg{% endif %}">
+          {% if p["last_result"] is not none %}
+          {{ "%.2f"|format(p["last_result"]) }}
+          {% else %}
+          —
+          {% endif %}
+        </td>
+        <td>{{ p["last_position"] }}</td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
 {% else %}
-  <p class="no-games">עדיין אין שחקנים.</p>
+<p class="no-games">
+  {% if show == "active" %}
+  אין כרגע שחקנים פעילים.
+  {% else %}
+  עדיין אין שחקנים.
+  {% endif %}
+</p>
 {% endif %}
 
 {% endblock %}
