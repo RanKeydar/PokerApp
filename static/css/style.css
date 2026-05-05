@@ -808,8 +808,8 @@ tbody tr:nth-child(even) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.35rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--color-surface-offset, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.10));
   border-radius: 0.9rem;
 }
 
@@ -828,30 +828,31 @@ tbody tr:nth-child(even) {
 }
 
 .players-filter-toggle a.players-tab.is-active {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: #f8fafc;
+  background: var(--color-surface, #f8fafc);
+  color: var(--color-text, #0f172a);
+  border-color: var(--color-surface, #f8fafc);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
 .players-filter-toggle a.players-tab.is-inactive {
   background: transparent;
-  color: #e2e8f0;
+  color: var(--color-text-muted, #e2e8f0);
   border-color: transparent;
 }
 
 .players-filter-toggle a.players-tab.is-inactive:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
+  background: color-mix(in oklab, var(--color-text) 8%, transparent);
+  color: var(--color-text, #f8fafc);
 }
 
 .players-filter-toggle a.players-tab:focus-visible {
-  outline: 2px solid rgba(103, 232, 249, 0.9);
+  outline: 2px solid var(--color-primary, rgba(103, 232, 249, 0.9));
   outline-offset: 2px;
 }
 
 .games-page .btn.ghost {
-  color: #0f172a;
-  border-color: #0f172a;
+  color: var(--color-text, #0f172a);
+  border-color: var(--color-text, #0f172a);
 }
 
 .games-page .btn.primary {
