@@ -67,8 +67,8 @@ def create_app():
     app.config["STATIC_VER"] = int(css_path.stat().st_mtime) if css_path.exists() else 1
 
     app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
-    db_path = instance_path / "poker.db"
-    app.config["DB_PATH"] = str(db_path)
+    db_path = os.environ.get("DB_PATH", str(instance_path / "poker.db"))
+    app.config["DB_PATH"] = db_path
 
     schema_path = Path(__file__).resolve().parent / "db" / "schema.sql"
     init_db(app.config["DB_PATH"], str(schema_path))

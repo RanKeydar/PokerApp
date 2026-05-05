@@ -1,10 +1,11 @@
+import os
 import sqlite3
 from werkzeug.security import generate_password_hash
 
-DB_NAME = "poker.db"
+DB_PATH = os.environ.get("DB_PATH", "instance/poker.db")
 
 def init_users():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     cur.execute("""
@@ -21,7 +22,7 @@ def init_users():
     print("Users table is ready.")
 
 def create_user(username: str, password: str, role: str):
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     pw_hash = generate_password_hash(password)

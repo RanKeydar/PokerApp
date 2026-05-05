@@ -1,9 +1,10 @@
+import os
 import sqlite3
 
-DB_NAME = "poker.db"
+DB_PATH = os.environ.get("DB_PATH", "instance/poker.db")
 
 def main():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     # בדיקה שהטבלה קיימת

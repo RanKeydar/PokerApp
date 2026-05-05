@@ -1,9 +1,10 @@
+import os
 import sqlite3
 
-DB_NAME = "poker.db"
+DB_PATH = os.environ.get("DB_PATH", "instance/poker.db")
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     # טבלת שחקנים
@@ -40,7 +41,7 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("Database initialized: poker.db")
+    print(f"Database initialized: {DB_PATH}")
 
 if __name__ == "__main__":
     init_db()

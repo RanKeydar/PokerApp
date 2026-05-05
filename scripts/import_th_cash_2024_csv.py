@@ -1,10 +1,11 @@
+import os
 import sqlite3
 from pathlib import Path
 import pandas as pd
 
 # paths
 BASE_DIR = Path(__file__).resolve().parents[1]   # scripts -> project root
-DB_PATH = BASE_DIR / "instance" / "poker.db"
+DB_PATH = os.environ.get("DB_PATH", str(BASE_DIR / "instance" / "poker.db"))
 CSV_PATH = BASE_DIR / "data" / "raw" / "TH_cash_2024.csv"
 
 LOCATION = "TH"

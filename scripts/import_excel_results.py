@@ -1,4 +1,5 @@
 import argparse
+import os
 import sqlite3
 from pathlib import Path
 import pandas as pd
@@ -9,12 +10,11 @@ def project_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def db_path() -> Path:
-    return project_root() / "instance" / "poker.db"
+DB_PATH = os.environ.get("DB_PATH", str(project_root() / "instance" / "poker.db"))
 
 
 def connect():
-    conn = sqlite3.connect(db_path())
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -147,7 +147,7 @@ def import_excel(excel_path: Path, location: str, game_type: str, sheet_name: st
 
         conn.commit()
         print(f"✅ Imported {games_imported} games, {results_imported} results from: {excel_path.name}")
-        print(f"DB: {db_path()}")
+        print(f"DB: {DB_PATH}")
         print(f"Location='{location}', game_type='{game_type}'")
     finally:
         conn.close()
