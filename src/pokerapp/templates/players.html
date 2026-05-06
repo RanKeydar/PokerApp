@@ -10,14 +10,14 @@
 <div class="top-links players-toolbar">
   <div class="players-filter-toggle" aria-label="סינון שחקנים">
     <a class="players-tab {% if show == 'active' %}is-active{% else %}is-inactive{% endif %}"
-      href="{{ url_for('main.players', show='active', sort=sort, direction=direction) }}"
+      href="{{ url_for('main.players', show='active', sort=sort, dir=direction) }}"
       aria-current="{% if show == 'active' %}page{% endif %}" data-analytics="players-filter"
       data-filter-value="active">
       פעילים
     </a>
 
     <a class="players-tab {% if show == 'all' %}is-active{% else %}is-inactive{% endif %}"
-      href="{{ url_for('main.players', show='all', sort=sort, direction=direction) }}"
+      href="{{ url_for('main.players', show='active', sort=sort, dir=direction) }}"
       aria-current="{% if show == 'all' %}page{% endif %}" data-analytics="players-filter" data-filter-value="all">
       כולם
     </a>
@@ -31,7 +31,7 @@
       <tr>
         <th {% if sort=='name' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'name' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='name', direction='asc' if sort != 'name' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='name', dir='asc' if sort != 'name' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="name"
             data-sort-direction="{{ 'asc' if sort != 'name' or direction == 'desc' else 'desc' }}">
             <span>שם</span>
@@ -48,7 +48,7 @@
         <th {% if sort=='total_profit' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
           %}>
           <a class="sort-link {% if sort == 'total_profit' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='total_profit', direction='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='total_profit', dir='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="total_profit"
             data-sort-direction="{{ 'asc' if sort != 'total_profit' or direction == 'desc' else 'desc' }}">
             <span>רווח/הפסד כולל</span>
@@ -65,7 +65,7 @@
         <th {% if sort=='year_profit' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
           %}>
           <a class="sort-link {% if sort == 'year_profit' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='year_profit', direction='asc' if sort != 'year_profit' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='year_profit', dir='asc' if sort != 'year_profit' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="year_profit"
             data-sort-direction="{{ 'asc' if sort != 'year_profit' or direction == 'desc' else 'desc' }}">
             <span>רווח/הפסד {{ year }}</span>
@@ -81,7 +81,7 @@
 
         <th {% if sort=='year_avg' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'year_avg' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='year_avg', direction='asc' if sort != 'year_avg' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='year_avg', dir='asc' if sort != 'year_avg' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="year_avg"
             data-sort-direction="{{ 'asc' if sort != 'year_avg' or direction == 'desc' else 'desc' }}">
             <span>ממוצע {{ year }}</span>
@@ -98,7 +98,7 @@
         <th {% if sort=='year_games' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
           %}>
           <a class="sort-link {% if sort == 'year_games' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='year_games', direction='asc' if sort != 'year_games' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='year_games', dir='asc' if sort != 'year_games' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="year_games"
             data-sort-direction="{{ 'asc' if sort != 'year_games' or direction == 'desc' else 'desc' }}">
             <span>משחקים {{ year }}</span>
@@ -115,7 +115,7 @@
         <th {% if sort=='last_result' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
           %}>
           <a class="sort-link {% if sort == 'last_result' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='last_result', direction='asc' if sort != 'last_result' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='last_result', dir='asc' if sort != 'last_result' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="last_result"
             data-sort-direction="{{ 'asc' if sort != 'last_result' or direction == 'desc' else 'desc' }}">
             <span>תוצאה אחרונה</span>
@@ -132,7 +132,7 @@
         <th {% if sort=='last_position' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
           %}>
           <a class="sort-link {% if sort == 'last_position' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='last_position', direction='asc' if sort != 'last_position' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show=show, sort='last_position', dir='asc' if sort != 'last_position' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="last_position"
             data-sort-direction="{{ 'asc' if sort != 'last_position' or direction == 'desc' else 'desc' }}">
             <span>מיקום אחרון</span>
