@@ -806,11 +806,13 @@ tbody tr:nth-child(even) {
 .players-filter-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem;
-  background: var(--color-surface-offset, rgba(255, 255, 255, 0.06));
-  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.10));
-  border-radius: 0.9rem;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  background: rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
 }
 
 .players-filter-toggle a.players-tab {
@@ -831,17 +833,20 @@ tbody tr:nth-child(even) {
   background: var(--color-surface, #f8fafc);
   color: var(--color-text, #0f172a);
   border-color: var(--color-surface, #f8fafc);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.10),
+    0 8px 18px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
 }
 
 .players-filter-toggle a.players-tab.is-inactive {
   background: transparent;
-  color: var(--color-text-muted, #e2e8f0);
+  color: color-mix(in oklab, var(--color-text-muted, #e2e8f0) 78%, white 22%);
   border-color: transparent;
 }
 
 .players-filter-toggle a.players-tab.is-inactive:hover {
-  background: color-mix(in oklab, var(--color-text) 8%, transparent);
+  background: color-mix(in oklab, var(--color-text) 10%, transparent);
   color: var(--color-text, #f8fafc);
 }
 
@@ -986,22 +991,46 @@ tbody tr:nth-child(even) {
   }
 
   .players-filter-toggle {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
-  .players-filter-toggle a.players-tab {
-    min-height: 40px;
-    padding: 0.5rem 0.85rem;
+  .players-tab {
+    min-width: 88px;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 800;
+    transition: all 0.2s ease;
   }
-}
 
-@media (max-width: 520px) {
-
-  .leaders-table th,
-  .leaders-table td {
-    padding: 8px;
-    font-size: 13px;
+  .players-tab.is-active {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 8px 16px rgba(0, 0, 0, 0.22);
   }
-}
+
+  .players-tab.is-inactive {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.68);
+  }
+
+  .players-tab.is-inactive:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+  }
+
+  @media (max-width: 520px) {
+
+    .leaders-table th,
+    .leaders-table td {
+      padding: 8px;
+      font-size: 13px;
+    }
+  }
