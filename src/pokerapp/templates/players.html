@@ -21,12 +21,6 @@
       aria-current="{% if show == 'all' %}page{% endif %}" data-analytics="players-filter" data-filter-value="all">
       כולם
     </a>
-
-    <a class="players-tab {% if show == 'all' %}is-active{% else %}is-inactive{% endif %}"
-      href="{{ url_for('main.players', show='all', sort=sort, dir=direction) }}"
-      aria-current="{% if show == 'all' %}page{% endif %}" data-analytics="players-filter" data-filter-value="all">
-      כולם
-    </a>
   </div>
 </div>
 
@@ -163,21 +157,26 @@
           </a>
         </td>
 
-        <td class="num {% if p['total_profit'] > 0 %}profit pos{% elif p['total_profit'] < 0 %}profit neg{% endif %}">
+        <td data-label='רווח/הפסד כולל'
+          class="num {% if p['total_profit'] > 0 %}profit pos{% elif p['total_profit'] < 0 %}profit neg{% endif %}">
           {{ "%.2f"|format(p["total_profit"]) }}
         </td>
 
-        <td class="num {% if p['year_profit'] > 0 %}profit pos{% elif p['year_profit'] < 0 %}profit neg{% endif %}">
+        <td data-label='רווח/הפסד 2026'
+          class="num {% if p['year_profit'] > 0 %}profit pos{% elif p['year_profit'] < 0 %}profit neg{% endif %}">
           {{ "%.2f"|format(p["year_profit"]) }}
         </td>
 
-        <td class="num {% if p['year_avg'] > 0 %}profit pos{% elif p['year_avg'] < 0 %}profit neg{% endif %}">
+        <td data-label="ממוצע 2026"
+          class="num {% if p['year_avg'] > 0 %}profit pos{% elif p['year_avg'] < 0 %}profit neg{% endif %}">
           {{ "%.2f"|format(p["year_avg"]) }}
         </td>
 
-        <td class="num">{{ p["year_games"] }}</td>
+        <td data-label="משחקים 2026" class="num">
+          {{ p["year_games"] }}
+        </td>
 
-        <td
+        <td data-label="תוצאה אחרונה"
           class="num {% if p['last_result'] is not none and p['last_result'] > 0 %}profit pos{% elif p['last_result'] is not none and p['last_result'] < 0 %}profit neg{% endif %}">
           {% if p["last_result"] is not none %}
           {{ "%.2f"|format(p["last_result"]) }}
@@ -186,7 +185,9 @@
           {% endif %}
         </td>
 
-        <td>{{ p["last_position"] }}</td>
+        <td data-label="מיקום אחרון" class="num">
+          {{ p["last_position"] }}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
