@@ -17,7 +17,13 @@
     </a>
 
     <a class="players-tab {% if show == 'all' %}is-active{% else %}is-inactive{% endif %}"
-      href="{{ url_for('main.players', show='active', sort=sort, dir=direction) }}"
+      href="{{ url_for('main.players', show='all', sort=sort, dir=direction) }}"
+      aria-current="{% if show == 'all' %}page{% endif %}" data-analytics="players-filter" data-filter-value="all">
+      כולם
+    </a>
+
+    <a class="players-tab {% if show == 'all' %}is-active{% else %}is-inactive{% endif %}"
+      href="{{ url_for('main.players', show='all', sort=sort, dir=direction) }}"
       aria-current="{% if show == 'all' %}page{% endif %}" data-analytics="players-filter" data-filter-value="all">
       כולם
     </a>

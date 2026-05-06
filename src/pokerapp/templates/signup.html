@@ -14,6 +14,7 @@
   {% endif %}
 
   <form method="POST" class="app-form auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-row">
       abel for="username">שם משתמש</label>
       <input id="username" name="username" type="text" autocomplete="username" required>
