@@ -7,7 +7,7 @@ from pokerapp.services.game_queries import (
     get_complete_top_players,
     get_complete_recent_games,
 )
-from datetime import date
+from datetime import date, datetime
 import os
 import pandas as pd
 import unicodedata
@@ -465,11 +465,7 @@ def admin_users():
 
     conn.close()
 
-    print("CURRENT YEAR:", current_year)
-    print("FIRST PLAYER ROW:", dict(players[0]) if players else "NO PLAYERS")
     return render_template("admin_users.html", pending=pending, active=active)
-
-
 # ------------------------------
 # תוצאות למשחק מסוים
 # ------------------------------
