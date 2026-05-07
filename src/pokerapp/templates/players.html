@@ -8,28 +8,31 @@
 <p class="table-meta">{{ subtitle }}</p>
 
 <div class="top-links players-toolbar">
-  <div class="players-filter-toggle" aria-label="סינון שחקנים">
-    <a class="players-tab {% if show == 'active' %}is-active{% else %}is-inactive{% endif %}"
-      href="{{ url_for('main.players', show='active', sort=sort, dir=direction) }}"
-      aria-current="{% if show == 'active' %}page{% endif %}" data-analytics="players-filter"
-      data-filter-value="active">
+  <div class="players-filter-toggle" role="tablist" aria-label="סינון שחקנים">
+    <a class="players-tab {% if show == 'active' %}active{% else %}ghost{% endif %}"
+      href="{{ url_for('main.players', show='active', sort=sort, dir=direction) }}" role="tab"
+      data-analytics="players-filter" data-filter-value="active"
+      aria-selected="{% if show == 'active' %}true{% else %}false{% endif %}">
       פעילים
     </a>
 
-    <a class="players-tab {% if show == 'all' %}is-active{% else %}is-inactive{% endif %}"
-      href="{{ url_for('main.players', show='all', sort=sort, dir=direction) }}"
-      aria-current="{% if show == 'all' %}page{% endif %}" data-analytics="players-filter" data-filter-value="all">
+    <a class="players-tab {% if show == 'all' %}active{% else %}ghost{% endif %}"
+      href="{{ url_for('main.players', show='all', sort=sort, dir=direction) }}" role="tab"
+      data-analytics="players-filter" data-filter-value="all"
+      aria-selected="{% if show == 'all' %}true{% else %}false{% endif %}">
       כולם
     </a>
   </div>
 </div>
 
 {% if players and players|length > 0 %}
-<div class="table-scroll table-scroll--rtl-start" data-table-scroll>
+<div class="table-scroll table-scroll--rtl-start players-table-wrap" data-table-scroll>
   <table class="players-table">
     <thead>
       <tr>
-        <th {% if sort=='name' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
+        <th class="col-expand"></th>
+        <th class="col-name" {% if sort=='name' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}"
+          {% endif %}>
           <a class="sort-link {% if sort == 'name' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='name', dir='asc' if sort != 'name' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="name"
@@ -45,8 +48,8 @@
           </a>
         </th>
 
-        <th {% if sort=='total_profit' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
-          %}>
+        <th class="col-total" {% if sort=='total_profit'
+          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'total_profit' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='total_profit', dir='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="total_profit"
@@ -62,8 +65,8 @@
           </a>
         </th>
 
-        <th {% if sort=='year_profit' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
-          %}>
+        <th class="col-year-profit" {% if sort=='year_profit'
+          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'year_profit' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='year_profit', dir='asc' if sort != 'year_profit' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="year_profit"
@@ -79,7 +82,8 @@
           </a>
         </th>
 
-        <th {% if sort=='year_avg' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
+        <th class="col-year-avg" {% if sort=='year_avg'
+          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'year_avg' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='year_avg', dir='asc' if sort != 'year_avg' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="year_avg"
@@ -95,8 +99,8 @@
           </a>
         </th>
 
-        <th {% if sort=='year_games' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
-          %}>
+        <th class="col-year-games" {% if sort=='year_games'
+          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'year_games' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='year_games', dir='asc' if sort != 'year_games' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="year_games"
@@ -112,8 +116,8 @@
           </a>
         </th>
 
-        <th {% if sort=='last_result' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
-          %}>
+        <th class="col-last-result" {% if sort=='last_result'
+          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'last_result' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='last_result', dir='asc' if sort != 'last_result' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="last_result"
@@ -129,8 +133,8 @@
           </a>
         </th>
 
-        <th {% if sort=='last_position' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif
-          %}>
+        <th class="col-last-position" {% if sort=='last_position'
+          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'last_position' %}is-active{% endif %}"
             href="{{ url_for('main.players', show=show, sort='last_position', dir='asc' if sort != 'last_position' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="last_position"
@@ -150,50 +154,86 @@
 
     <tbody>
       {% for p in players %}
-      <tr>
-        <td>
-          <a class="link" href="{{ url_for('main.player_detail', player_id=p['id']) }}">
-            {{ p["name"] }}
+      <tr class="player-row" data-player-id="{{ p.id }}">
+        <td class="col-expand">
+          <button class="row-toggle" type="button" aria-expanded="false" aria-controls="details-{{ p.id }}"
+            aria-label="הצג פרטים נוספים על {{ p['name'] if p is mapping else p.name }}">
+            +
+          </button>
+        </td>
+
+        <td class="col-name">
+          <a href="{{ url_for('main.player_detail', player_id=p.id, sort=sort, dir=direction) }}">
+            {{ p["name"] if p is mapping else p.name }}
           </a>
         </td>
 
-        <td data-label='רווח/הפסד כולל'
-          class="num {% if p['total_profit'] > 0 %}profit pos{% elif p['total_profit'] < 0 %}profit neg{% endif %}">
-          {{ "%.2f"|format(p["total_profit"]) }}
+        <td
+          class="col-total {% if (p['total_profit'] if p is mapping else p.total_profit) > 0 %}profit pos{% elif (p['total_profit'] if p is mapping else p.total_profit) < 0 %}profit neg{% endif %}">
+          {{ "%.2f"|format(p["total_profit"] if p is mapping else p.total_profit) }}
         </td>
 
-        <td data-label='רווח/הפסד 2026'
-          class="num {% if p['year_profit'] > 0 %}profit pos{% elif p['year_profit'] < 0 %}profit neg{% endif %}">
-          {{ "%.2f"|format(p["year_profit"]) }}
+        <td
+          class="col-year-profit {% if (p['year_profit'] if p is mapping else p.year_profit) > 0 %}profit pos{% elif (p['year_profit'] if p is mapping else p.year_profit) < 0 %}profit neg{% endif %}">
+          {{ "%.2f"|format(p["year_profit"] if p is mapping else p.year_profit) }}
         </td>
 
-        <td data-label="ממוצע 2026"
-          class="num {% if p['year_avg'] > 0 %}profit pos{% elif p['year_avg'] < 0 %}profit neg{% endif %}">
-          {{ "%.2f"|format(p["year_avg"]) }}
+        <td
+          class="col-year-avg {% if (p['year_avg'] if p is mapping else p.year_avg) > 0 %}profit pos{% elif (p['year_avg'] if p is mapping else p.year_avg) < 0 %}profit neg{% endif %}">
+          {{ "%.2f"|format(p["year_avg"] if p is mapping else p.year_avg) }}
         </td>
 
-        <td data-label="משחקים 2026" class="num">
-          {{ p["year_games"] }}
+        <td class="col-year-games">
+          {{ p["year_games"] if p is mapping else p.year_games }}
         </td>
 
-        <td data-label="תוצאה אחרונה"
-          class="num {% if p['last_result'] is not none and p['last_result'] > 0 %}profit pos{% elif p['last_result'] is not none and p['last_result'] < 0 %}profit neg{% endif %}">
-          {% if p["last_result"] is not none %}
-          {{ "%.2f"|format(p["last_result"]) }}
+        <td
+          class="col-last-result {% if (p['last_result'] if p is mapping else p.last_result) is not none and (p['last_result'] if p is mapping else p.last_result) > 0 %}profit pos{% elif (p['last_result'] if p is mapping else p.last_result) is not none and (p['last_result'] if p is mapping else p.last_result) < 0 %}profit neg{% endif %}">
+          {% if (p['last_result'] if p is mapping else p.last_result) is not none %}
+          {{ "%.2f"|format(p["last_result"] if p is mapping else p.last_result) }}
           {% else %}
           —
           {% endif %}
         </td>
 
-        <td data-label="מיקום אחרון" class="num">
-          {{ p["last_position"] }}
+        <td class="col-last-position">
+          {{ p["last_position"] if p is mapping else p.last_position }}
+        </td>
+      </tr>
+
+      <tr id="details-{{ p.id }}" class="player-details" hidden>
+        <td colspan="8">
+          <div class="player-details-inner">
+            <div class="player-details-grid">
+              <div><strong>רווח/הפסד כולל:</strong> {{ "%.2f"|format(p["total_profit"] if p is mapping else
+                p.total_profit) }}</div>
+              <div><strong>רווח/הפסד {{ year }}:</strong> {{ "%.2f"|format(p["year_profit"] if p is mapping else
+                p.year_profit) }}</div>
+              <div><strong>ממוצע {{ year }}:</strong> {{ "%.2f"|format(p["year_avg"] if p is mapping else p.year_avg) }}
+              </div>
+              <div><strong>משחקים {{ year }}:</strong> {{ p["year_games"] if p is mapping else p.year_games }}</div>
+              <div><strong>תוצאה אחרונה:</strong>
+                {% if (p["last_result"] if p is mapping else p.last_result) is not none %}
+                {{ "%.2f"|format(p["last_result"] if p is mapping else p.last_result) }}
+                {% else %}
+                —
+                {% endif %}
+              </div>
+              <div><strong>מיקום אחרון:</strong> {{ p["last_position"] if p is mapping else p.last_position }}</div>
+              <div>
+                <a class="details-link"
+                  href="{{ url_for('main.player_detail', player_id=p.id, sort=sort, dir=direction) }}">
+                  לעמוד השחקן
+                </a>
+              </div>
+            </div>
+          </div>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
-
 {% else %}
 <p class="no-games">
   {% if show == "active" %}
@@ -210,12 +250,27 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const tableScroll = document.querySelector('[data-table-scroll]');
-
     if (tableScroll && window.innerWidth <= 768) {
       requestAnimationFrame(() => {
         tableScroll.scrollLeft = 0;
       });
     }
+
+    if (typeof clarity === 'function') {
+      clarity('set', 'page_name', 'players');
+      clarity('set', 'players_view', '{{ show }}');
+    }
+
+    document.querySelectorAll('.row-toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('aria-controls');
+        const detailsRow = document.getElementById(targetId);
+        const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!isExpanded));
+        detailsRow.hidden = isExpanded;
+        btn.textContent = isExpanded ? '+' : '−';
+      });
+    });
 
     document.querySelectorAll('[data-analytics="players-filter"]').forEach((el) => {
       el.addEventListener('click', function () {

@@ -327,7 +327,7 @@ def add_game():
 @login_required
 def players():
     current_year = date.today().year
-
+    show = request.args.get("show", "active")
     sort = request.args.get("sort", "total_profit", type=str).strip().lower()
     direction = request.args.get("dir", "desc", type=str).strip().lower()
 
@@ -419,12 +419,16 @@ def players():
     players = cur.fetchall()
     conn.close()
 
+    if show == "active":
+        players = [p for p in players if p["year_games"] > 0]
+
     return render_template(
         "players.html",
         players=players,
         year=current_year,
         sort=sort,
         direction=direction,
+        show=show,
     )
 # ------------------------------
 # מסך אדמין לאישור משתמשים
