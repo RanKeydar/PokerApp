@@ -10,8 +10,7 @@
 <div class="top-links players-toolbar">
   <div class="players-filter-toggle" role="tablist" aria-label="סינון שחקנים">
     <a class="players-tab {% if show == 'active' %}active{% else %}ghost{% endif %}"
-      href="{{ url_for('main.players', show='active', sort=sort, dir=direction) }}" role="tab"
-      data-analytics="players-filter" data-filter-value="active"
+      href="{{ url_for('main.players', show='all') }}" data-analytics="players-filter" data-filter-value="active"
       aria-selected="{% if show == 'active' %}true{% else %}false{% endif %}">
       פעילים
     </a>
@@ -51,7 +50,7 @@
         <th class="col-total" {% if sort=='total_profit'
           %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'total_profit' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='total_profit', dir='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}"
+            href="{{ url_for('main.players', show='all', sort='total_profit', dir='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}"
             data-analytics="players-sort" data-sort-column="total_profit"
             data-sort-direction="{{ 'asc' if sort != 'total_profit' or direction == 'desc' else 'desc' }}">
             <span>רווח/הפסד כולל</span>
@@ -68,8 +67,8 @@
         <th class="col-year-profit" {% if sort=='year_profit'
           %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
           <a class="sort-link {% if sort == 'year_profit' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='year_profit', dir='asc' if sort != 'year_profit' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="year_profit"
+            href="{{ url_for('main.players', show='all') }}" data-analytics="players-sort"
+            data-sort-column="year_profit"
             data-sort-direction="{{ 'asc' if sort != 'year_profit' or direction == 'desc' else 'desc' }}">
             <span>רווח/הפסד {{ year }}</span>
             <span class="sort-arrow" aria-hidden="true">

@@ -328,9 +328,17 @@ def add_game():
 def players():
     current_year = date.today().year
     show = request.args.get("show", "active")
-    sort = request.args.get("sort", "total_profit", type=str).strip().lower()
-    direction = request.args.get("dir", "desc", type=str).strip().lower()
+    sort = request.args.get("sort", type=str)
+    direction = request.args.get("dir", type=str)
 
+    if not sort:
+        sort = "year_profit"
+    if not direction:
+        direction = "desc"
+
+    sort = sort.strip().lower()
+    direction = direction.strip().lower()
+    
     allowed_sorts = {
         "name": "p.name COLLATE NOCASE",
         "total_profit": "total_profit",
@@ -342,7 +350,7 @@ def players():
         "last_game_date": "last_game_date",
     }
 
-    sort_sql = allowed_sorts.get(sort, "total_profit")
+    sort_sql = allowed_sorts.get(sort, "year_profit")
     dir_sql = "ASC" if direction == "asc" else "DESC"
 
     conn = get_db_connection()
