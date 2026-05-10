@@ -327,7 +327,7 @@ def add_game():
 @login_required
 def players():
     current_year = date.today().year
-    show = request.args.get("show", "active")
+    hide_inactive = request.args.get("inactive") != "1"
     sort = request.args.get("sort", type=str)
     direction = request.args.get("dir", type=str)
 
@@ -427,7 +427,7 @@ def players():
     players = cur.fetchall()
     conn.close()
 
-    if show == "active":
+    if hide_inactive:
         players = [p for p in players if p["year_games"] > 0]
 
     return render_template(
@@ -436,7 +436,7 @@ def players():
         year=current_year,
         sort=sort,
         direction=direction,
-        show=show,
+        hide_inactive=hide_inactive,
     )
 # ------------------------------
 # מסך אדמין לאישור משתמשים
@@ -1080,6 +1080,7 @@ def player_detail(player_id):
         (player_id, player_id, str(current_year), player_id, player_id),
     )
     summary = cur.fetchone()
+    summary = dict(summary) if summary else {}
 
     games_sql = f"""
         SELECT
@@ -1098,15 +1099,75 @@ def player_detail(player_id):
     cur.execute(games_sql, (player_id,))
     games = cur.fetchall()
 
+    cash_sql = f"""
+    SELECT
+        g.id AS game_id,
+        g.date,
+        g.location,
+        g.game_type,
+        gr.buyin,
+        gr.cashout,
+        gr.profit
+    FROM game_results gr
+    JOIN games g ON g.id = gr.game_id
+    WHERE gr.player_id = ?
+      AND substr(g.date, 1, 4) = ?
+      AND g.game_type = 'cash'
+    ORDER BY {sort_sql} {dir_sql}, g.id DESC
+    """
+
+    cur.execute(cash_sql, (player_id, str(current_year)))
+    games_2026_cash = cur.fetchall()
+
+    harbo_sql = f"""
+    SELECT
+        g.id AS game_id,
+        g.date,
+        g.location,
+        g.game_type,
+        gr.buyin,
+        gr.cashout,
+        gr.profit
+    FROM game_results gr
+    JOIN games g ON g.id = gr.game_id
+    WHERE gr.player_id = ?
+      AND substr(g.date, 1, 4) = ?
+      AND g.game_type = 'harbo'
+    ORDER BY {sort_sql} {dir_sql}, g.id DESC
+    """
+
+    cur.execute(harbo_sql, (player_id, str(current_year)))
+    games_2026_harbo = cur.fetchall()
+
+    summary["year_cash_games"] = len(games_2026_cash)
+    summary["year_harbo_games"] = len(games_2026_harbo)
+
+    best_game = None
+    worst_game = None
+
+    if games:
+        valid_games = [g for g in games if g["profit"] is not None]
+
+        if valid_games:
+            best_game = max(valid_games, key=lambda g: g["profit"])
+            worst_game = min(valid_games, key=lambda g: g["profit"])
+
+    summary["best_profit"] = best_game["profit"] if best_game else None
+    summary["best_profit_date"] = best_game["date"] if best_game else None
+    summary["worst_profit"] = worst_game["profit"] if worst_game else None
+    summary["worst_profit_date"] = worst_game["date"] if worst_game else None
+
     conn.close()
 
-    subtitle = f'{summary["total_games"]} משחקים סה"כ · {summary["year_games"]} משחקים ב־{current_year}'
+    subtitle = f'{summary["total_games"]} משחקים סה"כ - {summary["year_games"]} משחקים ב-{current_year}'
 
     return render_template(
         "player_detail.html",
         player=player,
         summary=summary,
         games=games,
+        games_2026_cash=games_2026_cash,
+        games_2026_harbo=games_2026_harbo,
         year=current_year,
         subtitle=subtitle,
         sort=sort,

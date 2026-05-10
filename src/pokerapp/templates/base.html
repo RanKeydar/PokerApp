@@ -4,83 +4,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}פנקס הקטן{% endblock %}</title>
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <meta name="theme-color" content="#0b3d2e">
-  <link rel="icon" href="/static/icons/icon-192.png">
-  <meta name="build" content="BASE_20260101_1135">
-  <meta name="posthog_debug" content="BASE_WITH_REAL_KEY_20260105_1">
+  <title>{% block title %}פוקר אפ{% endblock %}</title>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ config.get('STATIC_VER', 1) }}">
-
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-245BG2ZY8W"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-245BG2ZY8W');
-  </script>
-
-  <!-- Microsoft Clarity -->
-  <script type="text/javascript">
-    (function (c, l, a, r, i, t, y) {
-      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
-      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
-      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-    })(window, document, "clarity", "script", "wnjbh8pzhz");
-  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  {% block page_css %}{% endblock %}
 </head>
 
 <body>
-  <div class="container">
-
+  <header class="site-header">
     <div class="topbar">
       <div class="brand">
         <div class="logo">♠</div>
         <div>
-          <h1>
-            <a href="{{ url_for('main.home') }}" class="brand-link">לוח תוצאות פוקר</a>
-          </h1>
-          <div class="sub">{% block subtitle %}{% endblock %}</div>
+          <h1>לוח תוצאות פוקר</h1>
+          <p class="sub">לוח תוצאות פוקר</p>
         </div>
       </div>
 
       <div class="userbox">
-        <div class="pill">
-          👤 {{ session.get("username","") }}
-          {% set r = session.get("role","player") %}
-          <span class="badge {{ r }}">{{ r }}</span>
-        </div>
+        {% if current_user is defined and current_user.is_authenticated %}
+        <span class="pill">
+          <span class="badge {% if current_user.role %}{{ current_user.role }}{% endif %}">
+            {{ current_user.username }}
+          </span>
+          <span>{{ current_user.username }}</span>
+        </span>
+        {% endif %}
+      </div>
 
-        <div class="actions">
-          <!-- ניווט קבוע בכל הדפים -->
-          <a class="btn ghost" href="{{ url_for('main.games_list') }}">📋 כל המשחקים</a>
+      <div class="actions">
+        <a class="btn secondary" href="{{ url_for('main.add_game') }}">הוסף משחק</a>
+        <a class="btn ghost" href="{{ url_for('main.games_list') }}">כל המשחקים</a>
+        <a class="btn ghost" href="{{ url_for('main.players') }}">שחקנים</a>
 
-          {% if session.get("role") in ["admin","magician"] %}
-          <a class="btn secondary" href="{{ url_for('main.add_game') }}">➕ הוסף משחק</a>
-          {% endif %}
+        {% if current_user is defined and current_user.is_authenticated and current_user.role == 'admin' %}
+        <a class="btn ghost" href="{{ url_for('main.admin_users') }}">ניהול משתמשים</a>
+        {% endif %}
 
-          <a class="btn ghost" href="{{ url_for('main.players') }}">👤 שחקנים</a>
-          {% if session.get("role") == "admin" %}
-          <a class="btn ghost" href="{{ url_for('main.admin_users') }}">🛠 ניהול משתמשים</a>
-          {% endif %}
-
-          {% if session.get("role") == "admin" %}
-          <a class="btn ghost" href="{{ url_for('main.admin_tools') }}"> כלי ניהול</a>
-          {% endif %}
-
-          <a class="btn danger" href="{{ url_for('auth.logout') }}">🚪 התנתקות</a>
-
-          <!-- פעולות ייחודיות לדף (רשות) -->
-          {% block topbar_actions %}{% endblock %}
-        </div>
+        {% if current_user is defined and current_user.is_authenticated %}
+        <a class="btn danger" href="{{ url_for('auth.logout') }}">התנתקות</a>
+        {% endif %}
       </div>
     </div>
+  </header>
 
+  <main class="container">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <div class="flash-stack" aria-live="polite" aria-atomic="true">
+    <div class="flash-stack">
       {% for category, message in messages %}
       <div class="flash flash-{{ category }}">{{ message }}</div>
       {% endfor %}
@@ -89,25 +60,9 @@
     {% endwith %}
 
     {% block content %}{% endblock %}
+  </main>
 
-  </div>
-  <!-- DEV: remove Service Worker + cache -->
-  <script>
-    (async () => {
-      if (!('serviceWorker' in navigator)) return;
-
-      // Unregister all Service Workers
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for (const reg of regs) await reg.unregister();
-
-      // Clear Cache Storage
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        for (const k of keys) await caches.delete(k);
-      }
-    })();
-  </script>
-  {% block extra_js %}{% endblock %}
+  {% block scripts %}{% endblock %}
 </body>
 
 </html>

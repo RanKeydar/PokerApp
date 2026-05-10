@@ -1,0 +1,334 @@
+.players-page-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-inline: 12px;
+}
+
+.players-toolbar {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 30;
+}
+
+.top-links.players-toolbar .players-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    position: relative;
+    z-index: 30;
+}
+
+.top-links.players-toolbar .players-filter-toggle .players-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, .18);
+    transition: transform .18s ease, background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+    flex: 1 1 0;
+    min-width: 0;
+    position: relative;
+    z-index: 31;
+    pointer-events: auto;
+}
+
+.top-links.players-toolbar .players-filter-toggle .players-tab.ghost {
+    background: rgba(255, 255, 255, .08);
+    color: rgba(255, 255, 255, .82);
+}
+
+.top-links.players-toolbar .players-filter-toggle .players-tab.active {
+    background: #fff;
+    color: #0f172a;
+    border-color: rgba(255, 255, 255, .95);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .18);
+}
+
+.players-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    background: rgba(255, 255, 255, .96);
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .14);
+    position: relative;
+    z-index: 1;
+}
+
+.players-table {
+    width: 100%;
+    min-width: 820px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.players-table th,
+.players-table td {
+    padding: .9rem 1rem;
+    border-bottom: 1px solid rgba(15, 23, 42, .08);
+    vertical-align: middle;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.players-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    font-weight: 800;
+    font-size: .82rem;
+    color: #475569;
+    background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+}
+
+.players-table td {
+    font-size: .95rem;
+    color: #0f172a;
+    background: rgba(255, 255, 255, .94);
+}
+
+.players-table tbody tr:nth-child(even):not(.player-details) td {
+    background: rgba(248, 250, 252, .96);
+}
+
+.players-table tbody tr:hover:not(.player-details) td {
+    background: rgba(226, 232, 240, .65);
+}
+
+.players-table td a,
+.players-table td .link,
+.player-name-cell a,
+.col-name a,
+.details-link {
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.players-table td a:hover,
+.players-table td .link:hover,
+.player-name-cell a:hover,
+.col-name a:hover,
+.details-link:hover {
+    text-decoration: underline;
+    color: #0f766e;
+}
+
+.profit.pos {
+    color: #15803d !important;
+    font-weight: 800;
+}
+
+.profit.neg {
+    color: #dc2626 !important;
+    font-weight: 800;
+}
+
+.money::before {
+    content: none;
+}
+
+.num {
+    font-variant-numeric: tabular-nums;
+}
+
+.col-expand {
+    width: 52px;
+    text-align: center;
+}
+
+.row-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    font-weight: 900;
+    background: #e5e7eb;
+    color: #0f172a;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    cursor: pointer;
+    position: relative;
+    z-index: 3;
+}
+
+.player-details[hidden] {
+    display: none !important;
+}
+
+.player-details {
+    background: #fff;
+}
+
+.player-details.is-open {
+    display: table-row !important;
+}
+
+.player-details td {
+    padding: 0 !important;
+    background: #ffffff !important;
+    white-space: normal !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.player-details-inner {
+    padding: 16px 18px;
+    background: #ffffff;
+}
+
+.player-details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.player-details-grid>div {
+    font-size: 15px;
+    line-height: 1.45;
+    color: #0f172a;
+}
+
+@media (min-width: 701px) {
+
+    .col-expand,
+    .player-details {
+        display: none !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .row-toggle {
+        display: inline-flex;
+    }
+
+    .players-table-wrap {
+        overflow-x: hidden;
+    }
+
+    .players-table {
+        width: 100%;
+        min-width: 100%;
+        table-layout: auto;
+    }
+
+    .players-table th,
+    .players-table td {
+        padding: 0.8rem 0.6rem;
+        font-size: 0.84rem;
+    }
+
+    .players-table th:not(.col-expand),
+    .players-table td:not(.col-expand) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .players-table .col-total,
+    .players-table .col-year-avg,
+    .players-table .col-year-games,
+    .players-table .col-last-result {
+        display: none !important;
+    }
+
+    .players-table .col-expand,
+    .players-table .col-name,
+    .players-table .col-year-profit {
+        display: table-cell !important;
+    }
+
+    .players-table tbody tr:not(.player-details) td {
+        background: rgba(255, 255, 255, 0.96) !important;
+    }
+
+    .player-details {
+        display: none;
+    }
+
+    .player-details.is-open {
+        display: table-row !important;
+    }
+
+    .player-details td {
+        display: table-cell !important;
+        width: auto !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+        background: #fff !important;
+    }
+
+    .player-details-inner {
+        padding: 18px 16px 20px;
+    }
+
+    .player-details-grid {
+        gap: 12px;
+    }
+}
+
+.top-links,
+.top-links * {
+    pointer-events: auto;
+}
+
+.top-links::before,
+.top-links::after,
+.players-page-shell::before,
+.players-page-shell::after {
+    pointer-events: none !important;
+}
+
+.money::before {
+    content: none;
+}
+
+.money {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+}
+
+.players-page-shell,
+.players-toolbar,
+.players-filter-toggle {
+    position: relative;
+}
+
+.players-toolbar {
+    z-index: 100;
+}
+
+.players-filter-toggle {
+    z-index: 101;
+}
+
+.players-tab {
+    position: relative;
+    z-index: 102;
+    pointer-events: auto !important;
+}
+
+.players-page-shell::before,
+.players-page-shell::after,
+.players-toolbar::before,
+.players-toolbar::after,
+.players-filter-toggle::before,
+.players-filter-toggle::after {
+    pointer-events: none !important;
+}
+
+.players-table-wrap {
+    position: relative;
+    z-index: 1;
+}

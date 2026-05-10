@@ -1,295 +1,174 @@
 {% extends "base.html" %}
 
 {% block title %}שחקנים{% endblock %}
-{% block subtitle %}שחקנים{% endblock %}
 
-{% block content %}
-
-<p class="table-meta">{{ subtitle }}</p>
-
-<div class="top-links players-toolbar">
-  <div class="players-filter-toggle" role="tablist" aria-label="סינון שחקנים">
-    <a class="players-tab {% if show == 'active' %}active{% else %}ghost{% endif %}"
-      href="{{ url_for('main.players', show='all') }}" data-analytics="players-filter" data-filter-value="active"
-      aria-selected="{% if show == 'active' %}true{% else %}false{% endif %}">
-      פעילים
-    </a>
-
-    <a class="players-tab {% if show == 'all' %}active{% else %}ghost{% endif %}"
-      href="{{ url_for('main.players', show='all', sort=sort, dir=direction) }}" role="tab"
-      data-analytics="players-filter" data-filter-value="all"
-      aria-selected="{% if show == 'all' %}true{% else %}false{% endif %}">
-      כולם
-    </a>
-  </div>
-</div>
-
-{% if players and players|length > 0 %}
-<div class="table-scroll table-scroll--rtl-start players-table-wrap" data-table-scroll>
-  <table class="players-table">
-    <thead>
-      <tr>
-        <th class="col-expand"></th>
-        <th class="col-name" {% if sort=='name' %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}"
-          {% endif %}>
-          <a class="sort-link {% if sort == 'name' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='name', dir='asc' if sort != 'name' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="name"
-            data-sort-direction="{{ 'asc' if sort != 'name' or direction == 'desc' else 'desc' }}">
-            <span>שם</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'name' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-
-        <th class="col-total" {% if sort=='total_profit'
-          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
-          <a class="sort-link {% if sort == 'total_profit' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show='all', sort='total_profit', dir='asc' if sort != 'total_profit' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="total_profit"
-            data-sort-direction="{{ 'asc' if sort != 'total_profit' or direction == 'desc' else 'desc' }}">
-            <span>רווח/הפסד כולל</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'total_profit' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-
-        <th class="col-year-profit" {% if sort=='year_profit'
-          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
-          <a class="sort-link {% if sort == 'year_profit' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show='all') }}" data-analytics="players-sort"
-            data-sort-column="year_profit"
-            data-sort-direction="{{ 'asc' if sort != 'year_profit' or direction == 'desc' else 'desc' }}">
-            <span>רווח/הפסד {{ year }}</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'year_profit' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-
-        <th class="col-year-avg" {% if sort=='year_avg'
-          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
-          <a class="sort-link {% if sort == 'year_avg' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='year_avg', dir='asc' if sort != 'year_avg' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="year_avg"
-            data-sort-direction="{{ 'asc' if sort != 'year_avg' or direction == 'desc' else 'desc' }}">
-            <span>ממוצע {{ year }}</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'year_avg' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-
-        <th class="col-year-games" {% if sort=='year_games'
-          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
-          <a class="sort-link {% if sort == 'year_games' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='year_games', dir='asc' if sort != 'year_games' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="year_games"
-            data-sort-direction="{{ 'asc' if sort != 'year_games' or direction == 'desc' else 'desc' }}">
-            <span>משחקים {{ year }}</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'year_games' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-
-        <th class="col-last-result" {% if sort=='last_result'
-          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
-          <a class="sort-link {% if sort == 'last_result' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='last_result', dir='asc' if sort != 'last_result' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="last_result"
-            data-sort-direction="{{ 'asc' if sort != 'last_result' or direction == 'desc' else 'desc' }}">
-            <span>תוצאה אחרונה</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'last_result' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-
-        <th class="col-last-position" {% if sort=='last_position'
-          %}aria-sort="{{ 'ascending' if direction == 'asc' else 'descending' }}" {% endif %}>
-          <a class="sort-link {% if sort == 'last_position' %}is-active{% endif %}"
-            href="{{ url_for('main.players', show=show, sort='last_position', dir='asc' if sort != 'last_position' or direction == 'desc' else 'desc') }}"
-            data-analytics="players-sort" data-sort-column="last_position"
-            data-sort-direction="{{ 'asc' if sort != 'last_position' or direction == 'desc' else 'desc' }}">
-            <span>מיקום אחרון</span>
-            <span class="sort-arrow" aria-hidden="true">
-              {% if sort == 'last_position' %}
-              {{ '▲' if direction == 'asc' else '▼' }}
-              {% else %}
-              ↕
-              {% endif %}
-            </span>
-          </a>
-        </th>
-      </tr>
-    </thead>
-
-    <tbody>
-      {% for p in players %}
-      <tr class="player-row" data-player-id="{{ p.id }}">
-        <td class="col-expand">
-          <button class="row-toggle" type="button" aria-expanded="false" aria-controls="details-{{ p.id }}"
-            aria-label="הצג פרטים נוספים על {{ p['name'] if p is mapping else p.name }}">
-            +
-          </button>
-        </td>
-
-        <td class="col-name">
-          <a href="{{ url_for('main.player_detail', player_id=p.id, sort=sort, dir=direction) }}">
-            {{ p["name"] if p is mapping else p.name }}
-          </a>
-        </td>
-
-        <td
-          class="col-total {% if (p['total_profit'] if p is mapping else p.total_profit) > 0 %}profit pos{% elif (p['total_profit'] if p is mapping else p.total_profit) < 0 %}profit neg{% endif %}">
-          {{ "%.2f"|format(p["total_profit"] if p is mapping else p.total_profit) }}
-        </td>
-
-        <td
-          class="col-year-profit {% if (p['year_profit'] if p is mapping else p.year_profit) > 0 %}profit pos{% elif (p['year_profit'] if p is mapping else p.year_profit) < 0 %}profit neg{% endif %}">
-          {{ "%.2f"|format(p["year_profit"] if p is mapping else p.year_profit) }}
-        </td>
-
-        <td
-          class="col-year-avg {% if (p['year_avg'] if p is mapping else p.year_avg) > 0 %}profit pos{% elif (p['year_avg'] if p is mapping else p.year_avg) < 0 %}profit neg{% endif %}">
-          {{ "%.2f"|format(p["year_avg"] if p is mapping else p.year_avg) }}
-        </td>
-
-        <td class="col-year-games">
-          {{ p["year_games"] if p is mapping else p.year_games }}
-        </td>
-
-        <td
-          class="col-last-result {% if (p['last_result'] if p is mapping else p.last_result) is not none and (p['last_result'] if p is mapping else p.last_result) > 0 %}profit pos{% elif (p['last_result'] if p is mapping else p.last_result) is not none and (p['last_result'] if p is mapping else p.last_result) < 0 %}profit neg{% endif %}">
-          {% if (p['last_result'] if p is mapping else p.last_result) is not none %}
-          {{ "%.2f"|format(p["last_result"] if p is mapping else p.last_result) }}
-          {% else %}
-          —
-          {% endif %}
-        </td>
-
-        <td class="col-last-position">
-          {{ p["last_position"] if p is mapping else p.last_position }}
-        </td>
-      </tr>
-
-      <tr id="details-{{ p.id }}" class="player-details" hidden>
-        <td colspan="8">
-          <div class="player-details-inner">
-            <div class="player-details-grid">
-              <div><strong>רווח/הפסד כולל:</strong> {{ "%.2f"|format(p["total_profit"] if p is mapping else
-                p.total_profit) }}</div>
-              <div><strong>רווח/הפסד {{ year }}:</strong> {{ "%.2f"|format(p["year_profit"] if p is mapping else
-                p.year_profit) }}</div>
-              <div><strong>ממוצע {{ year }}:</strong> {{ "%.2f"|format(p["year_avg"] if p is mapping else p.year_avg) }}
-              </div>
-              <div><strong>משחקים {{ year }}:</strong> {{ p["year_games"] if p is mapping else p.year_games }}</div>
-              <div><strong>תוצאה אחרונה:</strong>
-                {% if (p["last_result"] if p is mapping else p.last_result) is not none %}
-                {{ "%.2f"|format(p["last_result"] if p is mapping else p.last_result) }}
-                {% else %}
-                —
-                {% endif %}
-              </div>
-              <div><strong>מיקום אחרון:</strong> {{ p["last_position"] if p is mapping else p.last_position }}</div>
-              <div>
-                <a class="details-link"
-                  href="{{ url_for('main.player_detail', player_id=p.id, sort=sort, dir=direction) }}">
-                  לעמוד השחקן
-                </a>
-              </div>
-            </div>
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-<p class="no-games">
-  {% if show == "active" %}
-  אין כרגע שחקנים פעילים.
-  {% else %}
-  עדיין אין שחקנים.
-  {% endif %}
-</p>
-{% endif %}
-
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/players.css') }}">
 {% endblock %}
 
-{% block extra_js %}
+{% block content %}
+<div class="players-page-shell">
+  <div class="top-links players-toolbar">
+    <div class="players-filter-toggle">
+      <a class="players-tab {% if hide_inactive %}active{% else %}ghost{% endif %}"
+        href="{{ url_for('main.players') }}">שחקנים פעילים</a>
+      <a class="players-tab {% if not hide_inactive %}active{% else %}ghost{% endif %}"
+        href="{{ url_for('main.players', inactive=1) }}">כל השחקנים</a>
+    </div>
+  </div>
+
+  <div class="players-table-wrap">
+    <table class="players-table">
+      <thead>
+        <tr>
+          <th class="col-expand"></th>
+          <th class="col-name">שם</th>
+          <th class="col-year-profit">רווח/הפסד 26</th>
+          <th class="col-total">סה"כ רווח/הפסד</th>
+          <th class="col-year-avg">ממוצע 26</th>
+          <th class="col-year-games">משחקים 26</th>
+          <th class="col-last-result">תוצאה אחרונה</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in players %}
+        {% set p_data = p if p is mapping else p %}
+        <tr>
+          <td class="col-expand">
+            <button type="button" class="row-toggle" data-target="player-details-{{ p_data['id'] }}"
+              aria-expanded="false" aria-controls="player-details-{{ p_data['id'] }}">
+              +
+            </button>
+          </td>
+
+          <td class="col-name">
+            <a href="{{ url_for('main.player_detail', player_id=p_data['id']) }}">
+              {{ p_data["name"] }}
+            </a>
+          </td>
+
+          <td
+            class="col-year-profit {% if p_data['year_profit'] > 0 %}profit pos{% elif p_data['year_profit'] < 0 %}profit neg{% endif %}">
+            {% if p_data["year_profit"] is not none %}
+            <span class="money">₪{{ p_data["year_profit"]|int }}</span>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+
+          <td
+            class="col-total {% if p_data['total_profit'] > 0 %}profit pos{% elif p_data['total_profit'] < 0 %}profit neg{% endif %}">
+            {% if p_data["total_profit"] is not none %}
+            <span class="money">₪{{ p_data["total_profit"]|int }}</span>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+
+          <td
+            class="col-year-avg {% if p_data['year_avg'] > 0 %}profit pos{% elif p_data['year_avg'] < 0 %}profit neg{% endif %}">
+            {% if p_data["year_avg"] is not none %}
+            <span class="money">₪{{ p_data["year_avg"]|int }}</span>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+
+          <td class="col-year-games">
+            {{ p_data["year_games"] if p_data["year_games"] is not none else "—" }}
+          </td>
+
+          <td
+            class="col-last-result {% if p_data['last_result'] is not none and p_data['last_result'] > 0 %}profit pos{% elif p_data['last_result'] is not none and p_data['last_result'] < 0 %}profit neg{% endif %}">
+            {% if p_data["last_result"] is not none %}
+            <span class="money">₪{{ p_data["last_result"]|int }}</span>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+        </tr>
+        <tr id="player-details-{{ p_data['id'] }}" class="player-details" hidden>
+          <td colspan="7">
+            <div class="player-details-inner">
+              <div class="player-details-grid">
+                <div>
+                  <strong>סה"כ רווח/הפסד:</strong>
+                  {% if p_data["total_profit"] is not none %}₪{{ p_data["total_profit"]|int }}{% else %}—{% endif %}
+                </div>
+
+                <div>
+                  <strong>ממוצע 26:</strong>
+                  {% if p_data["year_avg"] is not none %}₪{{ p_data["year_avg"]|int }}{% else %}—{% endif %}
+                </div>
+
+                <div>
+                  <strong>משחקים 26:</strong>
+                  {{ p_data["year_games"] if p_data["year_games"] is not none else "—" }}
+                </div>
+
+                <div>
+                  <strong>תוצאה אחרונה:</strong>
+                  {% if p_data["last_result"] is not none %}₪{{ p_data["last_result"]|int }}{% else %}—{% endif %}
+                </div>
+
+                <div>
+                  <strong>מיקום אחרון:</strong>
+                  {{ p_data["last_position"] if p_data["last_position"] is not none else "—" }}
+                </div>
+
+                <div>
+                  <a class="details-link" href="{{ url_for('main.player_detail', player_id=p_data['id']) }}">
+                    לעמוד השחקן
+                  </a>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const tableScroll = document.querySelector('[data-table-scroll]');
-    if (tableScroll && window.innerWidth <= 768) {
-      requestAnimationFrame(() => {
-        tableScroll.scrollLeft = 0;
-      });
-    }
+    const rowToggles = document.querySelectorAll('.row-toggle');
 
-    if (typeof clarity === 'function') {
-      clarity('set', 'page_name', 'players');
-      clarity('set', 'players_view', '{{ show }}');
-    }
+    rowToggles.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const targetId = btn.getAttribute('data-target');
+        const row = document.getElementById(targetId);
+        if (!row) return;
 
-    document.querySelectorAll('.row-toggle').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('aria-controls');
-        const detailsRow = document.getElementById(targetId);
-        const isExpanded = btn.getAttribute('aria-expanded') === 'true';
-        btn.setAttribute('aria-expanded', String(!isExpanded));
-        detailsRow.hidden = isExpanded;
-        btn.textContent = isExpanded ? '+' : '−';
-      });
-    });
+        const isHidden = row.hasAttribute('hidden');
 
-    document.querySelectorAll('[data-analytics="players-filter"]').forEach((el) => {
-      el.addEventListener('click', function () {
-        if (typeof gtag === 'function') {
-          gtag('event', 'players_filter_changed', {
-            filter_type: this.dataset.filterValue,
-            page_name: 'players'
-          });
-        }
-      });
-    });
+        document.querySelectorAll('.player-details').forEach(function (otherRow) {
+          if (otherRow !== row) {
+            otherRow.setAttribute('hidden', '');
+            otherRow.classList.remove('is-open');
+          }
+        });
 
-    document.querySelectorAll('[data-analytics="players-sort"]').forEach((el) => {
-      el.addEventListener('click', function () {
-        if (typeof gtag === 'function') {
-          gtag('event', 'players_sort_changed', {
-            sort_column: this.dataset.sortColumn,
-            sort_direction: this.dataset.sortDirection,
-            page_name: 'players'
-          });
+        document.querySelectorAll('.row-toggle').forEach(function (otherBtn) {
+          if (otherBtn !== btn) {
+            otherBtn.setAttribute('aria-expanded', 'false');
+            otherBtn.textContent = '+';
+          }
+        });
+
+        if (isHidden) {
+          row.removeAttribute('hidden');
+          row.classList.add('is-open');
+          btn.setAttribute('aria-expanded', 'true');
+          btn.textContent = '−';
+        } else {
+          row.setAttribute('hidden', '');
+          row.classList.remove('is-open');
+          btn.setAttribute('aria-expanded', 'false');
+          btn.textContent = '+';
         }
       });
     });

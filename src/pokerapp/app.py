@@ -47,19 +47,23 @@ def create_app():
     )
 
     @app.template_filter("hedate")
-    def hedate_filter(date_str):
-        return format_hebrew_date(date_str)
+    def hedate_filter(date_value):
+        if not date_value:
+            return ""
 
-    csrf.init_app(app)
-
-    @app.template_filter("int0")
-    def int0(v):
-        if v is None:
-            return 0
         try:
-            return int(round(float(v)))
+            s = str(date_value).strip()
+            if " " in s:
+                s = s.split(" ", 1)[0]
+
+            if "T" in s:
+                s = s.split("T", 1)[0]
+
+            year, month, day = s.split("-")
+            return f"{day}.{month}.{year[-2:]}"
         except Exception:
-            return v
+            return str(date_value)
+
 
     app.config['STATIC_VER'] = 2
 
