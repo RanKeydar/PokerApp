@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}פנקס הקטן | סטטיסטיקות{% endblock %}
+{% block subtitle %}סטטיסטיקות כלליות{% endblock %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/player-detail.css', v='20260513-5') }}">
+{% endblock %}
+
+{% block content %}
+<div class="stats-page">
+
+  <div class="stats-page-header">
+    <h2>סטטיסטיקות כלליות</h2>
+    <div class="subnote">נתוני קאש — כל הזמנים</div>
+  </div>
+
+  <!-- ===== KPI CARDS ===== -->
+  <section class="stats-section">
+    <h3 class="stats-section-title">סיכום כללי</h3>
+    <div class="stats-kpi-grid">
+
+      <div class="stats-kpi-card">
+        <div class="stats-kpi-icon">🃏</div>
+        <div class="stats-kpi-value">{{ kpi.cash_games }}</div>
+        <div class="stats-kpi-label">משחקי קאש</div>
+      </div>
+
+      <div class="stats-kpi-card">
+        <div class="stats-kpi-icon">⚔️</div>
+        <div class="stats-kpi-value">{{ kpi.harbo_games }}</div>
+        <div class="stats-kpi-label">משחקי חרבו</div>
+      </div>
+
+      <div class="stats-kpi-card">
+        <div class="stats-kpi-icon">👥</div>
+        <div class="stats-kpi-value">{{ kpi.total_players }}</div>
+        <div class="stats-kpi-label">שחקנים ייחודיים</div>
+      </div>
+
+      <div class="stats-kpi-card">
+        <div class="stats-kpi-icon">📊</div>
+        <div class="stats-kpi-value">{{ kpi.avg_players_per_game }}</div>
+        <div class="stats-kpi-label">שחקנים ממוצע למשחק</div>
+      </div>
+
+      <div class="stats-kpi-card">
+        <div class="stats-kpi-icon">💰</div>
+        <div class="stats-kpi-value">₪{{ kpi.avg_pot | int }}</div>
+        <div class="stats-kpi-label">קופת ערב ממוצעת</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== RECORDS ===== -->
+  <section class="stats-section">
+    <h3 class="stats-section-title">שיאים — קאש</h3>
+    <div class="stats-records-grid">
+
+      {% if record_win %}
+      <div class="stats-record-card win-card">
+        <div class="stats-record-icon">🏆</div>
+        <div class="stats-record-label">רווח בודד מקסימלי</div>
+        <div class="stats-record-amount pos">+₪{{ record_win.profit | int }}</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=record_win.player_id) }}">{{ record_win.player_name }}</a>
+        </div>
+        <div class="stats-record-date">
+          <a href="{{ url_for('main.game_results', game_id=record_win.game_id) }}">{{ record_win.date_il }}</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if record_loss %}
+      <div class="stats-record-card loss-card">
+        <div class="stats-record-icon">📉</div>
+        <div class="stats-record-label">הפסד בודד מקסימלי</div>
+        <div class="stats-record-amount neg">-₪{{ record_loss.profit | abs | int }}</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=record_loss.player_id) }}">{{ record_loss.player_name }}</a>
+        </div>
+        <div class="stats-record-date">
+          <a href="{{ url_for('main.game_results', game_id=record_loss.game_id) }}">{{ record_loss.date_il }}</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if biggest_pot %}
+      <div class="stats-record-card pot-card">
+        <div class="stats-record-icon">🔥</div>
+        <div class="stats-record-label">הערב הכי חזק</div>
+        <div class="stats-record-amount neutral">₪{{ biggest_pot.total_pot | int }}</div>
+        <div class="stats-record-player">{{ biggest_pot.players_count }} שחקנים{% if biggest_pot.location %} · {{ biggest_pot.location }}{% endif %}</div>
+        <div class="stats-record-date">
+          <a href="{{ url_for('main.game_results', game_id=biggest_pot.game_id) }}">{{ biggest_pot.date_il }}</a>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if best_player %}
+      <div class="stats-record-card best-card">
+        <div class="stats-record-icon">⭐</div>
+        <div class="stats-record-label">המרוויח הגדול ביותר</div>
+        <div class="stats-record-amount pos">+₪{{ best_player.total_profit | int }}</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=best_player.player_id) }}">{{ best_player.player_name }}</a>
+        </div>
+        <div class="stats-record-date">סה"כ קאש</div>
+      </div>
+      {% endif %}
+
+      {% if worst_player %}
+      <div class="stats-record-card worst-card">
+        <div class="stats-record-icon">💸</div>
+        <div class="stats-record-label">המפסיד הגדול ביותר</div>
+        <div class="stats-record-amount neg">₪{{ worst_player.total_profit | int }}</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=worst_player.player_id) }}">{{ worst_player.player_name }}</a>
+        </div>
+        <div class="stats-record-date">סה"כ קאש</div>
+      </div>
+      {% endif %}
+
+      {% if most_active %}
+      <div class="stats-record-card active-card">
+        <div class="stats-record-icon">🎯</div>
+        <div class="stats-record-label">שחקן הכי פעיל</div>
+        <div class="stats-record-amount neutral">{{ most_active.games_count }} משחקים</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=most_active.player_id) }}">{{ most_active.player_name }}</a>
+        </div>
+        <div class="stats-record-date">קאש — כל הזמנים</div>
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  <!-- ===== CHARTS ===== -->
+  <section class="stats-section">
+    <h3 class="stats-section-title">גרפים</h3>
+
+    <div class="stats-charts-grid">
+
+      <div class="stats-chart-card">
+        <div class="stats-chart-title">משחקים לפי שנה</div>
+        <div class="stats-chart-wrap">
+          <canvas id="yearlyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="stats-chart-card">
+        <div class="stats-chart-title">פעילות לפי חודש (קאש)</div>
+        <div class="stats-chart-wrap">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const isDark = document.documentElement.classList.contains('dark') ||
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor  = 'rgba(255,255,255,0.08)';
+  const labelColor = '#9ca3af';
+  const tooltipBg  = '#1e2d22';
+
+  Chart.defaults.font.family = "'Heebo', 'Arial', sans-serif";
+  Chart.defaults.color = labelColor;
+
+  const baseOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: labelColor, boxWidth: 14, padding: 14 } },
+      tooltip: {
+        backgroundColor: tooltipBg,
+        titleColor: '#f1f5f9',
+        bodyColor: '#d1fae5',
+        borderColor: 'rgba(74,222,128,.3)',
+        borderWidth: 1,
+        rtl: true,
+        textDirection: 'rtl',
+      }
+    },
+    scales: {
+      x: { ticks: { color: labelColor }, grid: { color: gridColor } },
+      y: { ticks: { color: labelColor }, grid: { color: gridColor }, beginAtZero: true }
+    }
+  };
+
+  // ---- Yearly chart (stacked bar) ----
+  const years      = {{ chart_years | safe }};
+  const cashData   = {{ chart_cash | safe }};
+  const harboData  = {{ chart_harbo | safe }};
+
+  new Chart(document.getElementById('yearlyChart'), {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'קאש',
+          data: cashData,
+          backgroundColor: 'rgba(74,222,128,0.75)',
+          borderColor: 'rgba(74,222,128,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'חרבו',
+          data: harboData,
+          backgroundColor: 'rgba(99,179,237,0.65)',
+          borderColor: 'rgba(99,179,237,1)',
+          borderWidth: 1,
+          borderRadius: 4,
+        }
+      ]
+    },
+    options: {
+      ...baseOpts,
+      plugins: { ...baseOpts.plugins },
+      scales: {
+        ...baseOpts.scales,
+        x: { ...baseOpts.scales.x, stacked: false },
+        y: { ...baseOpts.scales.y, stacked: false }
+      }
+    }
+  });
+
+  // ---- Monthly activity chart ----
+  const months     = {{ chart_months | safe }};
+  const monthsData = {{ chart_months_data | safe }};
+
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'משחקי קאש',
+        data: monthsData,
+        backgroundColor: 'rgba(251,191,36,0.72)',
+        borderColor: 'rgba(251,191,36,1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: { ...baseOpts }
+  });
+
+})();
+</script>
+{% endblock %}

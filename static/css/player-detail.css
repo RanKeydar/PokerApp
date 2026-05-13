@@ -146,7 +146,7 @@
 
 .view-switch.view-switch-top {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
     margin: 18px 0 14px;
 }
@@ -350,7 +350,7 @@
     }
 
     .view-switch.view-switch-top {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
     }
 }
@@ -372,4 +372,223 @@
     .stat-card {
         padding: 16px 14px;
     }
+}
+
+/* ── locked / private stat card ── */
+.stat-card-locked {
+  opacity: 0.65;
+}
+.stat-locked-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+/* ── privacy toggle ── */
+.privacy-toggle-wrap {
+  margin-top: 10px;
+}
+.privacy-btn {
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  opacity: 0.8;
+}
+.privacy-btn:hover {
+  opacity: 1;
+}
+
+/* ── cash-only footnote ── */
+.stat-footnote {
+  font-size: 0.7rem;
+  opacity: 0.55;
+  margin-top: 4px;
+}
+
+/* ============================================================
+   Analytics section (Phase C)
+   ============================================================ */
+
+.analytics-section {
+    margin-top: 32px;
+}
+
+/* KPI cards row — same 2-col grid */
+.analytics-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+/* Chart tab bar */
+.chart-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.chart-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-weight: 800;
+    font-size: 15px;
+    border-radius: 14px;
+    border: 1px solid #b8c4d3;
+    background: #e8edf3;
+    color: #243041;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+    font-family: inherit;
+}
+
+.chart-tab:hover {
+    background: #dbe4ee;
+    color: #111827;
+    border-color: #93a4b8;
+}
+
+.chart-tab.active {
+    background: #2f3447;
+    color: #ffffff;
+    border-color: #2f3447;
+    box-shadow: 0 2px 6px rgba(47, 52, 71, .18);
+}
+
+/* Chart canvas wrapper */
+.chart-wrap {
+    background: rgba(255, 255, 255, .98);
+    border-radius: 22px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .12);
+    padding: 20px 16px 16px;
+    position: relative;
+}
+
+.chart-wrap canvas {
+    max-height: 340px;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .analytics-kpi-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .chart-tabs {
+        gap: 6px;
+    }
+
+    .chart-tab {
+        font-size: 13px;
+        padding: 8px 8px;
+        min-height: 40px;
+    }
+
+    .chart-wrap canvas {
+        max-height: 260px;
+    }
+}
+
+/* ── Anchor button to analytics section ── */
+.analytics-anchor-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 10px 16px;
+    margin: 10px 0 4px;
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 14px;
+    color: #fff;
+    font-weight: 800;
+    font-size: .92rem;
+    text-decoration: none;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+}
+.analytics-anchor-btn:hover {
+    background: rgba(255,255,255,.22);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ============================================================
+   Year-collapsible table rows (Phase C)
+   ============================================================ */
+
+.yr-hidden { display: none !important; }
+
+.year-header-row td {
+    background: linear-gradient(90deg, #1e3a2f 0%, #1a3327 100%) !important;
+    color: #a7f3d0;
+    font-weight: 900;
+    font-size: .95rem;
+    padding: 10px 14px !important;
+    border-bottom: 2px solid rgba(167,243,208,.18) !important;
+    user-select: none;
+}
+
+.year-header-row:hover td {
+    background: linear-gradient(90deg, #254d3e 0%, #1f3d30 100%) !important;
+}
+
+.year-header-cell {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+}
+
+.year-label {
+    font-size: 1.05rem;
+    letter-spacing: .04em;
+}
+
+.year-meta {
+    font-size: .78rem;
+    opacity: .7;
+    font-weight: 700;
+}
+
+.year-chevron {
+    margin-inline-start: auto;
+    font-size: .85rem;
+    opacity: .8;
+    transition: opacity .15s;
+}
+
+.year-header-row:hover .year-chevron { opacity: 1; }
+
+/* Mobile: year header stays full-width */
+@media (max-width: 700px) {
+    .year-header-row td {
+        display: flex !important;
+        border-radius: 10px;
+        margin-bottom: 4px;
+    }
+}
+
+/* ── Back to top link ── */
+.back-to-top-btn {
+    display: block;
+    text-align: center;
+    margin: 28px auto 12px;
+    padding: 10px 20px;
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 14px;
+    color: #fff;
+    font-weight: 800;
+    font-size: .9rem;
+    text-decoration: none;
+    width: fit-content;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+}
+.back-to-top-btn:hover {
+    background: rgba(255,255,255,.22);
+    color: #fff;
+    text-decoration: none;
 }

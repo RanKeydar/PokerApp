@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}פוקר אפ{% endblock %}</title>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v='20260513-3') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260513-3') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v='20260513-4') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260513-4') }}">
   {% block page_css %}{% endblock %}
 
   <!-- Google Analytics GA4 -->
@@ -48,6 +48,11 @@
           שחקנים
         </a>
 
+        <a class="nav-chip {% if request.endpoint == 'main.stats' %}active{% endif %}"
+          href="{{ url_for('main.stats') }}">
+          סטטיסטיקות
+        </a>
+
         {% if current_user and current_user["role"] == "admin" %}
         <a class="nav-chip nav-chip-accent {% if request.endpoint == 'main.add_game' %}active{% endif %}"
           href="{{ url_for('main.add_game') }}">
@@ -66,6 +71,11 @@
         </div>
         {% endif %}
 
+        {% if current_user %}
+        <a class="icon-circle" href="{{ url_for('auth.change_password') }}" aria-label="שינוי סיסמה" title="שינוי סיסמה">
+          🔑
+        </a>
+        {% endif %}
         <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="התנתקות"
            onclick="gtag('event','logout');">
           ←

@@ -8,7 +8,7 @@ def get_current_user():
         return None
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, username, role FROM users WHERE id = ?;", (uid,))
+    cur.execute("SELECT id, username, role, player_id FROM users WHERE id = ?;", (uid,))
     user = cur.fetchone()
     conn.close()
     return user

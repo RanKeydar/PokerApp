@@ -2,24 +2,12 @@
 migrate_phase_b.py
 ------------------
 Phase B migration: add multi-table infrastructure to an existing DB.
-
-Safe to run multiple times (idempotent):
-  - Creates poker_tables / user_tables if they do not exist.
-  - Inserts default table "sholchan habayit" (id=1) if missing.
-  - Adds table_id column to games if it does not exist.
-  - Assigns every existing user to the home table with the correct role
-    (admin/magician -> admin, everyone else -> member).
-
-Existing users and data are untouched beyond this assignment.
+Safe to run multiple times (idempotent).
 """
 
 import sqlite3
 import sys
 from pathlib import Path
-
-# ---------------------------------------------------------------------------
-# Locate DB
-# ---------------------------------------------------------------------------
 
 DEFAULT_DB = Path(__file__).resolve().parent.parent / "poker.db"
 
@@ -29,10 +17,6 @@ def get_db_path():
         return Path(sys.argv[1])
     return DEFAULT_DB
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def column_exists(conn, table, column):
     rows = conn.execute("PRAGMA table_info(%s)" % table).fetchall()
@@ -45,10 +29,6 @@ def table_exists(conn, table):
     ).fetchone()
     return row is not None
 
-
-# ---------------------------------------------------------------------------
-# Migration steps
-# ---------------------------------------------------------------------------
 
 def step_create_poker_tables(conn):
     if not table_exists(conn, "poker_tables"):
@@ -82,8 +62,7 @@ def step_create_user_tables(conn):
             ")"
         )
         conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_user_tables_table_id"
-            "  ON user_tables(table_id)"
+            "CREATE INDEX IF NOT EXISTS idx_user_tables_table_id ON user_tables(table_id)"
         )
         print("  [+] Created table: user_tables")
     else:
@@ -96,8 +75,7 @@ def step_insert_home_table(conn):
     ).fetchone()
     if not existing:
         conn.execute(
-            "INSERT INTO poker_tables (id, name, description, is_public)"
-            " VALUES (1, ?, ?, 1)",
+            "INSERT INTO poker_tables (id, name, description, is_public) VALUES (1, ?, ?, 1)",
             ("sholchan habayit", "The main table")
         )
         print("  [+] Inserted home table (id=1)")
@@ -107,18 +85,28 @@ def step_insert_home_table(conn):
 
 def step_add_table_id_to_games(conn):
     if not column_exists(conn, "games", "table_id"):
-        # SQLite ALTER TABLE ADD COLUMN with DEFAULT — existing rows get DEFAULT 1.
-        # REFERENCES clause cannot be used with NOT NULL DEFAULT in SQLite ALTER TABLE;
-        # FK enforcement is handled at runtime via PRAGMA foreign_keys = ON.
         conn.execute(
             "ALTER TABLE games ADD COLUMN table_id INTEGER NOT NULL DEFAULT 1"
         )
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_games_table_id ON games(table_id)"
         )
-        print("  [+] Added games.table_id (default=1, all existing games -> home table)")
+        print("  [+] Added games.table_id (default=1)")
     else:
         print("  [=] games.table_id already exists")
+
+
+def step_add_player_id_to_users(conn):
+    if not column_exists(conn, "users", "player_id"):
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN player_id INTEGER NULL"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_users_player_id ON users(player_id)"
+        )
+        print("  [+] Added users.player_id (nullable FK to players)")
+    else:
+        print("  [=] users.player_id already exists")
 
 
 def step_assign_users_to_home_table(conn):
@@ -138,7 +126,6 @@ def step_assign_users_to_home_table(conn):
             skipped += 1
             continue
 
-        # admin / magician get table-admin role; everyone else is a member
         table_role = "admin" if user["role"] in ("admin", "magician") else "member"
         conn.execute(
             "INSERT INTO user_tables (user_id, table_id, role) VALUES (?, 1, ?)",
@@ -152,9 +139,15 @@ def step_assign_users_to_home_table(conn):
         print("  [=] %d user(s) already assigned, skipped" % skipped)
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+
+def step_add_private_stats_to_users(conn):
+    if not column_exists(conn, "users", "private_stats"):
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN private_stats INTEGER NOT NULL DEFAULT 0"
+        )
+        print("  [+] Added users.private_stats (default=0 = public)")
+    else:
+        print("  [=] users.private_stats already exists")
 
 def migrate(db_path):
     db_path = Path(db_path)
@@ -173,7 +166,9 @@ def migrate(db_path):
         step_create_user_tables(conn)
         step_insert_home_table(conn)
         step_add_table_id_to_games(conn)
+        step_add_player_id_to_users(conn)
         step_assign_users_to_home_table(conn)
+        step_add_private_stats_to_users(conn)
         conn.commit()
         print("\n[OK] Phase B migration complete.\n")
     except Exception as exc:

@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app, session as flask_session
 from pokerapp.services.auth import login_required, role_required, get_current_user
 from pokerapp.db.connection import get_db_connection
@@ -282,6 +283,30 @@ def home():
         recent_games = get_complete_recent_games(limit=5, year=selected_year)
         recent_games = enrich_recent_games_with_highlights(conn, recent_games)
 
+    # ── All-time record: biggest single-game profit ────────────────────
+    conn2 = get_db_connection()
+    if view == "cash":
+        _type_filter = "AND g.game_type = 'cash'"
+    elif view == "harbo":
+        _type_filter = "AND g.game_type = 'harbo'"
+    else:
+        _type_filter = ""
+    record_game = conn2.execute(f"""
+        SELECT p.id AS player_id, p.name AS player_name,
+               gr.profit, g.date, g.id AS game_id
+        FROM game_results gr
+        JOIN players p ON p.id = gr.player_id
+        JOIN games g ON g.id = gr.game_id
+        WHERE gr.profit IS NOT NULL
+          AND g.date LIKE '____-__-__'
+          {_type_filter}
+        ORDER BY gr.profit DESC
+        LIMIT 1
+    """).fetchone()
+    record_game = dict(record_game) if record_game else None
+    conn2.close()
+    # ── End record ─────────────────────────────────────────────────────
+
     conn.close()
 
     ga_login = flask_session.pop("_ga_login", False)
@@ -296,6 +321,7 @@ def home():
         top_players=top_players,
         recent_games=recent_games,
         ga_login=ga_login,
+        record_game=record_game,
     )
 
 # ------------------------------
@@ -522,6 +548,198 @@ def players():
         show=show,
         current_user=get_current_user(),
     )
+
+# ------------------------------
+# עמוד סטטיסטיקות כלליות
+# ------------------------------
+@bp.route("/stats")
+@login_required
+def stats():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # --- KPI counts ---
+    cur.execute("""
+        SELECT
+            COUNT(CASE WHEN game_type='cash'  THEN 1 END) AS cash_games,
+            COUNT(CASE WHEN game_type='harbo' THEN 1 END) AS harbo_games,
+            COUNT(*) AS total_games
+        FROM games
+    """)
+    kpi_counts = dict(cur.fetchone())
+
+    # Unique players who played at least one game
+    cur.execute("""
+        SELECT COUNT(DISTINCT player_id) AS total_players
+        FROM game_results
+    """)
+    kpi_counts["total_players"] = cur.fetchone()["total_players"]
+
+    # Avg players per cash game
+    cur.execute("""
+        SELECT ROUND(AVG(cnt), 1) AS avg_players
+        FROM (
+            SELECT game_id, COUNT(*) AS cnt
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE g.game_type = 'cash'
+            GROUP BY gr.game_id
+        )
+    """)
+    row = cur.fetchone()
+    kpi_counts["avg_players_per_game"] = row["avg_players"] if row else 0
+
+    # Avg buyin per cash game (avg total pot)
+    cur.execute("""
+        SELECT ROUND(AVG(pot), 0) AS avg_pot
+        FROM (
+            SELECT gr.game_id, SUM(gr.buyin) AS pot
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE g.game_type = 'cash'
+            GROUP BY gr.game_id
+        )
+    """)
+    row = cur.fetchone()
+    kpi_counts["avg_pot"] = row["avg_pot"] if row and row["avg_pot"] else 0
+
+    # --- Records ---
+    # Biggest single win (cash)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               gr.profit, g.date, g.id AS game_id
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash' AND gr.profit > 0
+        ORDER BY gr.profit DESC LIMIT 1
+    """)
+    record_win = dict(cur.fetchone()) if cur.rowcount != 0 else None
+    if record_win and record_win.get("date"):
+        d = record_win["date"]
+        record_win["date_il"] = f"{d[8:10]}.{d[5:7]}.{d[2:4]}"
+
+    # Biggest single loss (cash)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               gr.profit, g.date, g.id AS game_id
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash' AND gr.profit < 0
+        ORDER BY gr.profit ASC LIMIT 1
+    """)
+    record_loss = dict(cur.fetchone()) if cur.rowcount != 0 else None
+    if record_loss and record_loss.get("date"):
+        d = record_loss["date"]
+        record_loss["date_il"] = f"{d[8:10]}.{d[5:7]}.{d[2:4]}"
+
+    # Most active player (most cash games)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               COUNT(*) AS games_count
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.player_id
+        ORDER BY games_count DESC LIMIT 1
+    """)
+    most_active = dict(cur.fetchone()) if cur.rowcount != 0 else None
+
+    # Best overall player (cash, all-time profit)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               ROUND(SUM(gr.profit), 0) AS total_profit
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.player_id
+        ORDER BY total_profit DESC LIMIT 1
+    """)
+    best_player = dict(cur.fetchone()) if cur.rowcount != 0 else None
+
+    # Worst overall player (cash, all-time loss)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               ROUND(SUM(gr.profit), 0) AS total_profit
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.player_id
+        ORDER BY total_profit ASC LIMIT 1
+    """)
+    worst_player = dict(cur.fetchone()) if cur.rowcount != 0 else None
+
+    # Biggest single pot (cash) - sum of buyins in one game
+    cur.execute("""
+        SELECT g.id AS game_id, g.date, g.location,
+               ROUND(SUM(gr.buyin), 0) AS total_pot,
+               COUNT(*) AS players_count
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.game_id
+        ORDER BY total_pot DESC LIMIT 1
+    """)
+    biggest_pot = dict(cur.fetchone()) if cur.rowcount != 0 else None
+    if biggest_pot and biggest_pot.get("date"):
+        d = biggest_pot["date"]
+        biggest_pot["date_il"] = f"{d[8:10]}.{d[5:7]}.{d[2:4]}"
+
+    # --- Chart: games per year (cash + harbo) ---
+    cur.execute("""
+        SELECT substr(date, 1, 4) AS year,
+               COUNT(CASE WHEN game_type='cash'  THEN 1 END) AS cash_count,
+               COUNT(CASE WHEN game_type='harbo' THEN 1 END) AS harbo_count
+        FROM games
+        GROUP BY year
+        ORDER BY year ASC
+    """)
+    yearly_rows = cur.fetchall()
+    chart_years   = [r["year"] for r in yearly_rows]
+    chart_cash    = [r["cash_count"] for r in yearly_rows]
+    chart_harbo   = [r["harbo_count"] for r in yearly_rows]
+
+    # --- Chart: activity by month (1-12, across all years, cash) ---
+    month_names = ["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"]
+    cur.execute("""
+        SELECT CAST(substr(date, 6, 2) AS INTEGER) AS month,
+               COUNT(*) AS cnt
+        FROM games
+        WHERE game_type = 'cash'
+        GROUP BY month
+        ORDER BY month ASC
+    """)
+    month_raw = {r["month"]: r["cnt"] for r in cur.fetchall()}
+    chart_months      = month_names
+    chart_months_data = [month_raw.get(i, 0) for i in range(1, 13)]
+
+    conn.close()
+
+    # fix fetchone returning None for no-match
+    def _safe(r):
+        return r if r and (isinstance(r, dict) and any(r.values())) else None
+
+    return render_template(
+        "stats.html",
+        kpi=kpi_counts,
+        record_win=record_win,
+        record_loss=record_loss,
+        most_active=most_active,
+        best_player=best_player,
+        worst_player=worst_player,
+        biggest_pot=biggest_pot,
+        chart_years=json.dumps(chart_years),
+        chart_cash=json.dumps(chart_cash),
+        chart_harbo=json.dumps(chart_harbo),
+        chart_months=json.dumps(chart_months),
+        chart_months_data=json.dumps(chart_months_data),
+        current_user=get_current_user(),
+    )
+
 # ------------------------------
 # מסך אדמין לאישור משתמשים
 # ------------------------------
@@ -1303,6 +1521,36 @@ def player_detail(player_id):
     summary["year_cash_games"] = len(games_2026_cash)
     summary["year_harbo_games"] = len(games_2026_harbo)
 
+    # ── Cash-only totals for the summary cards ──────────────────────────
+    row = cur.execute(
+        """
+        SELECT
+            ROUND(COALESCE(SUM(gr.profit), 0), 2) AS total_cash_profit
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        WHERE gr.player_id = ? AND g.game_type = 'cash'
+        """,
+        (player_id,)
+    ).fetchone()
+    summary["total_cash_profit"] = row["total_cash_profit"] if row else 0
+
+    row = cur.execute(
+        """
+        SELECT
+            ROUND(COALESCE(SUM(gr.profit), 0), 2) AS year_cash_profit,
+            ROUND(COALESCE(AVG(gr.profit), 0), 2) AS year_cash_avg
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        WHERE gr.player_id = ?
+          AND g.game_type = 'cash'
+          AND substr(g.date, 1, 4) = ?
+        """,
+        (player_id, str(current_year))
+    ).fetchone()
+    summary["year_cash_profit"] = row["year_cash_profit"] if row else 0
+    summary["year_cash_avg"]    = row["year_cash_avg"]    if row else 0
+
+
     best_game = None
     worst_game = None
 
@@ -1322,7 +1570,101 @@ def player_detail(player_id):
 
     conn.close()
 
+    user = get_current_user()
+
+    # Check if the player's linked user has opted into private stats
+    conn2 = get_db_connection()
+    linked = conn2.execute(
+        "SELECT private_stats FROM users WHERE player_id = ?", (player_id,)
+    ).fetchone()
+    conn2.close()
+    is_private = linked is not None and linked["private_stats"] == 1
+
+    can_see_private = (
+        not is_private
+        or user is None  # shouldn't happen (login_required), but safe
+        or user["role"] in ("admin", "magician")
+        or user["player_id"] == player_id
+    )
+
+    # Is this user the owner of this player page?
+    is_own_page = user is not None and user["player_id"] == player_id
+
+
     subtitle = f'{summary["total_games"]} משחקים סה"כ - {summary["year_games"]} משחקים ב-{current_year}'
+
+    # ── Year-grouped games for collapsible table ──────────────────────
+    from collections import OrderedDict as _OD
+
+    def _group_by_year(glist):
+        by_date = sorted(glist, key=lambda g: (g.get("date", ""), g.get("game_id", 0)), reverse=True)
+        od = _OD()
+        for g in by_date:
+            yr = g["date"][:4] if g.get("date") and len(str(g.get("date", ""))) >= 4 else "?"
+            g["year"] = yr
+            od.setdefault(yr, []).append(g)
+        return list(od.items())
+
+    games_cash_grouped     = _group_by_year([g for g in games if g.get("game_type") == "cash"])
+    games_harbo_grouped    = _group_by_year([g for g in games if g.get("game_type") == "harbo"])
+    games_complete_grouped = _group_by_year(games)
+    # ── End year-grouping ─────────────────────────────────────────────
+
+    # ── Analytics / Charts ─────────────────────────────────────────────
+    _valid = [
+        g for g in games
+        if g.get("date") and len(str(g.get("date", ""))) >= 10
+        and g.get("profit") is not None
+        and g.get("game_type") == "cash"
+    ]
+    _sorted_asc = sorted(_valid, key=lambda g: (g.get("date", ""), g.get("game_id", 0)))
+
+    _cumulative = 0.0
+    _chart_data = []
+    for _g in _sorted_asc:
+        _cumulative += float(_g["profit"])
+        _chart_data.append({
+            "date": _g["date"][:10],
+            "profit": round(float(_g["profit"])),
+            "cumulative": round(_cumulative),
+            "game_type": _g.get("game_type", ""),
+        })
+
+    _wins = sum(1 for g in _valid if float(g["profit"]) > 0)
+    _total_count = len(_valid)
+    win_rate = round(_wins / _total_count * 100) if _total_count > 0 else 0
+    wins_count = _wins
+    games_analytics_count = _total_count
+
+    # Streak — from the most recent game backwards
+    streak_count = 0
+    streak_type = None
+    for _g in sorted(_valid, key=lambda g: (g.get("date", ""), g.get("game_id", 0)), reverse=True):
+        _p = float(_g["profit"])
+        _gt = "win" if _p > 0 else ("loss" if _p < 0 else None)
+        if _gt is None:
+            continue
+        if streak_type is None:
+            streak_type = _gt
+            streak_count = 1
+        elif _gt == streak_type:
+            streak_count += 1
+        else:
+            break
+
+    # Monthly aggregation
+    _monthly: dict[str, float] = {}
+    for _g in _sorted_asc:
+        _mk = _g["date"][:7]
+        _monthly[_mk] = _monthly.get(_mk, 0.0) + float(_g["profit"])
+    _monthly_data = [
+        {"month": k, "profit": round(float(v))}
+        for k, v in sorted(_monthly.items())
+    ]
+
+    chart_data_json = json.dumps(_chart_data, ensure_ascii=False)
+    monthly_data_json = json.dumps(_monthly_data, ensure_ascii=False)
+    # ── End Analytics ──────────────────────────────────────────────────
 
     return render_template(
         "player_detail.html",
@@ -1333,7 +1675,40 @@ def player_detail(player_id):
         games_2026_harbo=games_2026_harbo,
         year=current_year,
         subtitle=subtitle,
+        view=view,
         sort=sort,
         direction=direction,
-        current_user=get_current_user(),
+        current_user=user,
+        can_see_private=can_see_private,
+        is_own_page=is_own_page,
+        is_private=is_private,
+        # year-grouped tables
+        games_cash_grouped=games_cash_grouped,
+        games_harbo_grouped=games_harbo_grouped,
+        games_complete_grouped=games_complete_grouped,
+        # analytics
+        chart_data_json=chart_data_json,
+        monthly_data_json=monthly_data_json,
+        win_rate=win_rate,
+        wins_count=wins_count,
+        games_analytics_count=games_analytics_count,
+        streak_count=streak_count,
+        streak_type=streak_type,
     )
+
+
+@bp.route("/players/<int:player_id>/privacy", methods=["POST"])
+@login_required
+def player_toggle_privacy(player_id):
+    user = get_current_user()
+    if user is None or user["player_id"] != player_id:
+        abort(403)
+    new_val = 1 if request.form.get("private_stats") == "1" else 0
+    conn = get_db_connection()
+    conn.execute(
+        "UPDATE users SET private_stats = ? WHERE player_id = ?",
+        (new_val, player_id)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("main.player_detail", player_id=player_id))

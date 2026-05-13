@@ -214,6 +214,29 @@
         {% else %}
         <div class="empty">אין משחקים עדיין.</div>
         {% endif %}
+
+        {% if record_game %}
+        {% set rd = record_game["date"] %}
+        {% set rd_fmt %}{{ rd[8:10] }}.{{ rd[5:7] }}.{{ rd[2:4] }}{% endset %}
+        <div class="record-box">
+          <div class="record-crown">🏆</div>
+          <div class="record-body">
+            <div class="record-label">שיא כל הזמנים</div>
+            <div class="record-player">
+              <a href="{{ url_for('main.player_detail', player_id=record_game['player_id']) }}">
+                {{ record_game["player_name"] }}
+              </a>
+            </div>
+            <div class="record-amount">+₪{{ "%.0f"|format(record_game["profit"]) }}</div>
+            <div class="record-date">
+              <a href="{{ url_for('main.game_results', game_id=record_game['game_id']) }}">
+                {{ rd_fmt }}
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
       </div>
   </section>
 </div>

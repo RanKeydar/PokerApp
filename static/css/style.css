@@ -2198,6 +2198,10 @@ tbody tr:nth-child(even) {
   overflow-x: auto;
   padding-bottom: 4px;
 }
+@media (max-width: 600px) {
+  .recent-cards { flex-direction: column; overflow-x: visible; }
+  .recent-card { flex: none; }
+}
 
 .recent-card {
   flex: 1 1 0;
@@ -2272,36 +2276,165 @@ tbody tr:nth-child(even) {
 .recent-line-value.pos { color: #15803d; }
 .recent-line-value.neg { color: #b91c1c; }
 
-.recent-action {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-  margin-top: 2px;
+.record-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 18px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #1a2e1f 0%, #0f2018 100%);
+    border: 1px solid rgba(212,160,23,.40);
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.22);
+}
+.record-crown { font-size: 2.2rem; line-height: 1; flex-shrink: 0; }
+@media (max-width: 600px) {
+  .record-box { flex-direction: column; align-items: center; text-align: center; padding: 14px 16px; }
+}
+.record-body { display: flex; flex-direction: column; gap: 3px; text-align: center; }
+.record-label { font-size: .7rem; font-weight: 900; letter-spacing: .08em; color: #d4a017; text-transform: uppercase; }
+.record-player a { font-size: 1.1rem; font-weight: 900; color: #f1f5f9; text-decoration: none; }
+.record-player a:hover { color: #fde68a; }
+.record-amount { font-size: 1.3rem; font-weight: 900; color: #4ade80; direction: ltr; unicode-bidi: isolate; text-align: center; display: block; }
+.record-date a { font-size: .78rem; color: rgba(255,255,255,.45); font-weight: 700; text-decoration: none; }
+.record-date a:hover { color: rgba(255,255,255,.8); }
+
+
+/* =========================================================
+   עמוד סטטיסטיקות כלליות
+   ========================================================= */
+
+.stats-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 0 48px;
 }
 
-/* ===== Mobile: stack vertically, keep card style ===== */
+.stats-page-header {
+  padding: 20px 0 12px;
+}
+.stats-page-header h2 {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text, #f1f5f9);
+}
+.stats-page-header .subnote {
+  font-size: .78rem;
+  color: #6b7280;
+}
+
+.stats-section {
+  margin-bottom: 32px;
+}
+.stats-section-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #4ade80;
+  margin: 0 0 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(74,222,128,.18);
+}
+
+/* ---- KPI grid ---- */
+.stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+.stats-kpi-card {
+  background: rgba(15,118,110,.10);
+  border: 1px solid rgba(103,232,249,.20);
+  border-radius: 14px;
+  padding: 16px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.stats-kpi-icon { font-size: 1.6rem; line-height: 1; }
+.stats-kpi-value {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #f1f5f9;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.stats-kpi-label { font-size: .72rem; color: #9ca3af; font-weight: 600; }
+
+/* ---- Records grid ---- */
+.stats-records-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.stats-record-card {
+  background: linear-gradient(135deg, #1a2e1f 0%, #0f2018 100%);
+  border: 1px solid rgba(212,160,23,.30);
+  border-radius: 16px;
+  padding: 16px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.stats-record-card.win-card   { border-color: rgba(74,222,128,.40); }
+.stats-record-card.loss-card  { border-color: rgba(248,113,113,.35); }
+.stats-record-card.pot-card   { border-color: rgba(251,191,36,.35); }
+.stats-record-card.best-card  { border-color: rgba(167,243,208,.35); }
+.stats-record-card.worst-card { border-color: rgba(248,113,113,.25); }
+.stats-record-card.active-card{ border-color: rgba(99,179,237,.35); }
+
+.stats-record-icon  { font-size: 1.5rem; line-height: 1; }
+.stats-record-label { font-size: .7rem; font-weight: 700; color: #d4a017; text-transform: uppercase; letter-spacing: .06em; }
+.stats-record-amount {
+  font-size: 1.2rem;
+  font-weight: 900;
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: block;
+  text-align: center;
+}
+.stats-record-amount.pos     { color: #4ade80; }
+.stats-record-amount.neg     { color: #f87171; }
+.stats-record-amount.neutral { color: #fbbf24; }
+.stats-record-player a { font-size: .92rem; font-weight: 800; color: #f1f5f9; text-decoration: none; }
+.stats-record-player a:hover { color: #fde68a; }
+.stats-record-date, .stats-record-date a {
+  font-size: .72rem;
+  color: rgba(255,255,255,.40);
+  font-weight: 600;
+  text-decoration: none;
+}
+.stats-record-date a:hover { color: rgba(255,255,255,.75); }
+
+/* ---- Charts ---- */
+.stats-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
 @media (max-width: 640px) {
-  /* כותרת מיושרת למרכז */
-  .brand-copy {
-    flex: 1;
-    text-align: center;
-  }
-
-  /* כרטיסיות משחקים — עמודה אנכית במובייל */
-  .recent-cards {
-    flex-direction: column;
-    gap: 10px;
-    overflow-x: unset;
-    padding-bottom: 0;
-  }
-
-  .recent-card {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: none;
-    background: rgba(15, 118, 110, 0.09);
-    border: 1px solid rgba(103, 232, 249, 0.30);
-    border-radius: 12px;
-    padding: 9px 10px;
-  }
+  .stats-charts-grid { grid-template-columns: 1fr; }
+  .stats-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-records-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.stats-chart-card {
+  background: rgba(15,32,24,.70);
+  border: 1px solid rgba(74,222,128,.15);
+  border-radius: 16px;
+  padding: 16px;
+}
+.stats-chart-title {
+  font-size: .82rem;
+  font-weight: 800;
+  color: #9ca3af;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.stats-chart-wrap {
+  position: relative;
+  height: 220px;
 }

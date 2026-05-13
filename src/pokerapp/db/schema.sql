@@ -1,11 +1,13 @@
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'user'
-    CHECK (role IN ('admin', 'magician', 'player', 'user')),
-  is_approved INTEGER NOT NULL DEFAULT 1
-    CHECK (is_approved IN (0, 1))
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  username      TEXT    UNIQUE NOT NULL,
+  password_hash TEXT    NOT NULL,
+  role          TEXT    NOT NULL DEFAULT 'user'
+                  CHECK (role IN ('admin', 'magician', 'player', 'user')),
+  is_approved   INTEGER NOT NULL DEFAULT 1
+                  CHECK (is_approved IN (0, 1)),
+  player_id     INTEGER NULL
+                  REFERENCES players(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS players (
