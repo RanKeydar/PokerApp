@@ -246,6 +246,31 @@ search.addEventListener('blur',   () => setTimeout(() => { dropdown.hidden = tru
   document.querySelectorAll('.table-wrap').forEach(function(w) {
     w.scrollLeft = 0;
   });
+
+  gtag('event', '{{ "edit_game" if can_edit else "view_game" }}', {
+    game_id: {{ game['id'] }},
+    game_type: '{{ game["game_type"] }}',
+    game_date: '{{ game["date"] }}'
+  });
+
+  {% if can_edit %}
+  document.querySelectorAll('button[formaction*="delete"]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      gtag('event', 'delete_game', {
+        game_id: {{ game['id'] }},
+        game_type: '{{ game["game_type"] }}'
+      });
+    });
+  });
+  document.querySelectorAll('form[action*="delete"] button[type="submit"]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      gtag('event', 'delete_game', {
+        game_id: {{ game['id'] }},
+        game_type: '{{ game["game_type"] }}'
+      });
+    });
+  });
+  {% endif %}
 </script>
 {% endblock %}
 

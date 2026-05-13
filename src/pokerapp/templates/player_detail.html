@@ -202,3 +202,12 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+  gtag('event', 'view_player', {
+    player_id: {{ player.get('id') }},
+    player_name: '{{ player.get("name", "") | replace("'", "\\'") }}'
+  });
+</script>
+{% endblock %}

@@ -43,17 +43,20 @@
       <div class="panel">
         <div class="view-switch view-switch-top">
           <a class="btn {% if view == 'cash' %}primary{% else %}ghost{% endif %}"
-            href="{{ url_for('main.home', view='cash', year=selected_year, players=players_view) }}">
+            href="{{ url_for('main.home', view='cash', year=selected_year, players=players_view) }}"
+            onclick="gtag('event','view_switch',{view:'cash'});">
             קאש
           </a>
 
           <a class="btn {% if view == 'harbo' %}primary{% else %}ghost{% endif %}"
-            href="{{ url_for('main.home', view='harbo', year=selected_year, players=players_view) }}">
+            href="{{ url_for('main.home', view='harbo', year=selected_year, players=players_view) }}"
+            onclick="gtag('event','view_switch',{view:'harbo'});">
             חרבו
           </a>
 
           <a class="btn {% if view == 'complete' %}primary{% else %}ghost{% endif %}"
-            href="{{ url_for('main.home', view='complete', year=selected_year, players=players_view) }}">
+            href="{{ url_for('main.home', view='complete', year=selected_year, players=players_view) }}"
+            onclick="gtag('event','view_switch',{view:'complete'});">
             קומפלט
           </a>
         </div>
@@ -61,7 +64,8 @@
         <div class="year-selector">
           {% for year in years %}
           <a class="btn ghost {% if selected_year == year %}active{% endif %} {% if year == 'all' %}total-btn{% endif %}"
-            href="{{ url_for('main.home', view=view, year=year, players=players_view) }}">
+            href="{{ url_for('main.home', view=view, year=year, players=players_view) }}"
+            onclick="gtag('event','year_filter',{year:'{{ year }}'});">
             {% if year == 'all' %}סה״כ{% else %}{{ year }}{% endif %}
           </a>
           {% endfor %}
@@ -213,4 +217,10 @@
       </div>
   </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if ga_login %}
+<script>gtag('event', 'login');</script>
+{% endif %}
 {% endblock %}

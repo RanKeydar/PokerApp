@@ -20,6 +20,9 @@ def login():
         user = cur.fetchone()
         conn.close()
 
+        print(f"DEBUG LOGIN: username={repr(username)} password={repr(password)} user_found={user is not None}")
+        if user:
+            print(f"DEBUG CHECK: {check_password_hash(user['password_hash'], password)}")
         if user and check_password_hash(user["password_hash"], password):
             if user["is_approved"] != 1:
                 return render_template("login.html", error="המשתמש ממתין לאישור מנהל.")
@@ -27,6 +30,7 @@ def login():
             session["user_id"] = user["id"]
             session["role"] = user["role"]
             session["username"] = user["username"]
+            session["_ga_login"] = True
             return redirect(url_for("main.home"))
 
         return render_template("login.html", error="שם משתמש או סיסמה שגויים")

@@ -9,6 +9,15 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v='20260513-3') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260513-3') }}">
   {% block page_css %}{% endblock %}
+
+  <!-- Google Analytics GA4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-245BG2ZY8W"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-245BG2ZY8W');
+  </script>
 </head>
 
 <body>
@@ -57,7 +66,8 @@
         </div>
         {% endif %}
 
-        <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="התנתקות">
+        <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="התנתקות"
+           onclick="gtag('event','logout');">
           ←
         </a>
       </div>

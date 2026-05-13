@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app, session as flask_session
 from pokerapp.services.auth import login_required, role_required, get_current_user
 from pokerapp.db.connection import get_db_connection
 from pokerapp.services.game_queries import (
@@ -284,6 +284,8 @@ def home():
 
     conn.close()
 
+    ga_login = flask_session.pop("_ga_login", False)
+
     return render_template(
         "home.html",
         current_user=get_current_user(),
@@ -293,6 +295,7 @@ def home():
         players_view=players_view,
         top_players=top_players,
         recent_games=recent_games,
+        ga_login=ga_login,
     )
 
 # ------------------------------
