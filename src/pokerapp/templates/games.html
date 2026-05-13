@@ -1,79 +1,71 @@
 {% extends "base.html" %}
 
 {% block title %}פנקס הקטן | משחקים{% endblock %}
-{% block subtitle %}המשחקים שלנו{% endblock %}
 
 {% block content %}
 
 <div class="grid games-page">
-
-  <div class="toggle-row">
-    <a class="btn {% if view == 'cash' %}primary{% else %}ghost{% endif %}"
-      href="{{ url_for('main.games_list', view='cash') }}">
-      קאש
-    </a>
-
-    <a class="btn {% if view == 'harbo' %}primary{% else %}ghost{% endif %}"
-      href="{{ url_for('main.games_list', view='harbo') }}">
-      חרבו
-    </a>
-  </div>
 
   <section class="game-card game-card-full">
     <div class="game-header">
       <div class="game-title">
         <div class="chip">{% if view == 'cash' %}₪{% else %}★{% endif %}</div>
         <div>
-          <h2>{% if view == 'cash' %}קאש{% else %}חרבו{% endif %}</h2>
-          <div class="note">רשימת משחקים</div>
+          <h2>משחקים</h2>
+          <div class="note">רשימת כל המשחקים</div>
         </div>
       </div>
 
+      {% if current_user and current_user["role"] in ["admin", "magician"] %}
       <div class="header-actions">
-        {% if current_user and current_user["role"] in ["admin", "magician"] %}
-        <a class="btn ghost" href="{{ url_for('main.add_game') }}">
-          הוסף משחק חדש
-        </a>
-        {% endif %}
-
-        {% if current_user and current_user["role"] == "admin" %}
-        <a class="btn ghost" href="{{ url_for('main.players') }}">
-          ניהול שחקנים
-        </a>
-        {% endif %}
+        <a class="btn ghost" href="{{ url_for('main.add_game') }}">+ הוסף משחק</a>
       </div>
+      {% endif %}
     </div>
 
     <div class="game-body">
+
+      <!-- טוגל cash / harbo — ממורכז בגוף הדף -->
+      <div class="games-toggle-wrap">
+        <div class="view-switch-top games-toggle">
+          <a class="btn {% if view == 'cash' %}primary{% else %}ghost{% endif %}"
+            href="{{ url_for('main.games_list', view='cash') }}">קאש</a>
+          <a class="btn {% if view == 'harbo' %}primary{% else %}ghost{% endif %}"
+            href="{{ url_for('main.games_list', view='harbo') }}">חרבו</a>
+        </div>
+      </div>
+
       {% if games and games|length > 0 %}
       <div class="table-wrap big">
         <table class="games-table">
-          <caption class="sr-only">
-            רשימת משחקים מסוג {{ 'קאש' if view == 'cash' else 'חרבו' }}
-          </caption>
+          <colgroup>
+            <col class="col-date">
+            <col class="col-loc">
+            <col class="col-act">
+          </colgroup>
           <thead>
             <tr>
               <th scope="col">תאריך</th>
               <th scope="col">מיקום</th>
-              <th scope="col">פעולות</th>
+              <th scope="col" style="text-align:left; padding-left:14px;">פעולות</th>
             </tr>
           </thead>
           <tbody>
             {% for game in games %}
             <tr>
-              <td>{{ game["date_il"] or game["date"] }}</td>
-              <td>{{ game["location"] or "-" }}</td>
+              <td style="font-variant-numeric: tabular-nums; white-space: nowrap;">
+                {{ game["date_il"] or game["date"] }}
+              </td>
+              <td>{{ game["location"] or "—" }}</td>
               <td class="row-actions">
-                <a class="btn ghost" href="{{ url_for('main.game_results', game_id=game['id']) }}"
-                  aria-label="צפייה בתוצאות משחק מתאריך {{ game['date_il'] or game['date'] }}">
-                  צפייה
-                </a>
+                <a class="btn ghost icon-btn"
+                  href="{{ url_for('main.game_results', game_id=game['id']) }}"
+                  aria-label="צפייה" title="צפייה">👁</a>
 
-                {% if current_user and current_user["role"] == "admin" %}
-                <a class="btn primary" href="{{ url_for('main.game_results_edit', game_id=game['id']) }}"
-                  aria-label="עריכת תוצאות משחק מתאריך {{ game['date_il'] or game['date'] }}">
-                  עריכה
-                </a>
+                {% if current_user and current_user["role"] in ["admin", "magician"] %}
+                <a class="btn primary icon-btn"
+                  href="{{ url_for('main.game_results_edit', game_id=game['id']) }}"
+                  aria-label="עריכה" title="עריכה">✏️</a>
                 {% endif %}
               </td>
             </tr>
@@ -89,4 +81,13 @@
 
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ודא שהטבלה מתחילה מהעמודה הימנית (RTL)
+  document.querySelectorAll('.table-wrap').forEach(function(w) {
+    w.scrollLeft = 0;
+  });
+</script>
 {% endblock %}

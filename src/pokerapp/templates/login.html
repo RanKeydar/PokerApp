@@ -1,9 +1,18 @@
 {% extends "base.html" %}
-{% block title %}התחברות{% endblock %}
-{% block subtitle %}כניסה למערכת{% endblock %}
+{% block title %}פנקס הקטן | התחברות{% endblock %}
 
 {% block content %}
 <section class="auth-card">
+
+  <div style="text-align:center;margin-bottom:18px;">
+    <img src="{{ url_for('static', filename='icons/icon-512.png') }}"
+         alt="פנקס הקטן" width="56" height="56"
+         style="border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);">
+    <div style="font-size:13px;font-weight:700;color:#0f766e;margin-top:6px;letter-spacing:.03em;">
+      פנקס הקטן
+    </div>
+  </div>
+
   <h1 class="page-title">התחברות</h1>
 
   {% if error %}
@@ -16,17 +25,16 @@
       <label for="username">שם משתמש</label>
       <input id="username" name="username" type="text" autocomplete="username" required>
     </div>
-
     <div class="form-row">
       <label for="password">סיסמה</label>
       <input id="password" name="password" type="password" autocomplete="current-password" required>
     </div>
-
     <button type="submit" class="btn primary">כניסה</button>
   </form>
 
   <p class="auth-alt">
     <a href="{{ url_for('auth.signup') }}">אין לך משתמש? שלח בקשת הרשמה</a>
   </p>
+
 </section>
 {% endblock %}

@@ -1,474 +1,216 @@
 {% extends "base.html" %}
 
 {% block title %}פנקס הקטן | דף הבית{% endblock %}
-{% block subtitle %}דשבורד — קאש / חרבו{% endblock %}
+{% block subtitle %}לוח משחקים{% endblock %}
 
 {% block content %}
 
-<div class="grid">
-
-    <!-- SWITCH: מציג רק קאש / רק חרבו -->
-  <div class="toggle-row" style="grid-column: 1 / -1; display:flex; gap:8px; margin-bottom:12px;">
-    <a class="btn {% if view=='cash' %}primary{% else %}ghost{% endif %}"
-       href="{{ url_for('main.home', view='cash', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">
-      קאש
-    </a>
-
-    <a class="btn {% if view=='harbo' %}primary{% else %}ghost{% endif %}"
-       href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">
-      חרבו
-    </a>
-    <a class="btn {% if view=='complete' %}primary{% else %}ghost{% endif %}"
-       href="{{ url_for('main.home',
-                    view='complete',
-                    cash_year=cash_year,
-                    harbo_year=harbo_year,
-                    cash_players=cash_players_view,
-                    harbo_players=harbo_players_view) }}">
-      קומפלט
-    </a>
-
-  </div>
-
-
-  <!-- CASH -->
-    {% if view == 'cash' %}
-  <section class="game-card">
+<div class="home-dashboard">
+  <section class="game-card home-board">
     <div class="game-header">
       <div class="game-title">
-        <div class="chip">₪</div>
+        <div class="chip">
+          {% if view == "cash" %}
+          ₪
+          {% elif view == "harbo" %}
+          ★
+          {% else %}
+          ♣
+          {% endif %}
+        </div>
         <div>
-          <h2>קאש</h2>
-          <div class="note">טופ 5 שחקנים + 5 משחקים אחרונים</div>
+          <h2>
+            {% if view == "cash" %}
+            קאש
+            {% elif view == "harbo" %}
+            חרבו
+            {% else %}
+            קומפלט
+            {% endif %}
+          </h2>
+          <div class="note">
+            {% if players_view == "all" %}
+            כל השחקנים + 5 משחקים אחרונים
+            {% else %}
+            טופ 5 שחקנים + 5 משחקים אחרונים
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
 
     <div class="game-body">
-      <div class="year-selector">
-        <a class="btn ghost {% if cash_year == '2026' %}active{% endif %}"
-          href="{{ url_for('main.home', view='cash', cash_year='2026', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2026</a>
-        <a class="btn ghost {% if cash_year == '2025' %}active{% endif %}"
-          href="{{ url_for('main.home', view='cash', cash_year='2025', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2025</a>
-        <a class="btn ghost {% if cash_year == '2024' %}active{% endif %}"
-          href="{{ url_for('main.home', view='cash', cash_year='2024', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2024</a>
-        <a class="btn ghost {% if cash_year == '2023' %}active{% endif %}"
-          href="{{ url_for('main.home', view='cash', cash_year='2023', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2023</a>
-        <a class="btn ghost {% if cash_year == '2022' %}active{% endif %}"
-          href="{{ url_for('main.home', view='cash', cash_year='2022', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2022</a>
-        <a class="btn ghost total-btn {% if cash_year == 'all' %}active{% endif %}"
-          href="{{ url_for('main.home', view='cash', cash_year='all', harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">סה״כ</a>
+      <div class="panel">
+        <div class="view-switch view-switch-top">
+          <a class="btn {% if view == 'cash' %}primary{% else %}ghost{% endif %}"
+            href="{{ url_for('main.home', view='cash', year=selected_year, players=players_view) }}">
+            קאש
+          </a>
 
+          <a class="btn {% if view == 'harbo' %}primary{% else %}ghost{% endif %}"
+            href="{{ url_for('main.home', view='harbo', year=selected_year, players=players_view) }}">
+            חרבו
+          </a>
+
+          <a class="btn {% if view == 'complete' %}primary{% else %}ghost{% endif %}"
+            href="{{ url_for('main.home', view='complete', year=selected_year, players=players_view) }}">
+            קומפלט
+          </a>
+        </div>
+
+        <div class="year-selector">
+          {% for year in years %}
+          <a class="btn ghost {% if selected_year == year %}active{% endif %} {% if year == 'all' %}total-btn{% endif %}"
+            href="{{ url_for('main.home', view=view, year=year, players=players_view) }}">
+            {% if year == 'all' %}סה״כ{% else %}{{ year }}{% endif %}
+          </a>
+          {% endfor %}
+        </div>
+
+        <div class="leaders-header">
+          <div>
+            <h3>שחקנים מובילים</h3>
+            <div class="subnote">
+              {% if view == "complete" %}
+              לפי רווח מצטבר בקאש + חרבו
+              {% else %}
+              לפי רווח מצטבר
+              {% endif %}
+            </div>
+          </div>
+
+          {% if top_players and top_players|length > 5 %}
+          {% if players_view == "all" %}
+          <a class="link" href="{{ url_for('main.home', view=view, year=selected_year, players='top') }}">
+            צמצם
+          </a>
+          {% else %}
+          <a class="link" href="{{ url_for('main.home', view=view, year=selected_year, players='all') }}">
+            הצג הכל
+          </a>
+          {% endif %}
+          {% elif players_view == "all" %}
+          <a class="link" href="{{ url_for('main.home', view=view, year=selected_year, players='top') }}">
+            צמצם
+          </a>
+          {% endif %}
+        </div>
+
+        {% if top_players and top_players|length > 0 %}
+        <div class="table-wrap big">
+          <table class="leaders-table big">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>שחקן</th>
+                <th class="num">רווח מצטבר</th>
+                <th class="num">משחקים</th>
+                <th class="num">ממוצע למשחק</th>
+                {% if view == "complete" %}
+                <th class="num">שנות פעילות</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in top_players %}
+              {% set val = row["total_profit"] or 0 %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                  <a href="{{ url_for('main.player_detail', player_id=row['player_id']) }}">{{ row["player_name"] }}</a>
+                </td>
+                <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">
+                  <span class="money">₪{{ "%.0f"|format(val) }}</span>
+                </td>
+
+                {% if view == "complete" %}
+                <td class="num">{{ row["games_played"] or 0 }}</td>
+                <td class="num">{{ (row["avg_profit_per_game"] or 0) | round | int }}</td>
+                <td class="num">{{ row["years_played"] or 0 }}</td>
+                {% else %}
+                <td class="num">{{ row["games_count"] or 0 }}</td>
+                <td class="num">{{ (row["avg_per_game"] or 0) | round | int }}</td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-actions">
+          {% if players_view == "all" %}
+          <a class="link" href="{{ url_for('main.home', view=view, year=selected_year, players='top') }}">
+            צמצם
+          </a>
+          {% else %}
+          <a class="link" href="{{ url_for('main.home', view=view, year=selected_year, players='all') }}">
+            הצג הכל
+          </a>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="empty">אין עדיין נתונים להצגה.</div>
+        {% endif %}
       </div>
 
       <div class="panel">
         <h3>
-          שחקנים מובילים <small>(לפי רווח מצטבר)</small>
+          <span class="panel-title">5 המשחקים האחרונים</span>
         </h3>
 
-          {% if cash_players_view == "all" %}
-            <a class="link" style="margin-right:auto"
-              href="{{ url_for('main.home', view='cash', cash_year=cash_year, harbo_year=harbo_year, cash_players='top', harbo_players=harbo_players_view) }}">
-              צמצם
-            </a>
-          {% else %}
-            <a class="link" style="margin-right:auto"
-              href="{{ url_for('main.home', view='cash', cash_year=cash_year, harbo_year=harbo_year, cash_players='all', harbo_players=harbo_players_view) }}">
-              הצג הכל
-            </a>
-          {% endif %}
-        
-        {% if cash_top_players and cash_top_players|length > 0 %}
-          <div class="table-wrap big">
-            <table class="leaders-table big">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>שחקן</th>
-                  <th class="num">רווח מצטבר (₪)</th>
-                   <th class="num">משחקים</th>
-                  <th class="num">ממוצע למשחק</th>
-                 
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in cash_top_players %}
-                  {% set val = row["total_profit"] %}
-                  <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ row["player_name"] }}</td>
-                    <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
-                    <td class="num">{{ row["games_count"] or 0 }}</td>
-                    <td class="num">{{ (row["avg_per_game"] or 0) | round | int }}</td>
-                   
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+        {% if recent_games and recent_games|length > 0 %}
+        <div class="recent-cards">
+          {% for g in recent_games[:5] %}
+          {% set winner_amount = g["top_winner_amount"] if g["top_winner_amount"] is not none else 0 %}
+          {% set loser_amount = g["top_loser_amount"] if g["top_loser_amount"] is not none else 0 %}
 
-          <div class="table-actions">
-            {% if cash_players_view == "all" %}
-              <a class="link"
-                href="{{ url_for('main.home', view='cash', cash_year=cash_year, harbo_year=harbo_year, cash_players='top', harbo_players=harbo_players_view) }}">
-                צמצם
-              </a>
-            {% else %}
-              <a class="link"
-                href="{{ url_for('main.home', view='cash', cash_year=cash_year, harbo_year=harbo_year, cash_players='all', harbo_players=harbo_players_view) }}">
-                הצג הכל
-              </a>
-            {% endif %}
-          </div>
+          <div class="recent-card">
+            <div class="recent-meta">
+              <div class="recent-date">{{ g["date_il"] or g["date"] }}</div>
+              <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
+              {% if view == "complete" and g["game_type_label"] %}
+              <div class="recent-type">{{ g["game_type_label"] }}</div>
+              {% endif %}
+            </div>
 
-
-        {% else %}
-          <div class="empty">אין עדיין תוצאות קאש כדי לחשב מובילים.</div>
-        {% endif %}
-      </div>
-
-      <div class="panel">
-        <h3><span class="panel-title">🕒 5 המשחקים האחרונים</span></h3>
-
-        {% if cash_recent_games and cash_recent_games|length > 0 %}
-          <div class="recent-cards">
-            {% for g in cash_recent_games %}
-              <div class="recent-card">
-                <div class="recent-info">
-                  <div class="recent-date">{{ g["date_il"] or g["date"] }}</div>
-                  <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
-                </div>
-                <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
-                 <!-- צפייה: כולם -->
-                  <a class="btn ghost icon-btn"
-                    href="{{ url_for('main.game_results', game_id=g['id']) }}"
-                    aria-label="צפייה" title="צפייה">
-                    👁
-                  </a>
-
-
-                <!-- עריכה: ADMIN בלבד -->
-                {% if current_user and current_user["role"] == "admin" %}
-                  <a class="btn primary icon-btn"
-                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}"
-                    aria-label="עריכה" title="עריכה">
-                    ✏️
-                  </a>
-
-                {% endif %}
-
-                </div>
-
+            <div class="recent-lines">
+              <div class="recent-line winner-line">
+                <span class="recent-line-label">מורווח</span>
+                <span class="recent-line-name">
+                  {% if g["top_winner_id"] %}
+                  <a href="{{ url_for('main.player_detail', player_id=g['top_winner_id']) }}">{{ g["top_winner_name"] }}</a>
+                  {% else %}—{% endif %}
+                </span>
+                <span class="recent-line-value pos">+₪{{ "%.0f"|format(winner_amount) }}</span>
               </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty">אין משחקי קאש עדיין.</div>
-        {% endif %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
 
-  <!-- HARBO -->
-    {% if view == 'harbo' %}
-  <section class="game-card">
-    <div class="game-header">
-      <div class="game-title">
-        <div class="chip">★</div>
-        <div>
-          <h2>חרבו</h2>
-          <div class="note">טופ 5 שחקנים + 5 משחקים אחרונים</div>
+              <div class="recent-line loser-line">
+                <span class="recent-line-label">מופסד</span>
+                <span class="recent-line-name">
+                  {% if g["top_loser_id"] %}
+                  <a href="{{ url_for('main.player_detail', player_id=g['top_loser_id']) }}">{{ g["top_loser_name"] }}</a>
+                  {% else %}—{% endif %}
+                </span>
+                <span class="recent-line-value neg">-₪{{ "%.0f"|format(loser_amount|abs) }}</span>
+              </div>
+            </div>
+
+            <div class="recent-action">
+              <a class="btn view-btn icon-btn" href="{{ url_for('main.game_results', game_id=g['id']) }}"
+                aria-label="צפייה" title="צפייה">👁</a>
+
+              {% if current_user and current_user["role"] == "admin" %}
+              <a class="btn primary icon-btn" href="{{ url_for('main.game_results_edit', game_id=g['id']) }}"
+                aria-label="עריכה" title="עריכה">✏️</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
         </div>
-      </div>
-    </div>
-
-    <div class="game-body">
-      <div class="year-selector">
-        <a class="btn ghost {% if harbo_year == '2026' %}active{% endif %}"
-          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2026', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2026</a>
-        <a class="btn ghost {% if harbo_year == '2025' %}active{% endif %}"
-          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2025', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2025</a>
-        <a class="btn ghost {% if harbo_year == '2024' %}active{% endif %}"
-          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2024', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2024</a>
-        <a class="btn ghost {% if harbo_year == '2023' %}active{% endif %}"
-          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2023', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2023</a>
-        <a class="btn ghost {% if harbo_year == '2022' %}active{% endif %}"
-          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='2022', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2022</a>
-        <a class="btn ghost total-btn {% if harbo_year == 'all' %}active{% endif %}"
-          href="{{ url_for('main.home', view='harbo', cash_year=cash_year, harbo_year='all', cash_players=cash_players_view, harbo_players=harbo_players_view) }}">סה״כ</a>
-
-      </div>
-
-      <div class="panel">
-        <h3> שחקנים מובילים <small>(לפי רווח מצטבר)</small>
-
-        {% if harbo_players_view == "all" %}
-          <a class="link" style="margin-right:auto"
-            href="{{ url_for('main.home',
-                       view='harbo',
-                       cash_year=cash_year,
-                       harbo_year=harbo_year,
-                       cash_players=cash_players_view,
-                       harbo_players='top') }}">
-            צמצם
-          </a>
         {% else %}
-          <a class="link" style="margin-right:auto"
-            href="{{ url_for('main.home',
-                       view='harbo',
-                       cash_year=cash_year,
-                       harbo_year=harbo_year,
-                       cash_players=cash_players_view,
-                       harbo_players='all') }}">
-            הצג הכל
-          </a>
-        {% endif %}
-      </h3>
-
-
-        {% if harbo_top_players and harbo_top_players|length > 0 %}
-          <div class="table-wrap big">
-            <table class="leaders-table big">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>שחקן</th>
-                  <th class="num">רווח מצטבר (₪)</th>
-                  <th class="num">משחקים</th>
-                  <th class="num">ממוצע למשחק</th>
-              
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in harbo_top_players %}
-                  {% set val = row["total_profit"] %}
-                  <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ row["player_name"] }}</td>
-                    <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
-                    <td class="num">{{ row["games_count"] or 0 }}</td>
-                    <td class="num">{{ (row["avg_per_game"] or 0) | round | int }}</td>
-                  
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-
-          <div class="table-actions">
-            {% if harbo_players_view == "all" %}
-              <a class="link"
-                href="{{ url_for('main.home',
-                         view='harbo',
-                        cash_year=cash_year,
-                        harbo_year=harbo_year,
-                        cash_players=cash_players_view,
-                        harbo_players='top') }}">
-                צמצם
-              </a>
-            {% else %}
-              <a class="link"
-                href="{{ url_for('main.home',
-                      view='harbo',
-                      cash_year=cash_year,
-                      harbo_year=harbo_year,
-                      cash_players=cash_players_view,
-                      harbo_players='all') }}">
-                הצג הכל
-              </a>
-            {% endif %}
-        </div>
-
-        {% else %}
-          <div class="empty">אין עדיין תוצאות חרבו כדי לחשב מובילים.</div>
+        <div class="empty">אין משחקים עדיין.</div>
         {% endif %}
       </div>
-
-      <div class="panel">
-        <h3><span class="panel-title">🕒 5 המשחקים האחרונים</span></h3>
-
-        {% if harbo_recent_games and harbo_recent_games|length > 0 %}
-          <div class="recent-cards">
-            {% for g in harbo_recent_games %}
-              <div class="recent-card">
-                <div class="recent-info">
-                  <div class="recent-date">{{ g["date_il"] or g["date"] }}</div>
-                  <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
-                </div>
-                <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
-
-                <!-- צפייה: כולם -->
-                  <a class="btn ghost icon-btn"
-                    href="{{ url_for('main.game_results', game_id=g['id']) }}"
-                    aria-label="צפייה" title="צפייה">
-                    👁
-                  </a>
-
-
-                <!-- עריכה: ADMIN בלבד -->
-                {% if current_user and current_user["role"] == "admin" %}
-                  <a class="btn primary icon-btn"
-                    href="{{ url_for('main.game_results_edit', game_id=g['id']) }}"
-                    aria-label="עריכה" title="עריכה">
-                    ✏️
-                  </a>
-
-                {% endif %}
-
-                </div>
-
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty">אין משחקי חרבו עדיין.</div>
-        {% endif %}
-      </div>
-    </div>
   </section>
-  {% endif %}
-
-  {% if view == 'complete' %}
-  <section class="game-card">
-    <div class="game-header">
-      <div class="game-title">
-        <div class="chip">♣</div>
-        <div>
-          <h2>קומפלט</h2>
-          <div class="note">אגרגציה של קאש + חרבו</div>
-      </div>
-     </div>
-    </div>
-
-    <div class="game-body">
-      
-      <div class="year-selector">
-        <a class="btn ghost {% if complete_year == '2026' %}active{% endif %}"
-          href="{{ url_for('main.home', view='complete', complete_year='2026', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2026</a>
-
-        <a class="btn ghost {% if complete_year == '2025' %}active{% endif %}"
-          href="{{ url_for('main.home', view='complete', complete_year='2025', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2025</a>
-
-        <a class="btn ghost {% if complete_year == '2024' %}active{% endif %}"
-          href="{{ url_for('main.home', view='complete', complete_year='2024', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2024</a>
-
-        <a class="btn ghost {% if complete_year == '2023' %}active{% endif %}"
-          href="{{ url_for('main.home', view='complete', complete_year='2023', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2023</a>
-
-        <a class="btn ghost {% if complete_year == '2022' %}active{% endif %}"
-          href="{{ url_for('main.home', view='complete', complete_year='2022', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">2022</a>
-
-        <a class="btn ghost total-btn {% if complete_year == 'all' %}active{% endif %}"
-          href="{{ url_for('main.home', view='complete', complete_year='all', cash_year=cash_year, harbo_year=harbo_year, cash_players=cash_players_view, harbo_players=harbo_players_view) }}">סה״כ</a>
-      </div>
-
-      <div class="panel">
-        <h3>שחקנים מובילים <small>(רווח מצטבר בקאש+חרבו)</small></h3>
-        
-          <div class="table-actions">
-            {% if complete_players_view == "all" %}
-              <a class="link"
-                href="{{ url_for('main.home',
-                  view='complete',
-                  complete_year=complete_year,
-                  complete_players='top',
-                  cash_year=cash_year,
-                  harbo_year=harbo_year,
-                  cash_players=cash_players_view,
-                  harbo_players=harbo_players_view
-                ) }}">
-                צמצם
-              </a>
-            {% else %}
-              <a class="link"
-                href="{{ url_for('main.home',
-                  view='complete',
-                  complete_year=complete_year,
-                  complete_players='all',
-                  cash_year=cash_year,
-                  harbo_year=harbo_year,
-                  cash_players=cash_players_view,
-                  harbo_players=harbo_players_view
-                ) }}">
-                הצג הכל
-              </a>
-            {% endif %}
-          </div>
-
-
-        {% if complete_top_players %}
-          <div class="table-wrap big">
-            <table class="leaders-table big">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>שחקן</th>
-                  <th class="num">רווח מצטבר (₪)</th>
-                  <th class="num">משחקים</th>
-                  <th class="num">ממוצע למשחק</th>
-                  <th class="num">שנות פעילות</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in complete_top_players %}
-                  {% set val = row["total_profit"] %}
-                  <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ row["player_name"] }}</td>
-                    <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">{{ "%.2f"|format(val) }}</td>
-                    <td class="num">{{ row["games_played"] or 0 }}</td>
-                    <td class="num">{{ (row["avg_profit_per_game"] or 0) | round | int }}</td>
-                    <td class="num">{{ row["years_played"] or 0 }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div class="empty">אין עדיין נתונים לקומפלט.</div>
-        {% endif %}
-      </div>
-
-      <div class="panel">
-        <h3><span class="panel-title">🕒 5 המשחקים האחרונים (קאש+חרבו)</span></h3>
-
-        {% if complete_recent_games %}
-          <div class="recent-cards">
-            {% for g in complete_recent_games %}
-              <div class="recent-card">
-                <div class="recent-info">
-                  <div class="recent-date">{{ g["date_il"] or g["date"] }}</div>
-                  <div class="recent-location">{{ g["location"] or "ללא מיקום" }}</div>
-                  <div class="note">{{ g["game_type_label"] }}</div>
-                </div>
-
-                <div class="recent-action" style="display:flex; gap:8px; align-items:center;">
-                  <a class="btn ghost icon-btn"
-                    href="{{ url_for('main.game_results', game_id=g['id']) }}"
-                    aria-label="צפייה" title="צפייה">👁</a>
-
-                  {% if current_user and current_user["role"] == "admin" %}
-                    <a class="btn primary icon-btn"
-                      href="{{ url_for('main.game_results_edit', game_id=g['id']) }}"
-                      aria-label="עריכה" title="עריכה">✏️</a>
-                  {% endif %}
-                </div>
-
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty">אין משחקים עדיין.</div>
-        {% endif %}
-      </div>
-
-    </div>
-  </section>
-  {% endif %}
-
 </div>
-
-
 {% endblock %}
-

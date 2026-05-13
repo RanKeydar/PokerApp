@@ -53,7 +53,7 @@ def get_recent_games(game_type: str, limit: int = 5, year="all"):
             SELECT
               id,
               date,
-              strftime('%d/%m/%Y', date) AS date_il,
+              (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il,
               location
             FROM games
             WHERE game_type = ?
@@ -69,7 +69,7 @@ def get_recent_games(game_type: str, limit: int = 5, year="all"):
             SELECT
               id,
               date,
-              strftime('%d/%m/%Y', date) AS date_il,
+              (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il,
               location
             FROM games
             WHERE game_type = ?
@@ -142,7 +142,7 @@ def get_complete_recent_games(limit: int = 5, year="all"):
     SELECT
       id,
       date,
-      strftime('%d/%m/%Y', date) AS date_il,
+      (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il,
       location,
       game_type,
       CASE

@@ -1,134 +1,252 @@
 {% extends "base.html" %}
-{% block title %}כותרת הדף{% endblock %}
-{% block content %}
 
+{% block title %}פנקס הקטן | תוצאות משחק{% endblock %}
+
+{% block content %}
 {% set can_edit = (mode == "edit") %}
 
-<h1>תוצאות למשחק - {{ game["date"] }} ({{ game["location"] or "ללא מיקום" }})</h1>
+<div class="grid games-page">
+  <section class="game-card game-card-full">
 
-<p>
-  סוג משחק:
-  {% if game["game_type"] == "cash" %}
-    קאש
-  {% elif game["game_type"] == "harbo" %}
-    חרבו
-  {% endif %}
-</p>
+    <div class="game-header">
+      <div class="game-title">
+        <div class="chip">{% if game["game_type"] == "cash" %}&#8362;{% else %}&#9733;{% endif %}</div>
+        <div>
+          <h2>{% if game["game_type"] == "cash" %}קאש{% else %}חרבו{% endif %} &mdash; {{ game["date_il"] if game["date_il"] else game["date"] }}</h2>
+          <div class="note">{{ game["location"] or "ללא מיקום" }}</div>
+        </div>
+      </div>
 
-{% if can_edit %}
-  <form method="POST">
-{% endif %}
-
-{% if (not can_edit) and current_user and current_user["role"] in ["admin", "magician"] %}
-  <form method="POST"
-        action="{{ url_for('main.delete_game', game_id=game['id']) }}"
-        onsubmit="return confirm('למחוק את המשחק? פעולה בלתי הפיכה!');"
-        style="margin: 10px 0;">
-    <button type="submit" class="btn danger">🗑️ מחק משחק</button>
-  </form>
-{% endif %}
-
-<table>
-  <thead>
-    <tr>
-      <th>שחקן</th>
-      <th>סכום קנייה</th>
-      <th>סכום יציאה</th>
-      <th>רווח / הפסד</th>
-    </tr>
-  </thead>
- <tbody>
-  {% if can_edit %}
-    {# מצב עריכה: מציג את כל השחקנים כדי להזין נתונים #}
-    {% for p in players %}
-      {% set res = results.get(p["id"]) %}
-      <tr>
-        <td>{{ p["name"] }}</td>
-
-        <!-- BUYIN -->
-        <td>
-          <input type="number" step="0.01" name="buyin_{{ p['id'] }}"
-                 value="{{ res['buyin'] if res is not none else '' }}">
-        </td>
-
-        <!-- CASHOUT -->
-        <td>
-          <input type="number" step="0.01" name="cashout_{{ p['id'] }}"
-                 value="{{ res['cashout'] if res is not none else '' }}">
-        </td>
-
-        <!-- PROFIT -->
-        <td>
-          {% if res is not none %}
-            {{ "%.2f"|format(res["profit"]) }}
-          {% else %}
-            -
+      <div class="header-actions">
+        {% if not can_edit %}
+          {% if current_user and current_user["role"] in ["admin", "magician"] %}
+          <a class="btn primary" href="{{ url_for('main.game_results_edit', game_id=game['id']) }}">עריכה</a>
           {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
+        {% endif %}
+        <a class="btn ghost" href="{{ url_for('main.games_list', view=game['game_type']) }}">&#8592; משחקים</a>
+      </div>
+    </div>
 
-  {% else %}
-    {# מצב צפייה: מציג רק מי שיש לו תוצאה, וממויין (בהנחה שה-route כבר סינן/מיין) #}
-    {% for row in players %}
-      <tr>
-        <td>{{ row["player_name"] }}</td>
-        <td>{{ "%.2f"|format(row["buyin"]) }}</td>
-        <td>{{ "%.2f"|format(row["cashout"]) }}</td>
-        <td>{{ "%.2f"|format(row["profit"]) }}</td>
+    <div class="game-body">
 
-      </tr>
-    {% endfor %}
-  {% endif %}
-</tbody>
+      {% if can_edit %}<form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
 
-</table>
+      <div class="table-wrap big">
+        <table class="games-table results-table">
+          <colgroup>
+            <col class="col-player">
+            <col class="col-money">
+            <col class="col-money">
+            <col class="col-money">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">שחקן</th>
+              <th scope="col" class="num">קנייה (&#8362;)</th>
+              <th scope="col" class="num">יציאה (&#8362;)</th>
+              <th scope="col" class="num">רווח / הפסד</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if can_edit %}
+              {% for p in players %}
+                {% set res = results.get(p["id"]) %}
+                <tr>
+                  <td class="player-cell">{{ p["name"] }}</td>
+                  <td class="num">
+                    <input class="results-input" type="number" step="0.01" min="0"
+                           name="buyin_{{ p['id'] }}"
+                           value="{{ res['buyin'] if res is not none else '' }}"
+                           placeholder="0">
+                  </td>
+                  <td class="num">
+                    <input class="results-input" type="number" step="0.01" min="0"
+                           name="cashout_{{ p['id'] }}"
+                           value="{{ res['cashout'] if res is not none else '' }}"
+                           placeholder="0">
+                  </td>
+                  <td class="num">
+                    {% if res is not none %}
+                      {% if res["profit"] > 0 %}
+                        <span class="profit pos">+{{ "%.0f"|format(res["profit"]) }}</span>
+                      {% elif res["profit"] < 0 %}
+                        <span class="profit neg">{{ "%.0f"|format(res["profit"]) }}</span>
+                      {% else %}
+                        <span>0</span>
+                      {% endif %}
+                    {% else %}
+                      <span style="color:#94a3b8;">&#8212;</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              {% for row in players %}
+                <tr>
+                  <td><a href="{{ url_for('main.player_detail', player_id=row['player_id']) }}" class="player-link">{{ row["player_name"] }}</a></td>
+                  <td class="num">{{ "%.0f"|format(row["buyin"]) }}</td>
+                  <td class="num">{{ "%.0f"|format(row["cashout"]) }}</td>
+                  <td class="num">
+                    {% if row["profit"] > 0 %}
+                      <span class="profit pos">+{{ "%.0f"|format(row["profit"]) }}</span>
+                    {% elif row["profit"] < 0 %}
+                      <span class="profit neg">{{ "%.0f"|format(row["profit"]) }}</span>
+                    {% else %}
+                      <span>0</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
 
-{% if can_edit %}
-  <<button type="submit"
-        class="btn success"
-        style="margin-top:10px;">
-  💾 שמור תוצאות
-  </button>
+      {% if can_edit and available_players %}
+      <div class="panel" style="margin:12px 0 0; border-top: 1px solid var(--line); padding-top:14px;">
+        <div style="font-size:13px; font-weight:700; color:#374151; margin-bottom:8px;">הוסף שחקן למשחק</div>
+        <div class="player-search-wrap" style="position:relative;">
+          <input type="text" id="add-player-search" class="player-search-input"
+                 placeholder="חפש שחקן להוסיף..." autocomplete="off">
+          <ul id="add-player-dropdown" class="player-dropdown" hidden></ul>
+        </div>
+        <div id="new-player-rows"></div>
+      </div>
+      {% endif %}
 
+      <div class="result-summary">
+        <div class="result-summary-item">
+          <span class="result-summary-label">סך קניות:</span>
+          <span class="result-summary-value">&#8362;{{ "%.0f"|format(total_buyin) }}</span>
+        </div>
+        <div class="result-summary-item">
+          <span class="result-summary-label">סך יציאות:</span>
+          <span class="result-summary-value">&#8362;{{ "%.0f"|format(total_cashout) }}</span>
+        </div>
+        <div class="result-summary-item">
+          {% if diff == 0 %}
+            <span class="result-summary-ok">&#10003; הקופה מאוזנת</span>
+          {% elif diff > 0 %}
+            <span class="result-summary-warn">&#9888; עודף יציאות: &#8362;{{ "%.0f"|format(diff) }}</span>
+          {% else %}
+            <span class="result-summary-warn">&#9888; עודף קניות: &#8362;{{ "%.0f"|format(diff|abs) }}</span>
+          {% endif %}
+        </div>
+      </div>
 
-  {% if current_user and current_user["role"] in ["admin", "magician"] %}
-    <button type="submit"
-            formaction="{{ url_for('main.delete_game', game_id=game['id']) }}"
-            formmethod="post"
-            onclick="return confirm('למחוק את המשחק? פעולה בלתי הפיכה!');"
-            class="btn danger"
-            style="margin-top:10px;">
-      🗑️ מחק משחק
-    </button>
-  {% endif %}
+      {% if can_edit %}
+        <div class="header-actions" style="padding:12px 14px 14px; border-top:1px solid rgba(15,23,42,.06);">
+          <button type="submit" class="btn primary">שמור תוצאות</button>
+          {% if current_user and current_user["role"] in ["admin", "magician"] %}
+          <button type="submit"
+                  formaction="{{ url_for('main.delete_game', game_id=game['id']) }}"
+                  formmethod="post"
+                  onclick="return confirm('למחוק את המשחק? פעולה בלתי הפיכה!');"
+                  class="btn danger">מחק משחק</button>
+          {% endif %}
+        </div>
+        </form>
+      {% else %}
+        {% if current_user and current_user["role"] in ["admin", "magician"] %}
+        <div style="padding:10px 14px 14px;">
+          <form method="POST" action="{{ url_for('main.delete_game', game_id=game['id']) }}"
+                onsubmit="return confirm('למחוק את המשחק? פעולה בלתי הפיכה!');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn danger">מחק משחק</button>
+          </form>
+        </div>
+        {% endif %}
+      {% endif %}
 
-  </form>
-{% endif %}
-
-
-<div class="summary">
-  <p>סך כל הקניות: {{ "%.2f"|format(total_buyin) }} ₪</p>
-  <p>סך כל היציאות: {{ "%.2f"|format(total_cashout) }} ₪</p>
-
-  {% set diff_rounded = "%.2f"|format(diff) %}
-  {% if diff == 0 %}
-    <p class="ok">הקופה מאוזנת (אין חוסר או עודף).</p>
-  {% elif diff > 0 %}
-    <p class="warning">
-      יש עודף יציאות לעומת קניות: {{ diff_rounded }} ₪
-      (כנראה חסר כסף בקופה).
-    </p>
-  {% else %}
-    <p class="warning">
-      יש עודף קניות לעומת יציאות: {{ diff_rounded }}- ₪
-      (כנראה רשומה קנייה שלא מגובה בכסף אצל שחקן).
-    </p>
-  {% endif %}
+    </div>
+  </section>
 </div>
 
-<p>
-  <a href="{{ url_for('main.games_list') }}">← חזרה לרשימת המשחקים</a>
-</p>
+{% if can_edit and available_players %}
+<script>
+const AVAIL = {{ available_players | tojson }};
+const search  = document.getElementById('add-player-search');
+const dropdown = document.getElementById('add-player-dropdown');
+const rows    = document.getElementById('new-player-rows');
+const added   = new Set();
+
+function renderDrop(q) {
+  const matches = AVAIL.filter(p => !added.has(p.id) && p.name.includes(q));
+  if (!q || !matches.length) { dropdown.hidden = true; return; }
+  dropdown.innerHTML = '';
+  matches.forEach(p => {
+    const li = document.createElement('li');
+    li.textContent = p.name;
+    li.addEventListener('mousedown', e => { e.preventDefault(); addRow(p); });
+    dropdown.appendChild(li);
+  });
+  dropdown.hidden = false;
+}
+
+function addRow(p) {
+  added.add(p.id);
+  search.value = '';
+  dropdown.hidden = true;
+  const d = document.createElement('div');
+  d.className = 'new-player-row';
+  d.id = `np-${p.id}`;
+  d.innerHTML = `
+    <input type="hidden" name="player_${p.id}" value="${p.id}">
+    <span class="np-name">${p.name}</span>
+    <div class="np-inputs">
+      <input class="results-input" type="number" step="0.01" min="0" name="buyin_${p.id}" placeholder="קנייה">
+      <input class="results-input" type="number" step="0.01" min="0" name="cashout_${p.id}" placeholder="יציאה">
+    </div>
+    <button type="button" class="btn-remove" onclick="removeRow(${p.id})">✕</button>`;
+  rows.appendChild(d);
+}
+
+function removeRow(id) {
+  added.delete(id);
+  const el = document.getElementById(`np-${id}`);
+  if (el) el.remove();
+}
+
+search.addEventListener('input',  () => renderDrop(search.value));
+search.addEventListener('focus',  () => renderDrop(search.value));
+search.addEventListener('blur',   () => setTimeout(() => { dropdown.hidden = true; }, 150));
+</script>
+
+<style>
+.player-cell { color: #0f172a; font-weight: 600; }
+.player-search-input {
+  width: 100%; max-width: 300px; padding: 8px 12px;
+  border: 1px solid #cbd5e1; border-radius: 10px;
+  font-size: 14px; background: #fff; color: #0f172a; outline: none; box-sizing: border-box;
+}
+.player-search-input:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+.player-dropdown {
+  position: absolute; top: calc(100% + 4px); right: 0;
+  min-width: 200px; max-width: 300px;
+  background: #fff; border: 1px solid #cbd5e1; border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  list-style: none; margin: 0; padding: 4px 0; z-index: 50; max-height: 200px; overflow-y: auto;
+}
+.player-dropdown li { padding: 8px 14px; cursor: pointer; font-size: 14px; color: #0f172a; }
+.player-dropdown li:hover { background: #f1f5f9; }
+.new-player-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid #f1f5f9; flex-wrap: wrap;
+}
+.np-name { flex: 1; font-size: 14px; font-weight: 600; color: #0f172a; }
+.np-inputs { display: flex; gap: 8px; }
+.btn-remove { background:none; border:none; color:#94a3b8; font-size:15px; cursor:pointer; padding:4px 6px; border-radius:6px; }
+.btn-remove:hover { background:#fee2e2; color:#ef4444; }
+</style>
+{% endif %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.table-wrap').forEach(function(w) {
+    w.scrollLeft = 0;
+  });
+</script>
+{% endblock %}
 
 {% endblock %}

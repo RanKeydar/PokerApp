@@ -10,10 +10,10 @@
 <div class="players-page-shell">
   <div class="top-links players-toolbar">
     <div class="players-filter-toggle">
-      <a class="players-tab {% if hide_inactive %}active{% else %}ghost{% endif %}"
-        href="{{ url_for('main.players') }}">שחקנים פעילים</a>
-      <a class="players-tab {% if not hide_inactive %}active{% else %}ghost{% endif %}"
-        href="{{ url_for('main.players', inactive=1) }}">כל השחקנים</a>
+      <a class="players-tab {% if show == 'active' %}active{% else %}ghost{% endif %}"
+        href="{{ url_for('main.players', show='active') }}">שחקנים פעילים</a>
+      <a class="players-tab {% if show == 'all' %}active{% else %}ghost{% endif %}"
+        href="{{ url_for('main.players', show='all') }}">כל השחקנים</a>
     </div>
   </div>
 

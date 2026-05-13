@@ -1,11 +1,11 @@
+/* ============================================================
+   Player detail page
+   ============================================================ */
+
 .player-page-shell {
     max-width: 1200px;
     margin: 0 auto;
     padding-inline: 12px;
-}
-
-.mobile-only {
-    display: none;
 }
 
 .player-page-top {
@@ -26,6 +26,8 @@
     color: #fff;
     box-shadow: 0 12px 28px rgba(0, 0, 0, .16);
     padding: 28px 30px;
+    display: grid;
+    gap: 6px;
 }
 
 .player-kicker {
@@ -43,10 +45,33 @@
 }
 
 .player-subtitle {
-    margin-top: 12px;
+    margin: 6px 0 0;
     opacity: .9;
     font-size: 1rem;
 }
+
+.player-hero-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.player-hero-actions .btn.primary {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.30);
+    color: #fff;
+    font-weight: 800;
+}
+
+.player-hero-actions .btn.primary:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* ============================================================
+   Stats grid
+   ============================================================ */
 
 .player-stats-grid {
     display: grid;
@@ -78,7 +103,8 @@
     line-height: 1.05;
 }
 
-.stat-subline {
+.stat-subline,
+.stat-subvalue {
     display: block;
     margin-top: 8px;
     font-size: .82rem;
@@ -100,6 +126,12 @@
     font-weight: 900;
 }
 
+.money {
+    direction: ltr;
+    unicode-bidi: isolate;
+    display: inline-block;
+}
+
 .money::before {
     content: none;
 }
@@ -107,6 +139,61 @@
 .num {
     font-variant-numeric: tabular-nums;
 }
+
+/* ============================================================
+   View switch (cash / harbo / complete)
+   ============================================================ */
+
+.view-switch.view-switch-top {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin: 18px 0 14px;
+}
+
+.view-switch.view-switch-top .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+    padding: 10px 14px;
+    font-weight: 800;
+    font-size: 15px;
+    border-radius: 14px;
+    text-decoration: none;
+}
+
+.view-switch.view-switch-top .btn.ghost {
+    background: #e8edf3;
+    color: #243041;
+    border: 1px solid #b8c4d3;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.view-switch.view-switch-top .btn.ghost:hover {
+    background: #dbe4ee;
+    color: #111827;
+    border-color: #93a4b8;
+}
+
+.view-switch.view-switch-top .btn.primary {
+    background: #2f3447;
+    color: #ffffff;
+    border: 1px solid #2f3447;
+    box-shadow: 0 2px 6px rgba(47, 52, 71, 0.18);
+}
+
+.games-section-title {
+    margin: 18px 0 10px;
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+/* ============================================================
+   Games table — desktop
+   ============================================================ */
 
 .player-table-wrap {
     background: rgba(255, 255, 255, .98);
@@ -151,72 +238,120 @@
     background: #eef2f7;
 }
 
+.player-games-table .empty-row {
+    text-align: center;
+    color: #64748b;
+    font-style: italic;
+    padding: 18px;
+}
+
+/* ============================================================
+   Breakpoints
+   ============================================================ */
+
 @media (max-width: 900px) {
     .player-stats-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    .player-games-table {
-        min-width: 760px;
-    }
 }
 
+/* ---------- Mobile: card layout, all data visible ---------- */
+
 @media (max-width: 700px) {
-    .mobile-only {
+    .player-table-wrap {
+        background: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        overflow: visible;
+    }
+
+    .player-games-table,
+    .player-games-table tbody,
+    .player-games-table tr,
+    .player-games-table td {
         display: block;
-        margin: 0 0 12px;
-    }
-
-    #toggle-player-table-columns {
         width: 100%;
     }
 
-    #player-games-table-wrap {
-        overflow-x: hidden;
-    }
-
-    #player-games-table-wrap.is-compact .player-games-table {
-        width: 100%;
-        min-width: 100%;
-        table-layout: fixed;
-    }
-
-    #player-games-table-wrap.is-compact .col-location,
-    #player-games-table-wrap.is-compact .col-type,
-    #player-games-table-wrap.is-compact .col-buyin,
-    #player-games-table-wrap.is-compact .col-cashout {
+    .player-games-table thead {
         display: none;
     }
 
-    #player-games-table-wrap.is-compact .player-games-table th,
-    #player-games-table-wrap.is-compact .player-games-table td {
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .player-games-table .player-game-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px 12px;
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        background: #fff;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 14px;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .player-games-table .player-game-row td {
+        background: transparent !important;
+        border: 0;
+        padding: 2px 0;
         white-space: nowrap;
+        font-size: .9rem;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        min-width: 0;
     }
 
-    #player-games-table-wrap.show-all-columns {
-        overflow-x: auto;
+    .player-games-table .player-game-row td::before {
+        content: attr(data-label);
+        font-size: .72rem;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: none;
+        margin-inline-end: 4px;
     }
 
-    #player-games-table-wrap.show-all-columns .player-games-table {
-        width: auto;
-        min-width: 720px;
-        table-layout: auto;
+    /* Span full width: date at top, location below it */
+    .player-games-table .player-game-row .col-date {
+        grid-column: 1 / 2;
+        font-weight: 800;
+        font-size: 1rem;
     }
 
-    #player-games-table-wrap.show-all-columns .player-games-table th,
-    #player-games-table-wrap.show-all-columns .player-games-table td {
-        overflow: visible;
-        text-overflow: clip;
-        white-space: nowrap;
+    .player-games-table .player-game-row .col-profit {
+        grid-column: 2 / 3;
+        justify-content: flex-end;
+        font-weight: 900;
+        font-size: 1rem;
     }
 
-    #player-games-table-wrap.show-all-columns .col-location,
-    #player-games-table-wrap.show-all-columns .col-type,
-    #player-games-table-wrap.show-all-columns .col-buyin,
-    #player-games-table-wrap.show-all-columns .col-cashout {
-        display: table-cell;
+    .player-games-table .player-game-row .col-location {
+        grid-column: 1 / 3;
+        color: #475569;
+    }
+
+    .player-games-table .player-game-row .col-type {
+        grid-column: 1 / 3;
+    }
+
+    .player-games-table .player-game-row .col-buyin {
+        grid-column: 1 / 2;
+    }
+
+    .player-games-table .player-game-row .col-cashout {
+        grid-column: 2 / 3;
+        justify-content: flex-end;
+    }
+
+    .player-games-table .empty-row {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        margin-bottom: 10px;
+    }
+
+    .view-switch.view-switch-top {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
     }
 }
 
@@ -237,41 +372,4 @@
     .stat-card {
         padding: 16px 14px;
     }
-
-    .player-games-table th,
-    .player-games-table td {
-        padding: .72rem .68rem;
-        font-size: .86rem;
-    }
-}
-
-@media (min-width: 701px) {
-    .mobile-only {
-        display: none !important;
-    }
-}
-
-.money::before {
-    content: none;
-}
-
-.money {
-    direction: ltr;
-    unicode-bidi: isolate;
-    display: inline-block;
-}
-
-.stat-subvalue {
-    display: block;
-    margin-top: 6px;
-    font-size: .82rem;
-    color: #64748b;
-    font-weight: 700;
-}
-
-.games-section-title {
-    margin: 18px 0 10px;
-    color: #fff;
-    font-size: 1.05rem;
-    font-weight: 900;
 }

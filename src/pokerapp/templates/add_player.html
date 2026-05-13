@@ -6,6 +6,7 @@
 <h1>הוספת שחקן חדש</h1>
 
 <form method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>שם שחקן:</label>
     <input type="text" name="name" required>
 

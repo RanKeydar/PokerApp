@@ -1,25 +1,260 @@
 {% extends "base.html" %}
-{% block title %}כותרת הדף{% endblock %}
+
+{% block title %}פנקס הקטן | הוספת משחק{% endblock %}
+
 {% block content %}
-{% block subtitle %}{% endblock %}
 
-    <h1>הוספת משחק חדש</h1>
+<div class="grid games-page">
+  <section class="game-card game-card-full">
 
-    <form method="POST">
-        <label>תאריך:</label>
-        <input type="date" name="date" required>
+    <div class="game-header">
+      <div class="game-title">
+        <div class="chip">+</div>
+        <div>
+          <h2>הוספת משחק חדש</h2>
+          <div class="note">פרטי המשחק ותוצאות השחקנים</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a class="btn ghost" href="{{ url_for('main.games_list') }}">&#8592; משחקים</a>
+      </div>
+    </div>
 
-        <label>מיקום:</label>
-        <input type="text" name="location" placeholder="לדוגמה: אצל קסטון">
+    <div class="game-body">
+      <form method="POST" class="app-form" id="add-game-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <label>סוג משחק:</label>
-        <select name="game_type" required>
-            <option value="cash">קאש</option>
-            <option value="harbo">חרבו</option>
-        </select>
+        <!-- פרטי משחק -->
+        <div class="panel" style="margin-bottom:0;">
+          <h3>פרטי המשחק</h3>
+          <div class="form-row">
+            <label for="date">תאריך</label>
+            <input id="date" name="date" type="date" value="{{ today }}" required>
+          </div>
+          <div class="form-row">
+            <label for="location">מיקום <span style="color:#94a3b8;font-weight:400;font-size:11px;">(אופציונלי)</span></label>
+            <input id="location" name="location" type="text" placeholder="לדוגמה: אצל קסטון">
+          </div>
+          <div class="form-row">
+            <label for="game_type">סוג משחק</label>
+            <select id="game_type" name="game_type">
+              <option value="cash">קאש</option>
+              <option value="harbo">חרבו</option>
+            </select>
+          </div>
+        </div>
 
-        <button type="submit">שמור משחק</button>
-    </form>
+        {% if players %}
+        <div class="panel" style="margin-top:12px;margin-bottom:0;">
+          <h3>
+            תוצאות שחקנים
+            <span style="font-size:11px;font-weight:400;color:#64748b;">— ניתן למלא עכשיו או לאחר מכן</span>
+          </h3>
 
-    <a href="{{ url_for('main.games_list') }}">← חזרה לרשימת המשחקים</a>
+          <!-- שלב 1: חיפוש שחקן -->
+          <div id="search-phase" class="ag-phase">
+            <div class="player-search-wrap">
+              <input type="text" id="player-search" class="player-search-input"
+                     placeholder="חפש שחקן להוסיף..." autocomplete="off">
+              <ul id="player-dropdown" class="player-dropdown" hidden></ul>
+            </div>
+          </div>
+
+          <!-- שלב 2: הזנת נתונים לשחקן שנבחר -->
+          <div id="entry-phase" class="ag-phase" style="display:none;">
+            <div class="ag-entry-card">
+              <div class="ag-entry-name" id="entry-name"></div>
+              <div class="ag-entry-inputs">
+                <div class="ag-entry-field">
+                  <label>קנייה (₪)</label>
+                  <input id="entry-buyin" class="ag-entry-input" type="number" step="1" min="0"
+                         placeholder="0" inputmode="numeric">
+                </div>
+                <div class="ag-entry-field">
+                  <label>יציאה (₪)</label>
+                  <input id="entry-cashout" class="ag-entry-input" type="number" step="1" min="0"
+                         placeholder="0" inputmode="numeric">
+                </div>
+              </div>
+              <div class="ag-entry-actions">
+                <button type="button" class="btn primary" onclick="confirmPlayer()">הזן</button>
+                <button type="button" class="btn ghost" onclick="cancelEntry()">ביטול</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- שחקנים שאושרו -->
+          <div id="confirmed-list" style="margin-top:10px;"></div>
+        </div>
+        {% endif %}
+
+        <div class="header-actions" style="padding:14px 0 2px;">
+          <button type="submit" class="btn primary">שמור משחק</button>
+          <a class="btn ghost" href="{{ url_for('main.games_list') }}">ביטול</a>
+        </div>
+
+      </form>
+    </div>
+
+  </section>
+</div>
+
+{% if players %}
+<script>
+const ALL_PLAYERS = {{ players | tojson }};
+const confirmed = new Map(); // id → {id, name, buyin, cashout}
+let currentPlayer = null;
+
+const searchPhase  = document.getElementById('search-phase');
+const entryPhase   = document.getElementById('entry-phase');
+const searchInput  = document.getElementById('player-search');
+const dropdown     = document.getElementById('player-dropdown');
+const entryName    = document.getElementById('entry-name');
+const entryBuyin   = document.getElementById('entry-buyin');
+const entryCashout = document.getElementById('entry-cashout');
+const confirmedList = document.getElementById('confirmed-list');
+
+function renderDropdown(query) {
+  const q = query.trim().toLowerCase();
+  const matches = ALL_PLAYERS.filter(p =>
+    !confirmed.has(p.id) && (p.name.toLowerCase().includes(q) || q === '')
+  );
+  if (!matches.length) { dropdown.hidden = true; return; }
+  dropdown.innerHTML = '';
+  matches.forEach(p => {
+    const li = document.createElement('li');
+    li.textContent = p.name;
+    li.addEventListener('mousedown', e => { e.preventDefault(); selectPlayer(p); });
+    dropdown.appendChild(li);
+  });
+  dropdown.hidden = false;
+}
+
+function selectPlayer(p) {
+  currentPlayer = p;
+  dropdown.hidden = true;
+  searchInput.value = '';
+  entryName.textContent = p.name;
+  entryBuyin.value = '';
+  entryCashout.value = '';
+  searchPhase.style.display = 'none';
+  entryPhase.style.display = '';
+  entryBuyin.focus();
+}
+
+function confirmPlayer() {
+  if (!currentPlayer) return;
+  const buyin   = entryBuyin.value.trim();
+  const cashout = entryCashout.value.trim();
+  confirmed.set(currentPlayer.id, {
+    ...currentPlayer,
+    buyin: buyin || '0',
+    cashout: cashout || '0'
+  });
+  renderConfirmed();
+  resetToSearch();
+}
+
+function cancelEntry() {
+  currentPlayer = null;
+  resetToSearch();
+}
+
+function resetToSearch() {
+  currentPlayer = null;
+  entryPhase.style.display = 'none';
+  searchPhase.style.display = '';
+  searchInput.value = '';
+  searchInput.focus();
+}
+
+function removeConfirmed(id) {
+  confirmed.delete(id);
+  renderConfirmed();
+}
+
+function renderConfirmed() {
+  confirmedList.innerHTML = '';
+  if (!confirmed.size) return;
+  confirmed.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'conf-row';
+    d.innerHTML = `
+      <input type="hidden" name="player_${p.id}" value="${p.id}">
+      <input type="hidden" name="buyin_${p.id}"  value="${p.buyin}">
+      <input type="hidden" name="cashout_${p.id}" value="${p.cashout}">
+      <span class="conf-name">${p.name}</span>
+      <span class="conf-vals">קנייה: <b>${p.buyin}</b> | יציאה: <b>${p.cashout}</b></span>
+      <button type="button" class="btn-remove" onclick="removeConfirmed(${p.id})">✕</button>
+    `;
+    confirmedList.appendChild(d);
+  });
+}
+
+// enter key in cashout → confirm
+entryCashout.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); confirmPlayer(); } });
+entryBuyin.addEventListener('keydown',   e => { if (e.key === 'Enter') { e.preventDefault(); entryCashout.focus(); } });
+
+searchInput.addEventListener('input',  () => renderDropdown(searchInput.value));
+searchInput.addEventListener('focus',  () => renderDropdown(searchInput.value));
+searchInput.addEventListener('blur',   () => setTimeout(() => { dropdown.hidden = true; }, 150));
+</script>
+
+<style>
+/* Search */
+.player-search-wrap { position: relative; margin-top: 8px; }
+.player-search-input {
+  width: 100%; max-width: 300px;
+  padding: 9px 13px; border: 1px solid #cbd5e1; border-radius: 10px;
+  font-size: 15px; background: #fff; color: #0f172a; outline: none; box-sizing: border-box;
+}
+.player-search-input:focus { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+.player-dropdown {
+  position: absolute; top: calc(100% + 4px); right: 0;
+  min-width: 200px; max-width: 300px;
+  background: #fff; border: 1px solid #cbd5e1; border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  list-style: none; margin: 0; padding: 4px 0; z-index: 50; max-height: 220px; overflow-y: auto;
+}
+.player-dropdown li { padding: 9px 14px; cursor: pointer; font-size: 14px; color: #0f172a; }
+.player-dropdown li:hover { background: #f1f5f9; }
+
+/* Entry card */
+.ag-entry-card {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 14px; margin-top: 10px;
+}
+.ag-entry-name { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+.ag-entry-inputs { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.ag-entry-field { display: flex; flex-direction: column; gap: 4px; }
+.ag-entry-field label { font-size: 12px; font-weight: 700; color: #475569; }
+.ag-entry-input {
+  width: 110px; padding: 8px 10px;
+  border: 1px solid #cbd5e1; border-radius: 8px;
+  font-size: 15px; text-align: center; color: #0f172a;
+  -moz-appearance: textfield;
+}
+.ag-entry-input::-webkit-outer-spin-button,
+.ag-entry-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.ag-entry-input:focus { outline: none; border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15,118,110,.12); }
+.ag-entry-actions { display: flex; gap: 8px; }
+
+/* Confirmed list */
+.conf-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+}
+.conf-row:last-child { border-bottom: none; }
+.conf-name { font-size: 14px; font-weight: 600; color: #0f172a; flex: 1; }
+.conf-vals { font-size: 13px; color: #475569; white-space: nowrap; }
+.btn-remove { background:none; border:none; color:#94a3b8; font-size:15px; cursor:pointer; padding:4px 6px; border-radius:6px; }
+.btn-remove:hover { background:#fee2e2; color:#ef4444; }
+
+@media (max-width: 400px) {
+  .ag-entry-input { width: 90px; }
+  .ag-entry-inputs { gap: 8px; }
+}
+</style>
+{% endif %}
+
 {% endblock %}

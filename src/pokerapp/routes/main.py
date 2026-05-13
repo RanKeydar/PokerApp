@@ -189,6 +189,47 @@ def merge_recent_games_rows(cash_games, harbo_games, limit=5):
     merged.sort(key=lambda x: _parse_dt(x.get("date")), reverse=True)
     return merged[:limit]
 
+def enrich_recent_games_with_highlights(conn, recent_games):
+    enriched = []
+
+    for row in recent_games:
+        g = dict(row)
+        game_id = g["id"]
+
+        top_winner = conn.execute("""
+            SELECT
+                p.id AS player_id,
+                p.name AS player_name,
+                gr.profit AS profit
+            FROM game_results gr
+            JOIN players p ON p.id = gr.player_id
+            WHERE gr.game_id = ?
+            ORDER BY gr.profit DESC, p.name ASC
+            LIMIT 1
+        """, (game_id,)).fetchone()
+
+        top_loser = conn.execute("""
+            SELECT
+                p.id AS player_id,
+                p.name AS player_name,
+                gr.profit AS profit
+            FROM game_results gr
+            JOIN players p ON p.id = gr.player_id
+            WHERE gr.game_id = ?
+            ORDER BY gr.profit ASC, p.name ASC
+            LIMIT 1
+        """, (game_id,)).fetchone()
+
+        g["top_winner_name"] = top_winner["player_name"] if top_winner else None
+        g["top_winner_id"] = top_winner["player_id"] if top_winner else None
+        g["top_winner_amount"] = top_winner["profit"] if top_winner and top_winner["profit"] is not None else 0
+        g["top_loser_name"] = top_loser["player_name"] if top_loser else None
+        g["top_loser_id"] = top_loser["player_id"] if top_loser else None
+        g["top_loser_amount"] = top_loser["profit"] if top_loser and top_loser["profit"] is not None else 0
+
+        enriched.append(g)
+
+    return enriched
 
 # ------------------------------
 # מסך ראשי
@@ -198,75 +239,61 @@ def merge_recent_games_rows(cash_games, harbo_games, limit=5):
 def home():
     current_year = str(date.today().year)
 
-    cash_year = request.args.get("cash_year") or current_year
-    harbo_year = request.args.get("harbo_year") or current_year
-    complete_year = request.args.get("complete_year") or current_year
-
     view = request.args.get("view", "cash")
+    selected_year = request.args.get("year") or current_year
+    players_view = request.args.get("players", "top")
 
-    # מצב תצוגה לטבלת שחקנים (טופ/הכל) – נשמור, אבל רק לטבלה שמוצגת בפועל
-    cash_players_view = request.args.get("cash_players", "top")  # "top" / "all"
-    harbo_players_view = request.args.get("harbo_players", "top")
-    complete_players_view = request.args.get("complete_players", "top")  # top / all
-    
-    complete_limit = None if complete_players_view == "all" else 5
-    cash_limit = 5 if cash_players_view != "all" else 9999
-    harbo_limit = 5 if harbo_players_view != "all" else 9999
+    players_limit = 5 if players_view != "all" else 9999
 
-    # ברירת מחדל ריקה לצד שלא מוצג
-    cash_top_players, cash_recent_games = [], []
-    harbo_top_players, harbo_recent_games = [], []
-    complete_top_players, complete_recent_games = [], []
+    top_players = []
+    recent_games = []
 
     conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT DISTINCT substr(date, 1, 4) AS year
+        FROM games
+        WHERE date LIKE '____-__-__'
+        ORDER BY year DESC;
+    """)
+    years = [row["year"] for row in cur.fetchall() if row["year"]]
+
+    if selected_year != "all" and selected_year not in years:
+        selected_year = years[0] if years else current_year
+
+    if "all" not in years:
+        years.append("all")
 
     if view == "cash":
-        cash_top_players = get_top_players("cash", cash_limit, year=cash_year)
-        cash_recent_games = get_recent_games("cash", 5, year=cash_year)
-        cash_top_players = enrich_players(conn, cash_top_players, "cash", cash_year)
+        top_players = get_top_players("cash", players_limit, year=selected_year)
+        top_players = enrich_players(conn, top_players, "cash", selected_year)
+        recent_games = get_recent_games("cash", 5, year=selected_year)
+        recent_games = enrich_recent_games_with_highlights(conn, recent_games)
 
     elif view == "harbo":
-        harbo_top_players = get_top_players("harbo", harbo_limit, year=harbo_year)
-        harbo_recent_games = get_recent_games("harbo", 5, year=harbo_year)
-        harbo_top_players = enrich_players(conn, harbo_top_players, "harbo", harbo_year)
+        top_players = get_top_players("harbo", players_limit, year=selected_year)
+        top_players = enrich_players(conn, top_players, "harbo", selected_year)
+        recent_games = get_recent_games("harbo", 5, year=selected_year)
+        recent_games = enrich_recent_games_with_highlights(conn, recent_games)
 
     elif view == "complete":
-        # שנה אחת לקאש + חרבו (או all)
-        y = complete_year
-
-        cash_tp = get_top_players("cash", 9999, year=y)
-        harbo_tp = get_top_players("harbo", 9999, year=y)
-
-        cash_rg = get_recent_games("cash", 5, year=y)
-        harbo_rg = get_recent_games("harbo", 5, year=y)
-
-        cash_tp = enrich_players(conn, cash_tp, "cash", y)
-        harbo_tp = enrich_players(conn, harbo_tp, "harbo", y)
-
-        # טופ 5 מאוחד (אפשר להפוך ל"הצג הכל" בהמשך)
-        complete_top_players = get_complete_top_players(limit=complete_limit, year=complete_year)
-        complete_recent_games = get_complete_recent_games(limit=5, year=complete_year)
+        top_players = get_complete_top_players(limit=players_limit, year=selected_year)
+        recent_games = get_complete_recent_games(limit=5, year=selected_year)
+        recent_games = enrich_recent_games_with_highlights(conn, recent_games)
 
     conn.close()
 
     return render_template(
         "home.html",
-        current_user=get_current_user(),   # <-- להוסיף
+        current_user=get_current_user(),
         view=view,
-        cash_year=cash_year,
-        harbo_year=harbo_year,
-        complete_year=complete_year,
-        cash_players_view=cash_players_view,
-        harbo_players_view=harbo_players_view,
-        complete_players_view=complete_players_view,
-        cash_top_players=cash_top_players,
-        harbo_top_players=harbo_top_players,
-        complete_top_players=complete_top_players,
-        cash_recent_games=cash_recent_games,
-        harbo_recent_games=harbo_recent_games,
-        complete_recent_games=complete_recent_games,
+        selected_year=selected_year,
+        years=years,
+        players_view=players_view,
+        top_players=top_players,
+        recent_games=recent_games,
     )
-
 
 # ------------------------------
 # רשימת משחקים
@@ -280,7 +307,17 @@ def games_list():
     cur = conn.cursor()
 
     cur.execute(
-        "SELECT * FROM games WHERE game_type = ? ORDER BY date DESC;",
+        """
+        SELECT
+            id,
+            date,
+            (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il,
+            location,
+            game_type
+        FROM games
+        WHERE game_type = ?
+        ORDER BY date DESC;
+        """,
         (view,),
     )
     games = cur.fetchall()
@@ -301,23 +338,66 @@ def games_list():
 @login_required
 @role_required("admin", "magician")
 def add_game():
-    if request.method == "POST":
-        date = request.form.get("date")
-        location = request.form.get("location")
-        game_type = request.form.get("game_type")
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-        conn = get_db_connection()
-        cur = conn.cursor()
+    if request.method == "POST":
+        game_date  = request.form.get("date", "").strip()
+        location   = request.form.get("location", "").strip() or None
+        game_type  = request.form.get("game_type", "cash")
+
+        # צור את המשחק
         cur.execute(
             "INSERT INTO games (date, location, game_type) VALUES (?, ?, ?)",
-            (date, location, game_type),
+            (game_date, location, game_type),
         )
         conn.commit()
+        game_id = cur.lastrowid
+
+        # שמור תוצאות שחקנים (אם הוזנו)
+        cur.execute("SELECT * FROM players ORDER BY name COLLATE NOCASE;")
+        all_players = cur.fetchall()
+
+        for p in all_players:
+            pid = p["id"]
+            buyin_str   = request.form.get(f"buyin_{pid}",   "").strip()
+            cashout_str = request.form.get(f"cashout_{pid}", "").strip()
+
+            if buyin_str == "" and cashout_str == "":
+                continue
+
+            try:
+                buyin   = float(buyin_str)   if buyin_str   else 0.0
+                cashout = float(cashout_str) if cashout_str else 0.0
+            except ValueError:
+                continue
+
+            profit = cashout - buyin
+            cur.execute(
+                """
+                INSERT INTO game_results (game_id, player_id, buyin, cashout, profit)
+                VALUES (?, ?, ?, ?, ?);
+                """,
+                (game_id, pid, buyin, cashout, profit),
+            )
+
+        conn.commit()
         conn.close()
+        return redirect(url_for("main.game_results", game_id=game_id))
 
-        return redirect(url_for("main.games_list"))
+    # GET — טען שחקנים פעילים (כאלה שמופיעים ב-game_results)
+    cur.execute("""
+        SELECT DISTINCT p.id, p.name
+        FROM players p
+        JOIN game_results gr ON gr.player_id = p.id
+        ORDER BY p.name COLLATE NOCASE;
+    """)
+    players = [dict(r) for r in cur.fetchall()]
+    conn.close()
 
-    return render_template("add_game.html")
+    from datetime import date as _date
+    today = _date.today().isoformat()
+    return render_template("add_game.html", players=players, today=today, current_user=get_current_user())
 
 
 # ------------------------------
@@ -327,7 +407,7 @@ def add_game():
 @login_required
 def players():
     current_year = date.today().year
-    hide_inactive = request.args.get("inactive") != "1"
+    show = request.args.get("show", "active")
     sort = request.args.get("sort", type=str)
     direction = request.args.get("dir", type=str)
 
@@ -427,7 +507,7 @@ def players():
     players = cur.fetchall()
     conn.close()
 
-    if hide_inactive:
+    if show == "active":
         players = [p for p in players if p["year_games"] > 0]
 
     return render_template(
@@ -436,7 +516,8 @@ def players():
         year=current_year,
         sort=sort,
         direction=direction,
-        hide_inactive=hide_inactive,
+        show=show,
+        current_user=get_current_user(),
     )
 # ------------------------------
 # מסך אדמין לאישור משתמשים
@@ -483,7 +564,13 @@ def game_results(game_id):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM games WHERE id = ?;", (game_id,))
+    cur.execute(
+        """
+        SELECT *, (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il
+        FROM games WHERE id = ?;
+        """,
+        (game_id,),
+    )
     game = cur.fetchone()
     if game is None:
         conn.close()
@@ -494,6 +581,7 @@ def game_results(game_id):
     cur.execute(
         """
         SELECT
+        p.id AS player_id,
         p.name AS player_name,
         gr.buyin,
         gr.cashout,
@@ -539,7 +627,10 @@ def game_results_edit(game_id):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM games WHERE id = ?;", (game_id,))
+    cur.execute(
+        "SELECT *, (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il FROM games WHERE id = ?;",
+        (game_id,),
+    )
     game = cur.fetchone()
     if game is None:
         conn.close()
@@ -577,13 +668,35 @@ def game_results_edit(game_id):
 
         conn.commit()
 
-    cur.execute("SELECT * FROM players ORDER BY name;")
-    players = cur.fetchall()
-
     cur.execute("SELECT * FROM game_results WHERE game_id = ?;", (game_id,))
     results_rows = cur.fetchall()
+    results_rows = [dict(r) for r in results_rows]
 
     results_by_player = {row["player_id"]: row for row in results_rows}
+    players_in_game_ids = set(results_by_player.keys())
+
+    # שחקנים שכבר במשחק — עם הנתונים שלהם
+    cur.execute("""
+        SELECT p.id, p.name
+        FROM players p
+        WHERE p.id IN ({})
+        ORDER BY p.name COLLATE NOCASE;
+    """.format(",".join("?" * len(players_in_game_ids)) if players_in_game_ids else "NULL"),
+        list(players_in_game_ids) if players_in_game_ids else []
+    )
+    players = [dict(r) for r in cur.fetchall()]
+
+    # שחקנים פעילים שעוד לא במשחק — לחיפוש הוספה
+    cur.execute("""
+        SELECT DISTINCT p.id, p.name
+        FROM players p
+        JOIN game_results gr ON gr.player_id = p.id
+        WHERE p.id NOT IN ({})
+        ORDER BY p.name COLLATE NOCASE;
+    """.format(",".join("?" * len(players_in_game_ids)) if players_in_game_ids else "SELECT -1"),
+        list(players_in_game_ids) if players_in_game_ids else []
+    )
+    available_players = [dict(r) for r in cur.fetchall()]
 
     total_buyin = sum(row["buyin"] for row in results_rows) if results_rows else 0
     total_cashout = sum(row["cashout"] for row in results_rows) if results_rows else 0
@@ -596,10 +709,11 @@ def game_results_edit(game_id):
         game=game,
         players=players,
         results=results_by_player,
+        available_players=available_players,
         total_buyin=total_buyin,
         total_cashout=total_cashout,
         diff=diff,
-        mode="edit", 
+        mode="edit",
         current_user=get_current_user(),
     )
 
@@ -974,6 +1088,9 @@ def player_detail(player_id):
 
     sort = request.args.get("sort", "date", type=str).strip().lower()
     direction = request.args.get("dir", "desc", type=str).strip().lower()
+    view = request.args.get("view", "complete", type=str).strip().lower()
+    if view not in ("cash", "harbo", "complete"):
+        view = "complete"
 
     allowed_sorts = {
         "date": "g.date",
@@ -1003,6 +1120,8 @@ def player_detail(player_id):
         conn.close()
         return "השחקן לא נמצא", 404
 
+    player = dict(player)
+
     cur.execute(
         """
         WITH ranked_results AS (
@@ -1011,6 +1130,7 @@ def player_detail(player_id):
                 gr.game_id,
                 gr.profit,
                 g.date,
+                g.game_type,
                 ROW_NUMBER() OVER (
                     PARTITION BY gr.player_id
                     ORDER BY g.date DESC, g.id DESC
@@ -1040,7 +1160,9 @@ def player_detail(player_id):
                 gr.player_id,
                 ROUND(COALESCE(SUM(gr.profit), 0), 2) AS year_profit,
                 ROUND(COALESCE(AVG(gr.profit), 0), 2) AS year_avg,
-                COUNT(*) AS year_games
+                COUNT(*) AS year_games,
+                SUM(CASE WHEN g.game_type = 'cash' THEN 1 ELSE 0 END) AS year_cash_games,
+                SUM(CASE WHEN g.game_type = 'harbo' THEN 1 ELSE 0 END) AS year_harbo_games
             FROM game_results gr
             JOIN games g ON g.id = gr.game_id
             WHERE gr.player_id = ?
@@ -1051,11 +1173,38 @@ def player_detail(player_id):
             SELECT
                 rr.player_id,
                 ROUND(rr.profit, 2) AS last_result,
+                rr.date AS last_game_date,
                 rr.position_in_game,
                 rr.players_in_game
             FROM ranked_results rr
             WHERE rr.player_id = ?
               AND rr.player_last_game_rn = 1
+        ),
+        best_game AS (
+            SELECT
+                gr.player_id,
+                ROUND(gr.profit, 2) AS best_profit,
+                g.date AS best_profit_date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY gr.player_id
+                    ORDER BY gr.profit DESC, g.date DESC, g.id DESC
+                ) AS rn
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE gr.player_id = ?
+        ),
+        worst_game AS (
+            SELECT
+                gr.player_id,
+                ROUND(gr.profit, 2) AS worst_profit,
+                g.date AS worst_profit_date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY gr.player_id
+                    ORDER BY gr.profit ASC, g.date DESC, g.id DESC
+                ) AS rn
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE gr.player_id = ?
         )
         SELECT
             p.id,
@@ -1065,7 +1214,14 @@ def player_detail(player_id):
             COALESCE(y.year_profit, 0) AS year_profit,
             COALESCE(y.year_avg, 0) AS year_avg,
             COALESCE(y.year_games, 0) AS year_games,
+            COALESCE(y.year_cash_games, 0) AS year_cash_games,
+            COALESCE(y.year_harbo_games, 0) AS year_harbo_games,
             lg.last_result,
+            lg.last_game_date,
+            bg.best_profit,
+            bg.best_profit_date,
+            wg.worst_profit,
+            wg.worst_profit_date,
             CASE
                 WHEN lg.position_in_game IS NOT NULL
                 THEN CAST(lg.position_in_game AS TEXT) || ' מתוך ' || CAST(lg.players_in_game AS TEXT)
@@ -1075,9 +1231,11 @@ def player_detail(player_id):
         LEFT JOIN totals t ON t.player_id = p.id
         LEFT JOIN year_stats y ON y.player_id = p.id
         LEFT JOIN last_game lg ON lg.player_id = p.id
+        LEFT JOIN best_game bg ON bg.player_id = p.id AND bg.rn = 1
+        LEFT JOIN worst_game wg ON wg.player_id = p.id AND wg.rn = 1
         WHERE p.id = ?;
         """,
-        (player_id, player_id, str(current_year), player_id, player_id),
+        (player_id, player_id, str(current_year), player_id, player_id, player_id, player_id),
     )
     summary = cur.fetchone()
     summary = dict(summary) if summary else {}
@@ -1097,7 +1255,7 @@ def player_detail(player_id):
         ORDER BY {sort_sql} {dir_sql}, g.id DESC
     """
     cur.execute(games_sql, (player_id,))
-    games = cur.fetchall()
+    games = [dict(r) for r in cur.fetchall()]
 
     cash_sql = f"""
     SELECT
@@ -1117,7 +1275,7 @@ def player_detail(player_id):
     """
 
     cur.execute(cash_sql, (player_id, str(current_year)))
-    games_2026_cash = cur.fetchall()
+    games_2026_cash = [dict(r) for r in cur.fetchall()]
 
     harbo_sql = f"""
     SELECT
@@ -1137,7 +1295,7 @@ def player_detail(player_id):
     """
 
     cur.execute(harbo_sql, (player_id, str(current_year)))
-    games_2026_harbo = cur.fetchall()
+    games_2026_harbo = [dict(r) for r in cur.fetchall()]
 
     summary["year_cash_games"] = len(games_2026_cash)
     summary["year_harbo_games"] = len(games_2026_harbo)
@@ -1145,9 +1303,11 @@ def player_detail(player_id):
     best_game = None
     worst_game = None
 
+    best_game = None
+    worst_game = None
+
     if games:
         valid_games = [g for g in games if g["profit"] is not None]
-
         if valid_games:
             best_game = max(valid_games, key=lambda g: g["profit"])
             worst_game = min(valid_games, key=lambda g: g["profit"])
@@ -1172,4 +1332,5 @@ def player_detail(player_id):
         subtitle=subtitle,
         sort=sort,
         direction=direction,
+        current_user=get_current_user(),
     )

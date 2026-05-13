@@ -71,6 +71,9 @@ def create_app():
     app.config["STATIC_VER"] = int(css_path.stat().st_mtime) if css_path.exists() else 1
 
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
+    app.config["WTF_CSRF_ENABLED"] = True
+    csrf.init_app(app)
+
     db_path = os.environ.get("DB_PATH", str(instance_path / "poker.db"))
     app.config["DB_PATH"] = db_path
 
