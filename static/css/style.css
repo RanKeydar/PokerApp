@@ -1779,6 +1779,7 @@ tbody tr:nth-child(even) {
     .brand-copy h1 {
       font-size: 1.65rem;
       white-space: normal;
+      text-align: center;
     }
 
     .main-nav {
@@ -2187,4 +2188,120 @@ tbody tr:nth-child(even) {
 .results-table td a:hover {
   color: #1e3a8a;
   text-decoration: underline;
+}
+
+/* ===== Recent Cards — Desktop: horizontal row ===== */
+.recent-cards {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.recent-card {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  background: rgba(15, 118, 110, 0.07);
+  border: 1px solid rgba(103, 232, 249, 0.25);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recent-date {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.recent-location {
+  font-size: 12px;
+  color: #374151;
+}
+
+.recent-type {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.recent-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recent-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.recent-line-label {
+  color: #6b7280;
+  font-size: 11px;
+  flex: 0 0 auto;
+}
+
+.recent-line-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.recent-line-value {
+  font-weight: 700;
+  font-size: 12px;
+  flex: 0 0 auto;
+}
+
+.recent-line-value.pos { color: #15803d; }
+.recent-line-value.neg { color: #b91c1c; }
+
+.recent-action {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+/* ===== Mobile: stack vertically, keep card style ===== */
+@media (max-width: 640px) {
+  /* כותרת מיושרת למרכז */
+  .brand-copy {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* כרטיסיות משחקים — עמודה אנכית במובייל */
+  .recent-cards {
+    flex-direction: column;
+    gap: 10px;
+    overflow-x: unset;
+    padding-bottom: 0;
+  }
+
+  .recent-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    background: rgba(15, 118, 110, 0.09);
+    border: 1px solid rgba(103, 232, 249, 0.30);
+    border-radius: 12px;
+    padding: 9px 10px;
+  }
 }
