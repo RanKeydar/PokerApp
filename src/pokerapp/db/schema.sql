@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
   is_approved   INTEGER NOT NULL DEFAULT 1
                   CHECK (is_approved IN (0, 1)),
   player_id     INTEGER NULL
-                  REFERENCES players(id) ON DELETE SET NULL
+                  REFERENCES players(id) ON DELETE SET NULL,
+  private_stats INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS players (

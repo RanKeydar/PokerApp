@@ -997,6 +997,59 @@ def stats():
 # מסך אדמין לאישור משתמשים
 
 
+
+@bp.route("/game/<int:game_id>/results", methods=["GET"])
+@login_required
+def game_results(game_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT *, (substr(date,9,2) || '.' || substr(date,6,2) || '.' || substr(date,3,2)) AS date_il
+        FROM games WHERE id = ?;
+        """,
+        (game_id,),
+    )
+    game = cur.fetchone()
+    if game is None:
+        conn.close()
+        return "המשחק לא נמצא", 404
+
+    cur.execute(
+        """
+        SELECT
+        p.id AS player_id,
+        p.name AS player_name,
+        gr.buyin,
+        gr.cashout,
+        gr.profit
+        FROM game_results gr
+        JOIN players p ON p.id = gr.player_id
+        WHERE gr.game_id = ?
+        AND gr.profit IS NOT NULL
+        ORDER BY gr.profit DESC, p.name COLLATE NOCASE;
+        """,
+        (game_id,),
+    )
+    players = cur.fetchall()
+
+    total_buyin  = sum(row["buyin"]   for row in players) if players else 0
+    total_cashout= sum(row["cashout"] for row in players) if players else 0
+    diff = total_cashout - total_buyin
+    conn.close()
+
+    return render_template(
+        "game_results.html",
+        game=game,
+        players=players,
+        total_buyin=total_buyin,
+        total_cashout=total_cashout,
+        diff=diff,
+        mode="view",
+        current_user=get_current_user(),
+    )
+
 @bp.route("/game/<int:game_id>/results/edit", methods=["GET", "POST"])
 @login_required
 def game_results_edit(game_id):
