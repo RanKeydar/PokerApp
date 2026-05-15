@@ -77,7 +77,7 @@ def create_app():
             return str(date_value)
 
 
-    app.config['STATIC_VER'] = 2
+    app.config["STATIC_VER"] = 2
 
     css_path = project_root / "static" / "css" / "style.css"
     app.config["STATIC_VER"] = int(css_path.stat().st_mtime) if css_path.exists() else 1
@@ -102,4 +102,11 @@ def create_app():
     from pokerapp.routes.auth import bp as auth_bp
     from pokerapp.routes.main import bp as main_bp
     app.register_blueprint(auth_bp)
-    app.register_blueprint
+    app.register_blueprint(main_bp)
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        tb = traceback.format_exc()
+        return f"<pre>500 ERROR\n\n{tb}</pre>", 500
+
+    return app
