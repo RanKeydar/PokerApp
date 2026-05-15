@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+import traceback
+from flask import Flask, jsonify
 from pathlib import Path
 from pokerapp.db.init_db import init_db   # ⬅️ הוספה
 from flask_wtf.csrf import CSRFProtect
@@ -101,6 +102,4 @@ def create_app():
     from pokerapp.routes.auth import bp as auth_bp
     from pokerapp.routes.main import bp as main_bp
     app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-
-    return app
+    app.register_blueprint
