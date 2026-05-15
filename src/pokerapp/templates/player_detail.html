@@ -8,7 +8,7 @@
 
 {% block content %}
 {% macro fmt_short_date(d) -%}
-{%- if d and d|length >= 10 -%}{{ d[8:10] }}.{{ d[5:7] }}.{{ d[2:4] }}{%- else -%}—{%- endif -%}
+{%- if d and d|length >= 10 -%}{{ d[8:10] }}.{{ d[5:7] }}.{{ d[2:4] }}{%- else -%}-{%- endif -%}
 {%- endmacro %}
 
 {# ── pick the right grouped list for the active view ── #}
@@ -41,21 +41,21 @@
                 {% endif %}
             </div>
 
-            {# ── Privacy toggle — visible only to the page owner ── #}
+            {# ── Privacy toggle - visible only to the page owner ── #}
             {% if is_own_page %}
             <div class="privacy-toggle-wrap">
                 {% if is_private %}
                 <form method="POST" action="{{ url_for('main.player_toggle_privacy', player_id=player.get('id')) }}">
                     <input type="hidden" name="private_stats" value="0">
                     <button type="submit" class="btn ghost privacy-btn" title="נתוניך נראים רק לך">
-                        🔒 נתוני גלוי רק לי — לחץ להציג לכולם
+                        🔒 נתוני גלוי רק לי - לחץ להציג לכולם
                     </button>
                 </form>
                 {% else %}
                 <form method="POST" action="{{ url_for('main.player_toggle_privacy', player_id=player.get('id')) }}">
                     <input type="hidden" name="private_stats" value="1">
                     <button type="submit" class="btn ghost privacy-btn" title="נתוניך גלויים לכולם">
-                        🔓 נתוני גלויים לכולם — לחץ להסתיר
+                        🔓 נתוני גלויים לכולם - לחץ להסתיר
                     </button>
                 </form>
                 {% endif %}
@@ -70,7 +70,7 @@
             <div class="stat-card">
                 <h3>רווח/הפסד כולל</h3>
                 <span class="stat-value money {% if summary.get('total_cash_profit', 0) > 0 %}profit pos{% elif summary.get('total_cash_profit', 0) < 0 %}profit neg{% endif %}">
-                    <span class="money">₪{{ summary.get('total_cash_profit', 0)|int }}</span>
+                    <bdo dir="ltr" class="money ils">{{ summary.get('total_cash_profit', 0) | ils }}</bdo>
                 </span>
                 <div class="stat-subvalue stat-footnote">* קאש בלבד</div>
             </div>
@@ -78,7 +78,7 @@
             <div class="stat-card">
                 <h3>רווח/הפסד {{ year }}</h3>
                 <span class="stat-value money {% if summary.get('year_cash_profit', 0) > 0 %}profit pos{% elif summary.get('year_cash_profit', 0) < 0 %}profit neg{% endif %}">
-                    <span class="money">₪{{ summary.get('year_cash_profit', 0)|int }}</span>
+                    <bdo dir="ltr" class="money ils">{{ summary.get('year_cash_profit', 0) | ils }}</bdo>
                 </span>
                 <div class="stat-subvalue stat-footnote">* קאש בלבד</div>
             </div>
@@ -86,7 +86,7 @@
             <div class="stat-card">
                 <h3>ממוצע {{ year }}</h3>
                 <span class="stat-value money {% if summary.get('year_cash_avg', 0) > 0 %}profit pos{% elif summary.get('year_cash_avg', 0) < 0 %}profit neg{% endif %}">
-                    <span class="money">₪{{ summary.get('year_cash_avg', 0)|int }}</span>
+                    <bdo dir="ltr" class="money ils">{{ summary.get('year_cash_avg', 0) | ils }}</bdo>
                 </span>
                 <div class="stat-subvalue stat-footnote">* קאש בלבד</div>
             </div>
@@ -112,8 +112,8 @@
                 {% if can_see_private %}
                 <span class="stat-value money {% if summary.get('last_result') is not none and summary.get('last_result') > 0 %}profit pos{% elif summary.get('last_result') is not none and summary.get('last_result') < 0 %}profit neg{% endif %}">
                     {% if summary.get('last_result') is not none %}
-                    <span class="money">₪{{ summary.get('last_result')|int }}</span>
-                    {% else %}—{% endif %}
+                    <bdo dir="ltr" class="money ils">{{ summary.get('last_result') | ils }}</bdo>
+                    {% else %}-{% endif %}
                 </span>
                 {% else %}
                 <span class="stat-value stat-locked-icon">🔒</span>
@@ -129,8 +129,8 @@
                 <h3>שיא רווח</h3>
                 <span class="stat-value money {% if summary.get('best_profit') is not none and summary.get('best_profit') > 0 %}profit pos{% elif summary.get('best_profit') is not none and summary.get('best_profit') < 0 %}profit neg{% endif %}">
                     {% if summary.get('best_profit') is not none %}
-                    <span class="money">₪{{ summary.get('best_profit')|int }}</span>
-                    {% else %}—{% endif %}
+                    <bdo dir="ltr" class="money ils">{{ summary.get('best_profit') | ils }}</bdo>
+                    {% else %}-{% endif %}
                 </span>
                 {% if summary.get('best_profit_date') %}
                 <span class="stat-subline">{{ fmt_short_date(summary.get('best_profit_date')) }}</span>
@@ -141,8 +141,8 @@
                 <h3>שפל אישי</h3>
                 <span class="stat-value money {% if summary.get('worst_profit') is not none and summary.get('worst_profit') > 0 %}profit pos{% elif summary.get('worst_profit') is not none and summary.get('worst_profit') < 0 %}profit neg{% endif %}">
                     {% if summary.get('worst_profit') is not none %}
-                    <span class="money">₪{{ summary.get('worst_profit')|int }}</span>
-                    {% else %}—{% endif %}
+                    <bdo dir="ltr" class="money ils">{{ summary.get('worst_profit') | ils }}</bdo>
+                    {% else %}-{% endif %}
                 </span>
                 {% if summary.get('worst_profit_date') %}
                 <span class="stat-subline">{{ fmt_short_date(summary.get('worst_profit_date')) }}</span>
@@ -154,7 +154,7 @@
             <div class="stat-card">
                 <h3>מיקום אחרון</h3>
                 <span class="stat-value is-rank">
-                    {{ summary.get('last_position', '—') }}
+                    {{ summary.get('last_position', '-') }}
                 </span>
                 {% if summary.get('last_game_date') %}
                 <span class="stat-subline">{{ fmt_short_date(summary.get('last_game_date')) }}</span>
@@ -224,19 +224,19 @@
                         style="cursor:pointer;"
                         onclick="window.location.href='{{ url_for('main.game_results', game_id=g.get('game_id')) }}'">
                         <td class="col-date num" data-label="תאריך">{{ fmt_short_date(game_date) }}</td>
-                        <td class="col-location" data-label="מקום">{{ g.get('location') or "—" }}</td>
+                        <td class="col-location" data-label="מקום">{{ g.get('location') or "-" }}</td>
                         {% if view == 'complete' %}
                         <td class="col-type" data-label="סוג">
                             {% if g.get('game_type') == 'cash' %}קאש
                             {% elif g.get('game_type') == 'harbo' %}חרבו
-                            {% else %}—{% endif %}
+                            {% else %}-{% endif %}
                         </td>
                         {% endif %}
                         {% if can_see_private %}
-                        <td class="col-buyin num" data-label="כניסה"><span class="money">₪{{ g.get('buyin', 0)|int }}</span></td>
-                        <td class="col-cashout num" data-label="יציאה"><span class="money">₪{{ g.get('cashout', 0)|int }}</span></td>
+                        <td class="col-buyin num" data-label="כניסה"><bdo dir="ltr" class="money ils">₪{{ g.get('buyin', 0)|int }}</bdo></td>
+                        <td class="col-cashout num" data-label="יציאה"><bdo dir="ltr" class="money ils">₪{{ g.get('cashout', 0)|int }}</bdo></td>
                         <td class="col-profit num {% if g.get('profit', 0) > 0 %}profit pos{% elif g.get('profit', 0) < 0 %}profit neg{% endif %}"
-                            data-label="רווח/הפסד"><span class="money">₪{{ g.get('profit', 0)|int }}</span></td>
+                            data-label="רווח/הפסד"><bdo dir="ltr" class="money ils">{{ g.get('profit', 0) | ils }}</bdo></td>
                         {% endif %}
                     </tr>
                     {% endfor %}
@@ -263,7 +263,7 @@ function toggleYear(yr) {
 
 {% if can_see_private and chart_data_json and chart_data_json != '[]' %}
 <section class="analytics-section" id="analytics">
-    <h2 class="games-section-title">📈 ביצועים — קאש</h2>
+    <h2 class="games-section-title">📈 ביצועים - קאש</h2>
 
     {# ── Win-rate + Streak stat cards ── #}
     <div class="analytics-kpi-row">
@@ -277,7 +277,7 @@ function toggleYear(yr) {
         <div class="stat-card">
             <h3>סטריק נוכחי</h3>
             <span class="stat-value {% if streak_type == 'win' %}profit pos{% elif streak_type == 'loss' %}profit neg{% endif %}">
-                {{ streak_count if streak_count else '—' }}
+                {{ streak_count if streak_count else '-' }}
             </span>
             <div class="stat-subvalue">
                 {% if streak_type == 'win' %}ניצחונות רצופים

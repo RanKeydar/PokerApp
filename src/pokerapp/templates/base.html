@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}פוקר אפ{% endblock %}</title>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v='20260513-4') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260513-4') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v='20260515-5') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260515-5') }}">
   {% block page_css %}{% endblock %}
 
   <!-- Google Analytics GA4 -->
@@ -51,6 +51,11 @@
         <a class="nav-chip {% if request.endpoint == 'main.stats' %}active{% endif %}"
           href="{{ url_for('main.stats') }}">
           סטטיסטיקות
+        </a>
+
+        <a class="nav-chip {% if request.endpoint == 'main.calculator' %}active{% endif %}"
+          href="{{ url_for('main.calculator') }}">
+          🃏 מחשבון
         </a>
 
         {% if current_user and current_user["role"] == "admin" %}
@@ -103,13 +108,3 @@
       if (!window.matchMedia('(max-width: 900px)').matches) return;
 
       document.querySelectorAll('.table-wrap').forEach(function (wrap) {
-        requestAnimationFrame(function () {
-          wrap.scrollLeft = wrap.scrollWidth;
-        });
-      });
-    });
-  </script>
-  {% block scripts %}{% endblock %}
-</body>
-
-</html>

@@ -2339,7 +2339,7 @@ tbody tr:nth-child(even) {
 /* ---- KPI grid ---- */
 .stats-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 .stats-kpi-card {
@@ -2366,7 +2366,7 @@ tbody tr:nth-child(even) {
 /* ---- Records grid ---- */
 .stats-records-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 .stats-record-card {
@@ -2420,6 +2420,7 @@ tbody tr:nth-child(even) {
   .stats-charts-grid { grid-template-columns: 1fr; }
   .stats-kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-records-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-analysis-highlights { grid-template-columns: 1fr; }
 }
 .stats-chart-card {
   background: rgba(15,32,24,.70);
@@ -2437,4 +2438,239 @@ tbody tr:nth-child(even) {
 .stats-chart-wrap {
   position: relative;
   height: 220px;
+}
+
+/* ── Streak record cards ── */
+.stats-record-card.streak-win-card  { border-color: rgba(74,222,128,.35); }
+.stats-record-card.streak-loss-card { border-color: rgba(248,113,113,.30); }
+
+/* ── Player analysis highlights ── */
+.stats-analysis-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stats-highlight-card {
+  background: rgba(15,32,24,.70);
+  border: 1px solid rgba(74,222,128,.18);
+  border-radius: 14px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+}
+.stats-hl-icon { font-size: 1.5rem; line-height: 1; }
+.stats-hl-body { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stats-hl-label { font-size: .68rem; font-weight: 700; color: #d4a017; text-transform: uppercase; letter-spacing: .05em; }
+.stats-hl-name a { font-size: .95rem; font-weight: 800; color: #f1f5f9; text-decoration: none; }
+.stats-hl-name a:hover { color: #fde68a; }
+.stats-hl-value { font-size: 0.72rem; font-weight: 700; direction: ltr; unicode-bidi: isolate; text-align: center; display: block; }
+.stats-hl-sub { font-size: .72rem; color: #6b7280; text-align: center; }
+
+/* ── Win-rate badge ── */
+.winrate-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 700;
+}
+.winrate-badge.wr-high { background: rgba(74,222,128,.18); color: #4ade80; }
+.winrate-badge.wr-mid  { background: rgba(251,191,36,.15); color: #fbbf24; }
+.winrate-badge.wr-low  { background: rgba(248,113,113,.15); color: #f87171; }
+.stats-player-table .muted { color: #6b7280; }
+
+/* ── Lucky locations grid ── */
+.stats-locations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+.stats-location-card {
+  background: rgba(15,32,24,.65);
+  border: 1px solid rgba(212,160,23,.25);
+  border-radius: 14px;
+  padding: 14px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.stats-location-icon { font-size: 1.3rem; flex-shrink: 0; padding-top: 2px; }
+.stats-location-body { display: flex; flex-direction: column; gap: 2px; }
+.stats-location-player a { font-size: .95rem; font-weight: 800; color: #f1f5f9; text-decoration: none; }
+.stats-location-player a:hover { color: #fde68a; }
+.stats-location-arrow { font-size: .68rem; color: #6b7280; }
+.stats-location-name { font-size: .9rem; font-weight: 700; color: #fbbf24; }
+.stats-location-value { font-size: .75rem; font-weight: 600; }
+.stats-location-value.pos { color: #4ade80; }
+.stats-location-value.neg { color: #f87171; }
+.stats-locations-subheader {
+  font-size: .75rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin: 12px 0 8px;
+}
+.stats-locations-subheader:first-of-type { margin-top: 0; }
+
+/* ── 3-column chart grid on wide screens ── */
+@media (min-width: 800px) {
+  .stats-charts-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Stats section header with filter row ── */
+.stats-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(74,222,128,.18);
+}
+.stats-section-header .stats-section-title {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+.stats-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.location-toggle-btn {
+  font-size: 0.85rem;
+  padding: 7px 14px;
+  font-weight: 700;
+}
+.btn.danger {
+  background: rgba(185,28,28,.85);
+  border-color: rgba(239,68,68,.4);
+  color: #fff;
+}
+.btn.danger:hover {
+  background: rgba(185,28,28,.95);
+}
+.stats-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.btn.small {
+  font-size: .75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  line-height: 1.4;
+}
+
+/* ── Pot-by-year table card ── */
+.stats-pot-table-card { display: flex; flex-direction: column; }
+.stats-pot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+  margin-top: 4px;
+}
+.stats-pot-table th {
+  text-align: right;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(74,222,128,.20);
+  color: #9ca3af;
+  font-weight: 700;
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+.stats-pot-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  color: #f1f5f9;
+}
+.stats-pot-table tr:last-child td { border-bottom: none; }
+.stats-pot-table .num { text-align: left; direction: ltr; }
+.stats-pot-table .muted { color: #6b7280; }
+
+/* ── stats section note ── */
+.stats-section-note {
+  font-size: 0.72rem;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 2px;
+}
+.stats-section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.filter-divider {
+  color: var(--text-muted, #9ca3af);
+  margin: 0 2px;
+}
+
+/* ── sortable table headers ── */
+th.sortable:hover { background: rgba(255,255,255,0.05); }
+th.sort-desc, th.sort-asc { color: #4ade80; }
+.sort-arrow { font-size: 0.7em; opacity: 0.8; }
+
+/* ── chart subtitle ── */
+.chart-subtitle {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin-top: 2px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── std-dev hint ── */
+.hl-hint {
+  font-size: 0.65rem;
+  color: #6b7280;
+  cursor: help;
+  font-style: normal;
+}
+
+/* ── currency amount: forces LTR so -₪X always renders correctly in RTL context ── */
+bdo.ils, span.ils, .ils {
+  direction: ltr;
+  unicode-bidi: bidi-override;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: baseline;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-hl-explain-mini {
+  font-size: 0.58rem;
+  color: var(--muted, #6b7280);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 4px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.stats-section-subtitle {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--muted, #6b7280);
+  margin-right: 6px;
+}
+
+.stats-highlights-nowrap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 700px) {
+  .stats-highlights-nowrap {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

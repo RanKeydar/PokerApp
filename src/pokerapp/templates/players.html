@@ -50,40 +50,40 @@
           <td
             class="col-year-profit {% if p_data['year_profit'] > 0 %}profit pos{% elif p_data['year_profit'] < 0 %}profit neg{% endif %}">
             {% if p_data["year_profit"] is not none %}
-            <span class="money">₪{{ p_data["year_profit"]|int }}</span>
+            <bdo dir="ltr" class="money ils">{{ p_data["year_profit"] | ils }}</bdo>
             {% else %}
-            —
+            -
             {% endif %}
           </td>
 
           <td
             class="col-total {% if p_data['total_profit'] > 0 %}profit pos{% elif p_data['total_profit'] < 0 %}profit neg{% endif %}">
             {% if p_data["total_profit"] is not none %}
-            <span class="money">₪{{ p_data["total_profit"]|int }}</span>
+            <bdo dir="ltr" class="money ils">{{ p_data["total_profit"] | ils }}</bdo>
             {% else %}
-            —
+            -
             {% endif %}
           </td>
 
           <td
             class="col-year-avg {% if p_data['year_avg'] > 0 %}profit pos{% elif p_data['year_avg'] < 0 %}profit neg{% endif %}">
             {% if p_data["year_avg"] is not none %}
-            <span class="money">₪{{ p_data["year_avg"]|int }}</span>
+            <bdo dir="ltr" class="money ils">{{ p_data["year_avg"] | ils }}</bdo>
             {% else %}
-            —
+            -
             {% endif %}
           </td>
 
           <td class="col-year-games">
-            {{ p_data["year_games"] if p_data["year_games"] is not none else "—" }}
+            {{ p_data["year_games"] if p_data["year_games"] is not none else "-" }}
           </td>
 
           <td
             class="col-last-result {% if p_data['last_result'] is not none and p_data['last_result'] > 0 %}profit pos{% elif p_data['last_result'] is not none and p_data['last_result'] < 0 %}profit neg{% endif %}">
             {% if p_data["last_result"] is not none %}
-            <span class="money">₪{{ p_data["last_result"]|int }}</span>
+            <bdo dir="ltr" class="money ils">{{ p_data["last_result"] | ils }}</bdo>
             {% else %}
-            —
+            -
             {% endif %}
           </td>
         </tr>
@@ -93,27 +93,27 @@
               <div class="player-details-grid">
                 <div>
                   <strong>סה"כ רווח/הפסד:</strong>
-                  {% if p_data["total_profit"] is not none %}₪{{ p_data["total_profit"]|int }}{% else %}—{% endif %}
+                  {% if p_data["total_profit"] is not none %}{{ p_data["total_profit"] | ils }}{% else %}-{% endif %}
                 </div>
 
                 <div>
                   <strong>ממוצע 26:</strong>
-                  {% if p_data["year_avg"] is not none %}₪{{ p_data["year_avg"]|int }}{% else %}—{% endif %}
+                  {% if p_data["year_avg"] is not none %}{{ p_data["year_avg"] | ils }}{% else %}-{% endif %}
                 </div>
 
                 <div>
                   <strong>משחקים 26:</strong>
-                  {{ p_data["year_games"] if p_data["year_games"] is not none else "—" }}
+                  {{ p_data["year_games"] if p_data["year_games"] is not none else "-" }}
                 </div>
 
                 <div>
                   <strong>תוצאה אחרונה:</strong>
-                  {% if p_data["last_result"] is not none %}₪{{ p_data["last_result"]|int }}{% else %}—{% endif %}
+                  {% if p_data["last_result"] is not none %}{{ p_data["last_result"] | ils }}{% else %}-{% endif %}
                 </div>
 
                 <div>
                   <strong>מיקום אחרון:</strong>
-                  {{ p_data["last_position"] if p_data["last_position"] is not none else "—" }}
+                  {{ p_data["last_position"] if p_data["last_position"] is not none else "-" }}
                 </div>
 
                 <div>

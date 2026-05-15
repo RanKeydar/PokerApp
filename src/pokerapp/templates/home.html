@@ -124,7 +124,7 @@
                   <a href="{{ url_for('main.player_detail', player_id=row['player_id']) }}">{{ row["player_name"] }}</a>
                 </td>
                 <td class="num profit {% if val >= 0 %}pos{% else %}neg{% endif %}">
-                  <span class="money">₪{{ "%.0f"|format(val) }}</span>
+                  <bdo dir="ltr" class="money ils">{{ val | ils }}</bdo>
                 </td>
 
                 {% if view == "complete" %}
@@ -183,9 +183,9 @@
                 <span class="recent-line-name">
                   {% if g["top_winner_id"] %}
                   <a href="{{ url_for('main.player_detail', player_id=g['top_winner_id']) }}">{{ g["top_winner_name"] }}</a>
-                  {% else %}—{% endif %}
+                  {% else %}-{% endif %}
                 </span>
-                <span class="recent-line-value pos">+₪{{ "%.0f"|format(winner_amount) }}</span>
+                <span class="recent-line-value pos"><bdo dir="ltr" class="ils">₪{{ "%.0f"|format(winner_amount) }}</bdo></span>
               </div>
 
               <div class="recent-line loser-line">
@@ -193,9 +193,9 @@
                 <span class="recent-line-name">
                   {% if g["top_loser_id"] %}
                   <a href="{{ url_for('main.player_detail', player_id=g['top_loser_id']) }}">{{ g["top_loser_name"] }}</a>
-                  {% else %}—{% endif %}
+                  {% else %}-{% endif %}
                 </span>
-                <span class="recent-line-value neg">-₪{{ "%.0f"|format(loser_amount|abs) }}</span>
+                <span class="recent-line-value neg"><bdo dir="ltr" class="ils">-₪{{ "%.0f"|format(loser_amount|abs) }}</bdo></span>
               </div>
             </div>
 
@@ -227,7 +227,7 @@
                 {{ record_game["player_name"] }}
               </a>
             </div>
-            <div class="record-amount">+₪{{ "%.0f"|format(record_game["profit"]) }}</div>
+            <div class="record-amount"><bdo dir="ltr" class="ils">₪{{ "%.0f"|format(record_game["profit"]) }}</bdo></div>
             <div class="record-date">
               <a href="{{ url_for('main.game_results', game_id=record_game['game_id']) }}">
                 {{ rd_fmt }}
@@ -244,6 +244,8 @@
 
 {% block scripts %}
 {% if ga_login %}
-<script>gtag('event', 'login');</script>
+<script>
+  gtag('event', 'login', { method: 'password' });
+</script>
 {% endif %}
 {% endblock %}

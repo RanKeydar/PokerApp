@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}מחשבון פוקר{% endblock %}
+
+{% block page_css %}
+<style>
+.calc-page { max-width: 860px; margin: 0 auto; }
+.calc-hero { padding: 16px 0 10px; }
+.calc-hero h2 { margin: 0 0 4px; font-size: 1.5rem; font-weight: 900; color: #fff; }
+.calc-hero p  { margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.70); }
+
+.calc-section {
+  background: rgba(255,255,255,0.97);
+  border-radius: 20px; padding: 18px 16px; margin-bottom: 14px;
+  color: #0f172a; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.calc-section-title {
+  font-size: 11px; font-weight: 900; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: 0.10em; margin: 0 0 14px;
+}
+
+/* Card slot */
+.card-slot {
+  width: 52px; height: 74px; border: 2px dashed #cbd5e1; border-radius: 8px;
+  cursor: pointer; display: inline-flex; flex-direction: column;
+  align-items: center; justify-content: center; background: #f8fafc;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+  flex-shrink: 0; user-select: none; position: relative; overflow: hidden;
+}
+.card-slot:hover { border-color: #0f766e; background: #f0fdf4; }
+.card-slot.filled { border: 2px solid #e2e8f0; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.14); }
+.card-slot.filled:hover { border-color: #b91c1c; }
+.card-slot .card-rank { font-size: 17px; font-weight: 900; line-height: 1; }
+.card-slot .card-suit { font-size: 13px; line-height: 1; margin-top: 2px; }
+.card-slot.red-suit  { color: #dc2626; }
+.card-slot.black-suit { color: #0f172a; }
+.card-slot .empty-plus { font-size: 20px; color: #cbd5e1; }
+
+/* Community */
+.community-row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; direction: ltr; }
+.community-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.community-group-cards { display: flex; gap: 5px; }
+.community-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; }
+.community-sep { width: 1px; height: 50px; background: #e2e8f0; align-self: center; flex-shrink: 0; }
+
+/* Hands */
+.hand-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 4px; border-bottom: 1px solid #f1f5f9; transition: background .2s;
+}
+.hand-row:last-of-type { border-bottom: none; }
+.hand-row.hand-incomplete { background: rgba(251,146,60,.04); border-radius: 10px; }
+.hand-row.hand-incomplete .card-slot:not(.filled) { border-color: #fed7aa; background: #fff7ed; }
+.hand-row.hand-incomplete .card-slot:not(.filled) .empty-plus { color: #fb923c; }
+
+.hand-num { font-size: 12px; font-weight: 800; color: #94a3b8; min-width: 38px; flex-shrink: 0; text-align: right; }
+.hand-cards { display: flex; gap: 5px; flex-shrink: 0; }
+.hand-result-area { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+.result-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.result-stat { display: flex; flex-direction: column; gap: 1px; }
+.result-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .06em; }
+.result-value { font-size: 18px; font-weight: 900; color: #0f172a; font-variant-numeric: tabular-nums; line-height: 1; }
+.result-value.tie-val { font-size: 15px; color: #475569; }
+.result-placeholder { font-size: 12px; color: #cbd5e1; font-style: italic; }
+.result-excluded { font-size: 11px; color: #f97316; font-weight: 700; }
+.result-excluded::before { content: '⚠ '; }
+
+.equity-bar-track { height: 7px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+.equity-bar-fill  {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #0d9488);
+  transition: width .55s cubic-bezier(.4,0,.2,1); width: 0%;
+}
+.hand-row.is-leader .equity-bar-fill { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.hand-row.is-leader .hand-num { color: #d97706; }
+
+.hand-remove-btn {
+  width: 28px; height: 28px; border: none; background: none; cursor: pointer;
+  color: #cbd5e1; font-size: 15px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background .12s, color .12s;
+}
+.hand-remove-btn:hover { background: #fee2e2; color: #dc2626; }
+
+.add-hand-btn {
+  margin-top: 12px; display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border: 2px dashed #cbd5e1; border-radius: 12px;
+  background: #f8fafc; color: #64748b; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+}
+.add-hand-btn:hover { border-color: #0f766e; color: #0f766e; background: #f0fdf4; }
+
+/* Action bar */
+.calc-action-bar { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.run-btn {
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 36px;
+  border-radius: 16px; border: none;
+  background: linear-gradient(135deg, #065f46, #0f766e);
+  color: #fff; font-size: 15px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 8px 22px rgba(6,95,70,.28); transition: transform .15s, box-shadow .15s;
+}
+.run-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(6,95,70,.36); }
+.run-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.clear-btn {
+  background: none; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 7px 16px; color: #64748b; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.clear-btn:hover { background: #f1f5f9; color: #0f172a; }
+.sim-status { font-size: 11px; color: #94a3b8; text-align: center; }
+
+/* Picker overlay */
+.picker-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+}
+.picker-overlay.open { display: flex; }
+.picker-modal {
+  background: #fff; border-radius: 20px; padding: 18px;
+  width: min(420px,100%); max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,.28); color: #0f172a;
+}
+.picker-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.picker-title  { font-size: 15px; font-weight: 800; margin: 0; }
+.picker-deselect {
+  font-size: 11px; font-weight: 700; color: #b91c1c; cursor: pointer;
+  padding: 4px 8px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; display: none;
+}
+.picker-deselect.visible { display: block; }
+.picker-deselect:hover { background: #fee2e2; }
+
+.picker-grid { display: grid; grid-template-columns: repeat(13,1fr); gap: 3px; direction: ltr; }
+.pcell {
+  aspect-ratio: .72; border: 1px solid #e2e8f0; border-radius: 5px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; line-height: 1.1; background: #fff;
+  transition: transform .1s, border-color .1s; user-select: none; min-width: 0;
+}
+.pcell:hover:not(.pcell-used) { border-color: #0f766e; background: #f0fdf4; transform: scale(1.12); z-index: 1; position: relative; }
+.pcell.pcell-red   { color: #dc2626; }
+.pcell.pcell-black { color: #1e293b; }
+.pcell.pcell-used  { background: #f8fafc; color: #cbd5e1 !important; cursor: not-allowed; opacity: .45; }
+.pcell.pcell-current { background: #dcfce7; border-color: #16a34a !important; color: #15803d !important; }
+.suit-row-label {
+  grid-column: 1 / -1; font-size: 9px; font-weight: 700; color: #94a3b8;
+  padding: 4px 0 1px; letter-spacing: .06em; text-align: left; direction: ltr;
+}
+.picker-cancel {
+  margin-top: 14px; width: 100%; padding: 10px; border-radius: 10px;
+  border: 1px solid #e2e8f0; background: #f8fafc; color: #475569;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.picker-cancel:hover { background: #f1f5f9; }
+
+@media (max-width: 600px) {
+  .calc-section { padding: 14px 12px; }
+  .card-slot { width: 44px; height: 62px; }
+  .card-slot .card-rank { font-size: 14px; }
+  .card-slot .card-suit { font-size: 11px; }
+  .card-slot .empty-plus { font-size: 17px; }
+  .community-row { gap: 8px; }
+  .run-btn { padding: 12px 24px; font-size: 14px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calc-page">
+
+  <div class="calc-hero">
+    <h2>מחשבון אחוזי נצחון</h2>
+    <p>השוו בין 2 עד 9 ידיים — לפני ואחרי פלופ, טרן וריבר</p>
+  </div>
+
+  <div class="calc-section">
+    <div class="calc-section-title">קלפי שולחן (אופציונלי)</div>
+    <div class="community-row">
+      <div class="community-group">
+        <div class="community-label">פלופ</div>
+        <div class="community-group-cards">
+          <div class="card-slot" data-slot="c0" onclick="openPicker('c0')"><span class="empty-plus">+</span></div>
+          <div class="card-slot" data-slot="c1" onclick="openPicker('c1')"><span class="empty-plus">+</span></div>
+          <div class="card-slot" data-slot="c2" onclick="openPicker('c2')"><span class="empty-plus">+</span></div>
+        </div>
+      </div>
+      <div class="community-sep"></div>
+      <div class="community-group">
+        <div class="community-label">טרן</div>
+        <div class="community-group-cards">
+          <div class="card-slot" data-slot="c3" onclick="openPicker('c3')"><span class="empty-plus">+</span></div>
+        </div>
+      </div>
+      <div class="community-sep"></div>
+      <div class="community-group">
+        <div class="community-label">ריבר</div>
+        <div class="community-group-cards">
+          <div class="card-slot" data-slot="c4" onclick="openPicker('c4')"><span class="empty-plus">+</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc-section">
+    <div class="calc-section-title">ידיים</div>
+    <div id="hands-list"></div>
+    <button class="add-hand-btn" id="add-hand-btn" onclick="addHand()">
+      <span style="font-size:16px">+</span> הוסף יד
+    </button>
+  </div>
+
+  <div class="calc-section">
+    <div class="calc-action-bar">
+      <button class="run-btn" id="run-btn" onclick="runSim()">🃏 חשב הסתברויות</button>
+      <button class="clear-btn" onclick="clearAll()">נקה הכל</button>
+      <div class="sim-status" id="sim-status">הזינו לפחות 2 ידיים עם קלפים כדי לחשב</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="picker-overlay" id="picker-overlay" onclick="overlayClick(event)">
+  <div class="picker-modal">
+    <div class="picker-header">
+      <p class="picker-title">בחרו קלף</p>
+      <span class="picker-deselect" id="picker-deselect" onclick="deselectCurrent()">✕ הסר קלף</span>
+    </div>
+    <div class="picker-grid" id="picker-grid"></div>
+    <button class="picker-cancel" onclick="closePicker()">סגור</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SUITS = ['♠','♥','♦','♣'];
+const RED_SUITS = new Set([1,2]);
+const COMMUNITY_SLOTS = ['c0','c1','c2','c3','c4'];
+
+const slots = new Map();
+let hands = [], nextHandId = 0, pickerSlot = null;
+
+// ── slot rendering ──────────────────────────────────────────
+function cRank(i){ return i>>2; }
+function cSuit(i){ return i&3; }
+
+function renderSlot(key) {
+  const el = document.querySelector('[data-slot="'+key+'"]');
+  if (!el) return;
+  const idx = slots.get(key);
+  if (idx === undefined) {
+    el.className = 'card-slot';
+    el.innerHTML = '<span class="empty-plus">+</span>';
+  } else {
+    const cls = RED_SUITS.has(cSuit(idx)) ? 'red-suit' : 'black-suit';
+    el.className = 'card-slot filled '+cls;
+    el.innerHTML = '<span class="card-rank">'+RANKS[cRank(idx)]+'</span><span class="card-suit">'+SUITS[cSuit(idx)]+'</span>';
+  }
+}
+
+function usedCards(){ return new Set(slots.values()); }
+
+// ── picker ──────────────────────────────────────────────────
+function buildPickerGrid() {
+  const grid = document.getElementById('picker-grid');
+  const used = usedCards();
+  const current = slots.get(pickerSlot);
+  grid.innerHTML = '';
+  const suitOrder = [3,0,1,2]; // ♣♠♥♦ — black then red
+  for (const suit of suitOrder) {
+    const lbl = document.createElement('div');
+    lbl.className = 'suit-row-label';
+    lbl.style.color = RED_SUITS.has(suit) ? '#dc2626' : '#1e293b';
+    lbl.textContent = SUITS[suit];
+    grid.appendChild(lbl);
+    for (let rank=0; rank<13; rank++) {
+      const idx = rank*4+suit;
+      const cell = document.createElement('div');
+      const usedElsewhere = used.has(idx) && idx !== current;
+      cell.className = 'pcell '+(RED_SUITS.has(suit)?'pcell-red':'pcell-black');
+      if (usedElsewhere) cell.classList.add('pcell-used');
+      if (idx === current) cell.classList.add('pcell-current');
+      cell.innerHTML = '<span>'+RANKS[rank]+'</span>';
+      if (!usedElsewhere) cell.onclick = ()=>pickCard(idx);
+      grid.appendChild(cell);
+    }
+  }
+  document.getElementById('picker-deselect').classList.toggle('visible', current!==undefined);
+}
+
+function openPicker(key){ pickerSlot=key; buildPickerGrid(); document.getElementById('picker-overlay').classList.add('open'); }
+function closePicker(){ document.getElementById('picker-overlay').classList.remove('open'); pickerSlot=null; }
+function overlayClick(e){ if(e.target===document.getElementById('picker-overlay')) closePicker(); }
+function pickCard(idx){ if(!pickerSlot) return; slots.set(pickerSlot,idx); renderSlot(pickerSlot); clearResults(); closePicker(); }
+function deselectCurrent(){ if(!pickerSlot) return; slots.delete(pickerSlot); renderSlot(pickerSlot); clearResults(); closePicker(); }
+
+// ── hands ────────────────────────────────────────────────────
+function handIsComplete(h){ return slots.get(h.s0)!==undefined && slots.get(h.s1)!==undefined; }
+
+function addHand(){
+  if(hands.length>=9) return;
+  const id=nextHandId++;
+  hands.push({id, s0:'h'+id+'a', s1:'h'+id+'b'});
+  renderHandsList(); updateUI();
+}
+
+function removeHand(id){
+  const h=hands.find(x=>x.id===id);
+  if(h){ slots.delete(h.s0); slots.delete(h.s1); }
+  hands=hands.filter(x=>x.id!==id);
+  renderHandsList(); clearResults(); updateUI();
+}
+
+function renderHandsList(){
+  const container=document.getElementById('hands-list');
+  container.innerHTML='';
+  hands.forEach((h,i)=>{
+    const canRemove=hands.length>2;
+    const complete=handIsComplete(h);
+    const row=document.createElement('div');
+    row.className='hand-row'+(complete?'':' hand-incomplete');
+    row.id='hand-row-'+h.id;
+    row.innerHTML=
+      '<div class="hand-num">יד '+(i+1)+'</div>'+
+      '<div class="hand-cards">'+
+        '<div class="card-slot" data-slot="'+h.s0+'" onclick="openPicker(\''+h.s0+'\')"><span class="empty-plus">+</span></div>'+
+        '<div class="card-slot" data-slot="'+h.s1+'" onclick="openPicker(\''+h.s1+'\')"><span class="empty-plus">+</span></div>'+
+      '</div>'+
+      '<div class="hand-result-area" id="res-'+h.id+'">'+
+        '<div class="result-placeholder">'+(complete?'לחץ חשב':'הזן 2 קלפים')+'</div>'+
+      '</div>'+
+      '<button class="hand-remove-btn" style="visibility:'+(canRemove?'visible':'hidden')+'" onclick="removeHand('+h.id+')" title="הסר יד">✕</button>';
+    container.appendChild(row);
+    renderSlot(h.s0); renderSlot(h.s1);
+  });
+}
+
+function updateUI(){
+  document.getElementById('add-hand-btn').style.display=hands.length>=9?'none':'inline-flex';
+  const active=hands.filter(h=>handIsComplete(h)).length;
+  document.getElementById('sim-status').textContent=
+    active>=2?'לחצו "חשב" כדי לראות הסתברויות':
+    'יש להזין 2 קלפים לפחות ב-2 ידיים';
+}
+
+function clearResults(){
+  hands.forEach(h=>{
+    const el=document.getElementById('res-'+h.id);
+    if(el) el.innerHTML='<div class="result-placeholder">'+(handIsComplete(h)?'לחץ חשב':'הזן 2 קלפים')+'</div>';
+    const row=document.getElementById('hand-row-'+h.id);
+    if(row) row.classList.remove('is-leader');
+  });
+  updateUI();
+}
+
+function clearAll(){
+  slots.clear();
+  COMMUNITY_SLOTS.forEach(s=>renderSlot(s));
+  hands.forEach(h=>{renderSlot(h.s0);renderSlot(h.s1);});
+  clearResults();
+}
+
+// ── hand evaluation ─────────────────────────────────────────
+function score5(c){
+  const r=c.map(x=>x>>2).sort((a,b)=>b-a);
+  const s=c.map(x=>x&3);
+  const flush=s.every(x=>x===s[0]);
+  const cnt=new Array(13).fill(0);
+  for(const x of r) cnt[x]++;
+  const grp=cnt.map((c,i)=>[c,i]).filter(([c])=>c>0).sort(([ca,ra],[cb,rb])=>cb-ca||rb-ra);
+  const uniq=grp.map(([,i])=>i).sort((a,b)=>b-a);
+  let straight=false,sTop=0;
+  if(uniq.length===5){
+    if(uniq[0]-uniq[4]===4){straight=true;sTop=uniq[0];}
+    if(uniq[0]===12&&uniq[1]===3&&uniq[2]===2&&uniq[3]===1&&uniq[4]===0){straight=true;sTop=3;}
+  }
+  const[g0,g1]=grp.map(([c])=>c);
+  let type;
+  if(flush&&straight)type=8;
+  else if(g0===4)type=7;
+  else if(g0===3&&g1===2)type=6;
+  else if(flush)type=5;
+  else if(straight)type=4;
+  else if(g0===3)type=3;
+  else if(g0===2&&g1===2)type=2;
+  else if(g0===2)type=1;
+  else type=0;
+  const kr=(type===4||type===8)?[sTop,0,0,0,0]:grp.flatMap(([c,i])=>Array(c).fill(i));
+  let sc=type; for(const x of kr) sc=sc*13+x; return sc;
+}
+
+function bestOf(hole,board){
+  const all=[...hole,...board]; const n=all.length;
+  if(n<5) return -Infinity;
+  let best=-Infinity;
+  for(let a=0;a<n;a++)
+  for(let b=a+1;b<n;b++)
+  for(let c=b+1;c<n;c++)
+  for(let d=c+1;d<n;d++)
+  for(let e=d+1;e<n;e++){
+    const s=score5([all[a],all[b],all[c],all[d],all[e]]);
+    if(s>best)best=s;
+  }
+  return best;
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=(Math.random()*(i+1))|0;
+    const t=arr[i];arr[i]=arr[j];arr[j]=t;
+  }
+  return arr;
+}
+
+// ── simulation ──────────────────────────────────────────────
+const N_SIM=20000;
+
+function runSim(){
+  const btn=document.getElementById('run-btn');
+  const status=document.getElementById('sim-status');
+
+  // Only hands with BOTH cards filled participate
+  const activeHands=hands.filter(h=>handIsComplete(h));
+
+  // Show "not included" on incomplete hands
+  hands.forEach(h=>{
+    if(!handIsComplete(h)){
+      const el=document.getElementById('res-'+h.id);
+      if(el) el.innerHTML='<div class="result-excluded">לא נכלל — חסרים קלפים</div>';
+      const row=document.getElementById('hand-row-'+h.id);
+      if(row) row.classList.remove('is-leader');
+    }
+  });
+
+  if(activeHands.length<2){
+    status.textContent='יש להזין 2 קלפים לפחות ב-2 ידיים'; return;
+  }
+
+  const holeCards=activeHands.map(h=>[slots.get(h.s0),slots.get(h.s1)]);
+  const knownBoard=COMMUNITY_SLOTS.map(k=>slots.get(k)).filter(x=>x!==undefined);
+  const allKnown=new Set([...holeCards.flat(),...knownBoard]);
+  const deck=[]; for(let i=0;i<52;i++) if(!allKnown.has(i)) deck.push(i);
+  const boardNeeded=5-knownBoard.length;
+
+  const winCount=new Array(activeHands.length).fill(0);
+  const tieCount=new Array(activeHands.length).fill(0);
+  const equity  =new Array(activeHands.length).fill(0);
+
+  btn.disabled=true;
+  const skipped=hands.length-activeHands.length;
+  status.textContent=skipped>0
+    ?'מחשב... ('+skipped+' '+(skipped>1?'ידיים':'יד')+' ללא קלפים לא נכללות)'
+    :'מחשב...';
+
+  setTimeout(()=>{
+    for(let sim=0;sim<N_SIM;sim++){
+      shuffle(deck);
+      let di=0;
+      const board=[...knownBoard];
+      for(let j=0;j<boardNeeded;j++) board.push(deck[di++]);
+      // holeCards are already complete (2 cards each)
+      const scores=holeCards.map(hc=>bestOf(hc,board));
+      const best=Math.max(...scores);
+      const winners=scores.reduce((a,s,i)=>s===best?[...a,i]:a,[]);
+      if(winners.length===1){
+        winCount[winners[0]]++; equity[winners[0]]++;
+      } else {
+        const share=1/winners.length;
+        for(const w of winners){tieCount[w]++;equity[w]+=share;}
+      }
+    }
+
+    activeHands.forEach((h,i)=>{
+      const winPct=(winCount[i]/N_SIM*100).toFixed(1);
+      const tiePct=(tieCount[i]/N_SIM*100).toFixed(1);
+      const hasTie=tieCount[i]>0;
+      const tieBlock=hasTie
+        ?'<div class="result-stat"><div class="result-label">תיקו</div><div class="result-value tie-val">'+tiePct+'%</div></div>'
+        :'';
+      const el=document.getElementById('res-'+h.id);
+      if(el) el.innerHTML=
+        '<div class="result-top">'+
+          '<div class="result-stat"><div class="result-label">נצחון</div><div class="result-value">'+winPct+'%</div></div>'+
+          tieBlock+
+        '</div>'+
+        '<div class="equity-bar-track">'+
+          '<div class="equity-bar-fill" style="width:0%" data-target="'+winPct+'"></div>'+
+        '</div>';
+      const row=document.getElementById('hand-row-'+h.id);
+      if(row) row.classList.toggle('is-leader',winCount[i]===Math.max(...winCount));
+    });
+
+    requestAnimationFrame(()=>{
+      document.querySelectorAll('.equity-bar-fill').forEach(b=>{b.style.width=b.dataset.target+'%';});
+    });
+
+    const note=skipped>0?' · '+skipped+' יד'+(skipped>1?'יים':'')+' לא נכלל'+(skipped>1?'ו':''):'';
+    status.textContent='חושב על בסיס '+N_SIM.toLocaleString('he-IL')+' סימולציות · דיוק ±0.5%'+note;
+    btn.disabled=false;
+  },10);
+}
+
+// ── init ─────────────────────────────────────────────────────
+COMMUNITY_SLOTS.forEach(s=>renderSlot(s));
+addHand(); addHand();
+</script>
+{% endblock %}

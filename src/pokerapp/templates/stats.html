@@ -4,7 +4,7 @@
 {% block subtitle %}סטטיסטיקות כלליות{% endblock %}
 
 {% block page_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/player-detail.css', v='20260513-5') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/player-detail.css', v='20260514-1') }}">
 {% endblock %}
 
 {% block content %}
@@ -12,12 +12,22 @@
 
   <div class="stats-page-header">
     <h2>סטטיסטיקות כלליות</h2>
-    <div class="subnote">נתוני קאש — כל הזמנים</div>
+    <div class="subnote">נתוני קאש</div>
   </div>
 
   <!-- ===== KPI CARDS ===== -->
   <section class="stats-section">
-    <h3 class="stats-section-title">סיכום כללי</h3>
+    <div class="stats-section-header">
+      <h3 class="stats-section-title">סיכום כללי</h3>
+      <div class="stats-filter-row">
+        <a class="btn {% if year == 'all' %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year='all', scope=scope) }}">סה"כ</a>
+        {% for y in available_years %}
+        <a class="btn {% if year == y %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=y, scope=scope) }}">{{ y }}</a>
+        {% endfor %}
+      </div>
+    </div>
     <div class="stats-kpi-grid">
 
       <div class="stats-kpi-card">
@@ -55,14 +65,22 @@
 
   <!-- ===== RECORDS ===== -->
   <section class="stats-section">
-    <h3 class="stats-section-title">שיאים — קאש</h3>
+    <div class="stats-section-header">
+      <h3 class="stats-section-title">שיאי כל הזמנים</h3>
+      <div class="stats-filter-row">
+        <a class="btn {% if scope == 'all' %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=year, scope='all', player_year=player_year, player_scope=player_scope) }}">כולם</a>
+        <a class="btn {% if scope == 'active' %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=year, scope='active', player_year=player_year, player_scope=player_scope) }}">פעילים</a>
+      </div>
+    </div>
     <div class="stats-records-grid">
 
       {% if record_win %}
       <div class="stats-record-card win-card">
         <div class="stats-record-icon">🏆</div>
-        <div class="stats-record-label">רווח בודד מקסימלי</div>
-        <div class="stats-record-amount pos">+₪{{ record_win.profit | int }}</div>
+        <div class="stats-record-label">שיא רווח</div>
+        <div class="stats-record-amount pos"><bdo dir="ltr" class="ils">₪{{ record_win.profit | int }}</bdo></div>
         <div class="stats-record-player">
           <a href="{{ url_for('main.player_detail', player_id=record_win.player_id) }}">{{ record_win.player_name }}</a>
         </div>
@@ -75,8 +93,8 @@
       {% if record_loss %}
       <div class="stats-record-card loss-card">
         <div class="stats-record-icon">📉</div>
-        <div class="stats-record-label">הפסד בודד מקסימלי</div>
-        <div class="stats-record-amount neg">-₪{{ record_loss.profit | abs | int }}</div>
+        <div class="stats-record-label">שיא שפל</div>
+        <div class="stats-record-amount neg"><bdo dir="ltr" class="ils">-₪{{ record_loss.profit | abs | int }}</bdo></div>
         <div class="stats-record-player">
           <a href="{{ url_for('main.player_detail', player_id=record_loss.player_id) }}">{{ record_loss.player_name }}</a>
         </div>
@@ -101,24 +119,24 @@
       {% if best_player %}
       <div class="stats-record-card best-card">
         <div class="stats-record-icon">⭐</div>
-        <div class="stats-record-label">המרוויח הגדול ביותר</div>
-        <div class="stats-record-amount pos">+₪{{ best_player.total_profit | int }}</div>
+        <div class="stats-record-label">המורווח הגדול</div>
+        <div class="stats-record-amount pos"><bdo dir="ltr" class="ils">₪{{ best_player.total_profit | int }}</bdo></div>
         <div class="stats-record-player">
           <a href="{{ url_for('main.player_detail', player_id=best_player.player_id) }}">{{ best_player.player_name }}</a>
         </div>
-        <div class="stats-record-date">סה"כ קאש</div>
+        <div class="stats-record-date">סה"כ קאש{% if scope == 'active' %} - פעילים{% endif %}</div>
       </div>
       {% endif %}
 
       {% if worst_player %}
       <div class="stats-record-card worst-card">
         <div class="stats-record-icon">💸</div>
-        <div class="stats-record-label">המפסיד הגדול ביותר</div>
-        <div class="stats-record-amount neg">₪{{ worst_player.total_profit | int }}</div>
+        <div class="stats-record-label">המופסד הגדול</div>
+        <div class="stats-record-amount neg"><bdo dir="ltr" class="ils">-₪{{ worst_player.total_profit | abs | int }}</bdo></div>
         <div class="stats-record-player">
           <a href="{{ url_for('main.player_detail', player_id=worst_player.player_id) }}">{{ worst_player.player_name }}</a>
         </div>
-        <div class="stats-record-date">סה"כ קאש</div>
+        <div class="stats-record-date">סה"כ קאש{% if scope == 'active' %} - פעילים{% endif %}</div>
       </div>
       {% endif %}
 
@@ -130,18 +148,304 @@
         <div class="stats-record-player">
           <a href="{{ url_for('main.player_detail', player_id=most_active.player_id) }}">{{ most_active.player_name }}</a>
         </div>
-        <div class="stats-record-date">קאש — כל הזמנים</div>
+        <div class="stats-record-date">קאש - כל הזמנים{% if scope == 'active' %} (פעילים){% endif %}</div>
+      </div>
+      {% endif %}
+
+      {% if record_win_streak %}
+      <div class="stats-record-card streak-win-card">
+        <div class="stats-record-icon">🔥</div>
+        <div class="stats-record-label">רצף הנצחונות הארוך ביותר</div>
+        <div class="stats-record-amount pos">{{ record_win_streak.streak }} ברצף</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=record_win_streak.player_id) }}">{{ record_win_streak.player_name }}</a>
+        </div>
+        <div class="stats-record-date">קאש - כל הזמנים{% if scope == 'active' %} (פעילים){% endif %}</div>
+      </div>
+      {% endif %}
+
+      {% if record_loss_streak %}
+      <div class="stats-record-card streak-loss-card">
+        <div class="stats-record-icon">🌧️</div>
+        <div class="stats-record-label">רצף ההפסדים הארוך ביותר</div>
+        <div class="stats-record-amount neg">{{ record_loss_streak.streak }} ברצף</div>
+        <div class="stats-record-player">
+          <a href="{{ url_for('main.player_detail', player_id=record_loss_streak.player_id) }}">{{ record_loss_streak.player_name }}</a>
+        </div>
+        <div class="stats-record-date">קאש - כל הזמנים{% if scope == 'active' %} (פעילים){% endif %}</div>
       </div>
       {% endif %}
 
     </div>
   </section>
 
+  <!-- ===== PLAYER ANALYSIS ===== -->
+  {% if player_stats %}
+  <section class="stats-section" id="player-analysis">
+    <div class="stats-section-header">
+      <h3 class="stats-section-title">ניתוח שחקנים <span class="stats-section-subtitle">מבוסס על משחקי קאש</span></h3>
+    </div>
+
+    <!-- Streak + Improved cards (year-filter independent) -->
+    <div class="stats-analysis-highlights stats-highlights-nowrap">
+      {% if hot_streak %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">🔥</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">זה שעולה</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=hot_streak.player_id) }}">{{ hot_streak.player_name }}</a>
+          </div>
+          <div class="stats-hl-value pos">{{ hot_streak.streak }} ניצחונות</div>
+          <div class="stats-hl-sub">סה״כ ברצף: ₪{{ hot_streak.streak_sum }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if cold_streak %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">❄️</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">זה שיורד</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=cold_streak.player_id) }}">{{ cold_streak.player_name }}</a>
+          </div>
+          <div class="stats-hl-value neg">{{ cold_streak.streak }} הפסדים</div>
+          <div class="stats-hl-sub">סה״כ ברצף: -₪{{ cold_streak.streak_sum | abs }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if most_improved %}
+      {% set delta = most_improved.delta | int %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">📈</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">המשתפר</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=most_improved.player_id) }}">{{ most_improved.player_name }}</a>
+          </div>
+          <div class="stats-hl-value pos">+₪{{ delta }}</div>
+          <div class="stats-hl-sub">שיפור בממוצע למשחק</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if most_declined %}
+      {% set delta = most_declined.delta | int %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">📉</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">זה שנחלש</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=most_declined.player_id) }}">{{ most_declined.player_name }}</a>
+          </div>
+          <div class="stats-hl-value neg">-₪{{ delta | abs }}</div>
+          <div class="stats-hl-sub">ירידה בממוצע למשחק</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="stats-filter-row">
+
+        <a class="btn {% if player_scope == 'active' %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=year, scope=scope, player_year=player_year, player_scope='active') }}">פעילים</a>
+        <a class="btn {% if player_scope == 'all' %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=year, scope=scope, player_year=player_year, player_scope='all') }}">כולם</a>
+        <span class="filter-divider">|</span>
+        <a class="btn {% if player_year == 'all' %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=year, scope=scope, player_year='all', player_scope=player_scope) }}">סה"כ</a>
+        {% for y in available_years %}
+        <a class="btn {% if player_year == y %}primary{% else %}ghost{% endif %} small"
+           href="{{ url_for('main.stats', year=year, scope=scope, player_year=y, player_scope=player_scope) }}">{{ y }}</a>
+        {% endfor %}
+      
+    </div>
+
+    <!-- Highlight cards -->
+    <div class="stats-analysis-highlights">
+      {% if highest_winrate %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">🎯</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">אחוז הניצחנות הגבוה ביותר</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=highest_winrate.player_id) }}">{{ highest_winrate.player_name }}</a>
+          </div>
+          <div class="stats-hl-value pos">{{ highest_winrate.win_rate }}%</div>
+          <div class="stats-hl-sub">{{ highest_winrate.games }} משחקים</div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if most_volatile %}
+      {% set _avg = (most_volatile.avg_profit or 0) | int %}
+      {% set _vol = (most_volatile.volatility or 0) | int %}
+      {% set _lo  = _avg - _vol %}
+      {% set _hi  = _avg + _vol %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">🎲</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">הכי תנודתי - הג'וקר</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=most_volatile.player_id) }}">{{ most_volatile.player_name }}</a>
+          </div>
+          <div class="stats-hl-value neutral">±₪{{ _vol }}</div>
+          <div class="stats-hl-explain-mini">לדוגמה: הממוצע של {{ most_volatile.player_name }}
+            {% if player_year == "all" %}בסך כל התוצאות{% else %}ב-{{ player_year }}{% endif %}
+            הוא <bdo dir="ltr" class="ils">{% if _avg < 0 %}-₪{{ _avg | abs }}{% else %}₪{{ _avg }}{% endif %}</bdo>,
+            רוב המשחקים בטווח
+            <bdo dir="ltr" class="ils">{% if _lo < 0 %}-₪{{ _lo | abs }}{% else %}₪{{ _lo }}{% endif %}</bdo>
+            עד <bdo dir="ltr" class="ils">{% if _hi < 0 %}-₪{{ _hi | abs }}{% else %}₪{{ _hi }}{% endif %}</bdo></div>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if least_volatile %}
+      {% set _avg = (least_volatile.avg_profit or 0) | int %}
+      {% set _vol = (least_volatile.volatility or 0) | int %}
+      {% set _lo  = _avg - _vol %}
+      {% set _hi  = _avg + _vol %}
+      <div class="stats-highlight-card">
+        <div class="stats-hl-icon">🧊</div>
+        <div class="stats-hl-body">
+          <div class="stats-hl-label">הכי יציב - דגרן</div>
+          <div class="stats-hl-name">
+            <a href="{{ url_for('main.player_detail', player_id=least_volatile.player_id) }}">{{ least_volatile.player_name }}</a>
+          </div>
+          <div class="stats-hl-value neutral">±₪{{ _vol }}</div>
+          <div class="stats-hl-explain-mini">לדוגמה: הממוצע של {{ least_volatile.player_name }}
+            {% if player_year == "all" %}בסך כל התוצאות{% else %}ב-{{ player_year }}{% endif %}
+            הוא <bdo dir="ltr" class="ils">{% if _avg < 0 %}-₪{{ _avg | abs }}{% else %}₪{{ _avg }}{% endif %}</bdo>,
+            רוב המשחקים בטווח
+            <bdo dir="ltr" class="ils">{% if _lo < 0 %}-₪{{ _lo | abs }}{% else %}₪{{ _lo }}{% endif %}</bdo>
+            עד <bdo dir="ltr" class="ils">{% if _hi < 0 %}-₪{{ _hi | abs }}{% else %}₪{{ _hi }}{% endif %}</bdo></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Player stats table -->
+    <div class="table-wrap">
+      <table id="playerAnalysisTable" class="leaders-table big stats-player-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-col="0" data-type="str">שחקן <span class="sort-arrow"></span></th>
+            <th class="sortable num" data-col="1" data-type="num">משחקים <span class="sort-arrow"></span></th>
+            <th class="sortable num" data-col="2" data-type="num">% ניצחון <span class="sort-arrow"></span></th>
+            <th class="sortable num" data-col="3" data-type="num">ממוצע <span class="sort-arrow"></span></th>
+            <th class="sortable num" data-col="4" data-type="num" title="סטיית תקן של הרווח/הפסד — מדד לתנודתיות. ערך גבוה = תנודתי, ערך נמוך = עקבי">תנודתיות ± <span class="sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in player_stats %}
+          {% set wr = p.win_rate or 0 %}
+          <tr>
+            <td>
+              <a href="{{ url_for('main.player_detail', player_id=p.player_id) }}">{{ p.player_name }}</a>
+            </td>
+            <td class="num">{{ p.games }}</td>
+            <td class="num">
+              <span class="winrate-badge {% if wr >= 55 %}wr-high{% elif wr >= 45 %}wr-mid{% else %}wr-low{% endif %}">
+                {{ wr }}%
+              </span>
+            </td>
+            <td class="num profit {% if (p.avg_profit or 0) >= 0 %}pos{% else %}neg{% endif %}">
+              <bdo dir="ltr" class="ils">{% if (p.avg_profit or 0) < 0 %}-₪{{ p.avg_profit | int | abs }}{% else %}₪{{ p.avg_profit | int }}{% endif %}</bdo>
+            </td>
+            <td class="num muted">±₪{{ p.volatility | int }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ===== LUCKY / UNLUCKY LOCATIONS ===== -->
+  {% if lucky_locations or unlucky_locations %}
+  <section class="stats-section">
+    <div class="stats-section-header">
+      <h3 class="stats-section-title">בית המזל</h3>
+      <div class="stats-header-actions">
+        {% if earliest_date %}<div class="stats-section-note">* נתונים החל מ-{{ earliest_date }}</div>{% endif %}
+        {% if unlucky_locations %}
+        <button id="locationToggleBtn" class="btn small ghost location-toggle-btn" onclick="toggleLocationMode()">💀 בית המנחוס</button>
+        {% endif %}
+      </div>
+    </div>
+    <div id="locationsGrid" class="stats-locations-grid"></div>
+  </section>
+
+  <script>
+  (function(){
+    const luckyData   = {{ lucky_locations | tojson | safe }};
+    const unluckyData = {{ unlucky_locations | tojson | safe }};
+    const playerUrlTpl = "{{ url_for('main.player_detail', player_id=999999) }}";
+    function playerUrl(id){ return playerUrlTpl.replace('999999', id); }
+    function fmtAmount(v){
+      var n = Math.round(v);
+      return n < 0 ? '-₪' + Math.abs(n) : '₪' + n;
+    }
+    function renderLocs(locs, arrowText){
+      var grid = document.getElementById('locationsGrid');
+      if(!grid) return;
+      if(!locs || !locs.length){ grid.innerHTML = '<div class="muted" style="padding:8px">אין נתונים</div>'; return; }
+      grid.innerHTML = locs.map(function(loc){
+        var profit = loc.avg_profit || 0;
+        var cls = profit >= 0 ? 'pos' : 'neg';
+        var amt = fmtAmount(profit);
+        return '<div class="stats-location-card">' +
+          '<div class="stats-location-icon">📍</div>' +
+          '<div class="stats-location-body">' +
+            '<div class="stats-location-player"><a href="' + playerUrl(loc.player_id) + '">' + loc.player_name + '</a></div>' +
+            '<div class="stats-location-arrow">' + arrowText + '</div>' +
+            '<div class="stats-location-name">' + loc.location + '</div>' +
+            '<div class="stats-location-value ' + cls + '">ממוצע <bdo dir="ltr" class="ils">' + amt + '</bdo> · ' + loc.games + ' משחקים</div>' +
+          '</div></div>';
+      }).join('');
+    }
+    var showingLucky = true;
+    window.toggleLocationMode = function(){
+      showingLucky = !showingLucky;
+      var btn = document.getElementById('locationToggleBtn');
+      if(showingLucky){
+        renderLocs(luckyData, 'מרוויח אצל');
+        btn.textContent = '💀 בית המנחוס';
+        btn.className = 'btn small ghost location-toggle-btn';
+      } else {
+        renderLocs(unluckyData, 'מפסיד אצל');
+        btn.textContent = '🍀 בית המזל';
+        btn.className = 'btn small danger location-toggle-btn';
+      }
+    };
+    renderLocs(luckyData, 'מרוויח אצל');
+  })();
+  </script>
+  {% endif %}
+
   <!-- ===== CHARTS ===== -->
   <section class="stats-section">
     <h3 class="stats-section-title">גרפים</h3>
 
     <div class="stats-charts-grid">
+
+      {% if pot_by_year %}
+      <div class="stats-chart-card">
+        <div class="stats-chart-title">קופת ערב לפי שנה - קאש</div>
+        <div class="stats-chart-wrap">
+          <canvas id="potChart"></canvas>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="stats-chart-card">
+        <div class="stats-chart-title">ממוצע שחקנים לשולחן לפי שנה</div>
+        <div class="stats-chart-wrap">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
 
       <div class="stats-chart-card">
         <div class="stats-chart-title">משחקים לפי שנה</div>
@@ -151,7 +455,9 @@
       </div>
 
       <div class="stats-chart-card">
-        <div class="stats-chart-title">פעילות לפי חודש (קאש)</div>
+        <div class="stats-chart-title">ממוצע משחקים לפי חודש — קאש
+          <span class="chart-subtitle">ממוצע לכל שנה</span>
+        </div>
         <div class="stats-chart-wrap">
           <canvas id="monthlyChart"></canvas>
         </div>
@@ -167,8 +473,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 (function () {
-  const isDark = document.documentElement.classList.contains('dark') ||
-    window.matchMedia('(prefers-color-scheme: dark)').matches;
   const gridColor  = 'rgba(255,255,255,0.08)';
   const labelColor = '#9ca3af';
   const tooltipBg  = '#1e2d22';
@@ -197,65 +501,157 @@
     }
   };
 
-  // ---- Yearly chart (stacked bar) ----
-  const years      = {{ chart_years | safe }};
-  const cashData   = {{ chart_cash | safe }};
-  const harboData  = {{ chart_harbo | safe }};
-
+  // ── Yearly (cash + harbo bars) ──
   new Chart(document.getElementById('yearlyChart'), {
     type: 'bar',
     data: {
-      labels: years,
+      labels: {{ chart_years | safe }},
       datasets: [
-        {
-          label: 'קאש',
-          data: cashData,
-          backgroundColor: 'rgba(74,222,128,0.75)',
-          borderColor: 'rgba(74,222,128,1)',
-          borderWidth: 1,
-          borderRadius: 4,
-        },
-        {
-          label: 'חרבו',
-          data: harboData,
-          backgroundColor: 'rgba(99,179,237,0.65)',
-          borderColor: 'rgba(99,179,237,1)',
-          borderWidth: 1,
-          borderRadius: 4,
-        }
+        { label: 'קאש',  data: {{ chart_cash | safe }},
+          backgroundColor: 'rgba(74,222,128,0.75)', borderColor: 'rgba(74,222,128,1)',
+          borderWidth: 1, borderRadius: 4 },
+        { label: 'חרבו', data: {{ chart_harbo | safe }},
+          backgroundColor: 'rgba(99,179,237,0.65)', borderColor: 'rgba(99,179,237,1)',
+          borderWidth: 1, borderRadius: 4 }
       ]
-    },
-    options: {
-      ...baseOpts,
-      plugins: { ...baseOpts.plugins },
-      scales: {
-        ...baseOpts.scales,
-        x: { ...baseOpts.scales.x, stacked: false },
-        y: { ...baseOpts.scales.y, stacked: false }
-      }
-    }
-  });
-
-  // ---- Monthly activity chart ----
-  const months     = {{ chart_months | safe }};
-  const monthsData = {{ chart_months_data | safe }};
-
-  new Chart(document.getElementById('monthlyChart'), {
-    type: 'bar',
-    data: {
-      labels: months,
-      datasets: [{
-        label: 'משחקי קאש',
-        data: monthsData,
-        backgroundColor: 'rgba(251,191,36,0.72)',
-        borderColor: 'rgba(251,191,36,1)',
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
     },
     options: { ...baseOpts }
   });
 
+  // ── Monthly activity ──
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ chart_months | safe }},
+      datasets: [{ label: 'ממוצע', data: {{ chart_months_data | safe }},
+        backgroundColor: 'rgba(251,191,36,0.72)', borderColor: 'rgba(251,191,36,1)',
+        borderWidth: 1, borderRadius: 4 }]
+    },
+    options: { ...baseOpts, plugins: { ...baseOpts.plugins, legend: { display: false } } }
+  });
+
+  // ── Players per table trend (line) ──
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: {{ chart_trend_years | safe }},
+      datasets: [{ label: 'ממוצע שחקנים', data: {{ chart_trend_players | safe }},
+        borderColor: 'rgba(167,139,250,1)',
+        backgroundColor: 'rgba(167,139,250,0.15)',
+        tension: 0.35, pointRadius: 5, pointHoverRadius: 7,
+        fill: true, borderWidth: 2 }]
+    },
+    options: {
+      ...baseOpts,
+      plugins: { ...baseOpts.plugins, legend: { display: false } },
+      scales: {
+        x: baseOpts.scales.x,
+        y: { ...baseOpts.scales.y, min: 6, max: 10,
+             ticks: { color: labelColor, stepSize: 1 } }
+      }
+    }
+  });
+
+  // ── Pot by year (bar + line combo) ──
+  const potEl = document.getElementById('potChart');
+  if (potEl) {
+    new Chart(potEl, {
+      type: 'bar',
+      data: {
+        labels: {{ chart_pot_years | safe }},
+        datasets: [
+          {
+            label: 'ממוצע קופה',
+            data: {{ chart_pot_avg | safe }},
+            backgroundColor: 'rgba(251,146,60,0.72)',
+            borderColor: 'rgba(251,146,60,1)',
+            borderWidth: 1, borderRadius: 4,
+            yAxisID: 'y'
+          },
+          {
+            label: 'סה"כ',
+            data: {{ chart_pot_total | safe }},
+            type: 'line',
+            borderColor: 'rgba(74,222,128,0.9)',
+            backgroundColor: 'rgba(74,222,128,0.1)',
+            tension: 0.3, pointRadius: 4,
+            fill: false, borderWidth: 2,
+            yAxisID: 'y2'
+          }
+        ]
+      },
+      options: {
+        ...baseOpts,
+        scales: {
+          x: { ticks: { color: labelColor }, grid: { color: gridColor } },
+          y:  { ticks: { color: labelColor, callback: v => '₪'+v.toLocaleString() },
+                grid: { color: gridColor }, beginAtZero: true, position: 'right' },
+          y2: { ticks: { color: '#4ade80', callback: v => '₪'+v.toLocaleString() },
+                grid: { display: false }, beginAtZero: true, position: 'left' }
+        }
+      }
+    });
+  }
+
 })();
+
+  // ── Sortable player analysis table ──
+  (function() {
+    const tbl = document.getElementById('playerAnalysisTable');
+    if (!tbl) return;
+    let sortCol = -1, sortDir = 1;
+
+    tbl.querySelectorAll('th.sortable').forEach(function(th) {
+      th.style.cursor = 'pointer';
+      th.addEventListener('click', function() {
+        const col  = parseInt(th.dataset.col);
+        const type = th.dataset.type;
+        if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = -1; }
+
+        // Update arrow indicators
+        tbl.querySelectorAll('th.sortable').forEach(h => {
+          h.querySelector('.sort-arrow').textContent = '';
+          h.classList.remove('sort-asc','sort-desc');
+        });
+        th.querySelector('.sort-arrow').textContent = sortDir === -1 ? ' ▼' : ' ▲';
+        th.classList.add(sortDir === -1 ? 'sort-desc' : 'sort-asc');
+
+        const tbody = tbl.querySelector('tbody');
+        const rows  = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort(function(a, b) {
+          const aCell = a.cells[col], bCell = b.cells[col];
+          if (!aCell || !bCell) return 0;
+          let aVal = aCell.textContent.trim().replace(/[₪%+,±▼▲]/g,'').trim();
+          let bVal = bCell.textContent.trim().replace(/[₪%+,±▼▲]/g,'').trim();
+          if (type === 'num') {
+            aVal = parseFloat(aVal) || 0;
+            bVal = parseFloat(bVal) || 0;
+            return (aVal - bVal) * sortDir;
+          }
+          return aVal.localeCompare(bVal, 'he') * sortDir;
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  })();
+
+  // ── Preserve scroll position across filter-link navigation ──
+  (function() {
+    document.querySelectorAll('.stats-filter-row a').forEach(function(a) {
+      a.addEventListener('click', function() {        sessionStorage.setItem('statsScrollY', window.scrollY);
+      });
+    });
+    window.addEventListener('load', function() {
+      var saved = sessionStorage.getItem('statsScrollY');
+      if (saved) {
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            window.scrollTo(0, parseInt(saved));
+            sessionStorage.removeItem('statsScrollY');
+          });
+        });
+      }
+    });
+  })();
 </script>
 {% endblock %}

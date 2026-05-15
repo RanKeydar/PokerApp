@@ -46,6 +46,17 @@ def create_app():
         static_url_path="/static"
     )
 
+    @app.template_filter("ils")
+    def ils_filter(value):
+        """Format a number as Hebrew currency: negative → -₪X, positive → ₪X"""
+        try:
+            v = int(value or 0)
+        except (TypeError, ValueError):
+            return ""
+        if v < 0:
+            return f"-₪{abs(v)}"
+        return f"₪{v}"
+
     @app.template_filter("hedate")
     def hedate_filter(date_value):
         if not date_value:
@@ -81,15 +92,4 @@ def create_app():
     init_db(app.config["DB_PATH"], str(schema_path))
 
     from pokerapp.db.connection import ensure_admin_audit_log_table
-    with app.app_context():
-        ensure_admin_audit_log_table()
-
-    from pokerapp.db.seed_admin import ensure_admin
-    ensure_admin(app.config["DB_PATH"])
-
-    from pokerapp.routes.auth import bp as auth_bp
-    from pokerapp.routes.main import bp as main_bp
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-
-    return app
+    with app.app_
