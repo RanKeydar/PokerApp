@@ -998,6 +998,41 @@ def stats():
 
 
 
+
+@bp.route("/admin/users", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def admin_users():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        action = request.form.get("action")
+        user_id = request.form.get("user_id")
+        new_role = request.form.get("new_role", "player")
+
+        if user_id:
+            if action == "approve":
+                if new_role not in ("admin", "magician", "player"):
+                    new_role = "player"
+                cur.execute(
+                    "UPDATE users SET is_approved = 1, role = ? WHERE id = ?;",
+                    (new_role, user_id),
+                )
+            elif action == "reject":
+                cur.execute("DELETE FROM users WHERE id = ?;", (user_id,))
+            conn.commit()
+
+    cur.execute("SELECT id, username, role FROM users WHERE is_approved = 0 ORDER BY id DESC;")
+    pending = cur.fetchall()
+
+    cur.execute("SELECT id, username, role FROM users WHERE is_approved = 1 ORDER BY username;")
+    active = cur.fetchall()
+
+    conn.close()
+
+    return render_template("admin_users.html", pending=pending, active=active)
+
 @bp.route("/game/<int:game_id>/results", methods=["GET"])
 @login_required
 def game_results(game_id):
