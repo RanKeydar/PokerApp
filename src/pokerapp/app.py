@@ -92,4 +92,15 @@ def create_app():
     init_db(app.config["DB_PATH"], str(schema_path))
 
     from pokerapp.db.connection import ensure_admin_audit_log_table
-    with app.app_
+    with app.app_context():
+        ensure_admin_audit_log_table()
+
+    from pokerapp.db.seed_admin import ensure_admin
+    ensure_admin(app.config["DB_PATH"])
+
+    from pokerapp.routes.auth import bp as auth_bp
+    from pokerapp.routes.main import bp as main_bp
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+
+    return app

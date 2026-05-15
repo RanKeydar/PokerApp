@@ -555,441 +555,188 @@ def players():
 @bp.route("/stats")
 @login_required
 def stats():
-    from itertools import groupby as _groupby
-
-    current_year_int = date.today().year
-    current_year     = str(current_year_int)
-
-    # ── URL params ────────────────────────────────────────
-    scope       = request.args.get("scope",       "all")   # all | active  → records
-    year        = request.args.get("year",        "all")   # all | YYYY    → KPI
-    player_year = request.args.get("player_year", "all")   # all | YYYY    → player analysis
-    if scope not in ("all", "active"):
-        scope = "all"
-    player_scope = request.args.get("player_scope", "active")
-    if player_scope not in ("all", "active"):
-        player_scope = "active"
-
     conn = get_db_connection()
-    cur  = conn.cursor()
+    cur = conn.cursor()
 
-    # Available years (descending for display: current year first)
-    cur.execute("SELECT DISTINCT substr(date,1,4) AS y FROM games ORDER BY y DESC")
-    available_years = [r["y"] for r in cur.fetchall()]
-    if year        not in available_years: year        = "all"
-    if player_year not in available_years: player_year = "all"
-
-    # ── SQL filter snippets ───────────────────────────────
-    kpi_cond        = f"AND substr(g.date,1,4) = '{year}'"         if year        != "all" else ""
-    kpi_cond_games  = f"AND substr(date,1,4) = '{year}'"           if year        != "all" else ""
-    py_cond         = f"AND substr(g.date,1,4) = '{player_year}'"  if player_year != "all" else ""
-
-    # Active player IDs (played cash this year) — used by scope + lucky_locations
-    cur.execute(f"""
-        SELECT DISTINCT gr.player_id FROM game_results gr
-        JOIN games g ON g.id=gr.game_id
-        WHERE g.game_type='cash' AND substr(g.date,1,4)='{current_year}'
-    """)
-    active_pids = {r["player_id"] for r in cur.fetchall()}
-
-    # scope_cond: filter by PLAYER POOL (פעילים=active this year), not by date
-    if scope == "active" and active_pids:
-        scope_cond = f"AND gr.player_id IN ({','.join(str(i) for i in active_pids)})"
-    else:
-        scope_cond = ""
-
-
-    # ── KPI counts ────────────────────────────────────────
-    cur.execute(f"""
-        SELECT COUNT(CASE WHEN game_type='cash'  THEN 1 END) AS cash_games,
-               COUNT(CASE WHEN game_type='harbo' THEN 1 END) AS harbo_games,
-               COUNT(*) AS total_games
-        FROM games WHERE 1=1 {kpi_cond_games}
-    """)
-    kpi = dict(cur.fetchone())
-
-    cur.execute(f"""
-        SELECT COUNT(DISTINCT gr.player_id) AS n
-        FROM game_results gr JOIN games g ON g.id = gr.game_id
-        WHERE 1=1 {kpi_cond}
-    """)
-    kpi["total_players"] = cur.fetchone()["n"]
-
-    cur.execute(f"""
-        SELECT ROUND(AVG(cnt), 1) AS v FROM (
-            SELECT COUNT(*) AS cnt FROM game_results gr
-            JOIN games g ON g.id = gr.game_id
-            WHERE g.game_type='cash' {kpi_cond} GROUP BY gr.game_id)
-    """)
-    row = cur.fetchone()
-    kpi["avg_players_per_game"] = dict(row).get("v") or 0 if row else 0
-
-    cur.execute(f"""
-        SELECT ROUND(AVG(pot), 0) AS v FROM (
-            SELECT SUM(gr.buyin) AS pot FROM game_results gr
-            JOIN games g ON g.id = gr.game_id
-            WHERE g.game_type='cash' {kpi_cond} GROUP BY gr.game_id)
-    """)
-    row = cur.fetchone()
-    kpi["avg_pot"] = dict(row).get("v") or 0 if row else 0
-
-    # ── Records (scope filter) ────────────────────────────
-    def _fmt_date(d):
-        return f"{d[8:10]}.{d[5:7]}.{d[2:4]}" if d else ""
-
-    def _first(q):
-        cur.execute(q)
-        r = cur.fetchone()
-        return dict(r) if r else None
-
-    record_win = _first(f"""
-        SELECT p.name AS player_name, p.id AS player_id,
-               gr.profit, g.date, g.id AS game_id
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash' AND gr.profit > 0 {scope_cond}
-        ORDER BY gr.profit DESC LIMIT 1""")
-    if record_win: record_win["date_il"] = _fmt_date(record_win.get("date"))
-
-    record_loss = _first(f"""
-        SELECT p.name AS player_name, p.id AS player_id,
-               gr.profit, g.date, g.id AS game_id
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash' AND gr.profit < 0 {scope_cond}
-        ORDER BY gr.profit ASC LIMIT 1""")
-    if record_loss: record_loss["date_il"] = _fmt_date(record_loss.get("date"))
-
-    most_active = _first(f"""
-        SELECT p.name AS player_name, p.id AS player_id, COUNT(*) AS games_count
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash' {scope_cond}
-        GROUP BY gr.player_id ORDER BY games_count DESC LIMIT 1""")
-
-    best_player = _first(f"""
-        SELECT p.name AS player_name, p.id AS player_id,
-               ROUND(SUM(gr.profit),0) AS total_profit
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash' {scope_cond}
-        GROUP BY gr.player_id ORDER BY total_profit DESC LIMIT 1""")
-
-    worst_player = _first(f"""
-        SELECT p.name AS player_name, p.id AS player_id,
-               ROUND(SUM(gr.profit),0) AS total_profit
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash' {scope_cond}
-        GROUP BY gr.player_id ORDER BY total_profit ASC LIMIT 1""")
-
-    biggest_pot = _first(f"""
-        SELECT g.id AS game_id, g.date, g.location,
-               ROUND(SUM(gr.buyin),0) AS total_pot, COUNT(*) AS players_count
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        WHERE g.game_type='cash' {scope_cond}
-        GROUP BY gr.game_id ORDER BY total_pot DESC LIMIT 1""")
-    if biggest_pot: biggest_pot["date_il"] = _fmt_date(biggest_pot.get("date"))
-
-    # Streak (scope filter)
-    cur.execute(f"""
-        SELECT gr.player_id, p.name AS player_name, gr.profit, g.date, g.id AS game_id
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash' {scope_cond}
-        ORDER BY gr.player_id, g.date ASC, g.id ASC
-    """)
-    all_results = cur.fetchall()
-
-    record_win_streak = record_loss_streak = None
-    best_ws = best_ls = 0
-    for pid, grp in _groupby(all_results, key=lambda r: r["player_id"]):
-        gl = list(grp)
-        pname = gl[0]["player_name"]
-        cw = cl = mw = ml = 0
-        for g in gl:
-            if   g["profit"] > 0: cw += 1; cl = 0
-            elif g["profit"] < 0: cl += 1; cw = 0
-            else:                 cw = cl = 0
-            if cw > mw: mw = cw
-            if cl > ml: ml = cl
-        if mw > best_ws:
-            best_ws = mw
-            record_win_streak  = {"player_name": pname, "player_id": pid, "streak": mw}
-        if ml > best_ls:
-            best_ls = ml
-            record_loss_streak = {"player_name": pname, "player_id": pid, "streak": ml}
-
-    # ── Player analysis (player_year filter) ──────────────
-    cur.execute(f"""
-        SELECT p.id AS player_id, p.name AS player_name,
-               COUNT(*) AS games,
-               ROUND(100.0 * SUM(CASE WHEN gr.profit > 0 THEN 1 ELSE 0 END) / COUNT(*), 1) AS win_rate,
-               ROUND(AVG(gr.profit), 1) AS avg_profit,
-               ROUND(SQRT(MAX(0, AVG(gr.profit * gr.profit) - AVG(gr.profit) * AVG(gr.profit))), 1) AS volatility
-        FROM game_results gr
-        JOIN games g ON g.id = gr.game_id
-        JOIN players p ON p.id = gr.player_id
-        WHERE g.game_type = 'cash' {py_cond}
-        GROUP BY gr.player_id
-        HAVING games >= 3
-        ORDER BY games DESC
-    """)
-    player_stats = [dict(r) for r in cur.fetchall()]
-    if player_scope == "active":
-        player_stats = [p for p in player_stats if p["player_id"] in active_pids]
-
-    qualified       = [p for p in player_stats if p["games"] >= 5]
-    most_volatile   = max(qualified, key=lambda x: x["volatility"]) if qualified else None
-    least_volatile  = min(qualified, key=lambda x: x["volatility"]) if qualified else None
-    highest_winrate = max(qualified, key=lambda x: x["win_rate"])   if qualified else None
-
-    # ── Current streaks (active players, cash games) ─────────────────────────────
-    scope_pids = active_pids if player_scope == "active" else None
-    cur.execute(
-        """
-        SELECT gr.player_id, p.name AS player_name, gr.profit
-        FROM game_results gr
-        JOIN games g ON g.id = gr.game_id
-        JOIN players p ON p.id = gr.player_id
-        WHERE g.game_type = 'cash'
-        ORDER BY gr.player_id, g.date DESC, g.id DESC
-        """
-    )
-    streak_rows = cur.fetchall()
-    current_streaks = []
-    for pid, grp in _groupby(streak_rows, key=lambda r: r["player_id"]):
-        if scope_pids is not None and pid not in scope_pids:
-            continue
-        games_desc = list(grp)
-        if not games_desc:
-            continue
-        pname = games_desc[0]["player_name"]
-        streak_val = 0
-        streak_sum = 0
-        streak_type = None
-        for g in games_desc:
-            if g["profit"] > 0:
-                gt = "win"
-            elif g["profit"] < 0:
-                gt = "loss"
-            else:
-                break
-            if streak_type is None:
-                streak_type = gt
-                streak_val = 1
-                streak_sum = g["profit"]
-            elif gt == streak_type:
-                streak_val += 1
-                streak_sum += g["profit"]
-            else:
-                break
-        if streak_type and streak_val >= 2:
-            current_streaks.append({
-                "player_id": pid,
-                "player_name": pname,
-                "streak": streak_val,
-                "streak_sum": int(round(streak_sum)),
-                "streak_type": streak_type,
-            })
-
-    hot_streak  = max((s for s in current_streaks if s["streak_type"] == "win"),
-                      key=lambda x: x["streak"], default=None)
-    cold_streak = max((s for s in current_streaks if s["streak_type"] == "loss"),
-                      key=lambda x: x["streak"], default=None)
-
-    # ── Most improved (last full year vs year before) ──────────────────────────
-    from datetime import date as _date
-    _cur_year  = str(_date.today().year)
-    _prev_year = str(_date.today().year - 1)
-
-    cur.execute(
-        f"""
-        SELECT gr.player_id, p.name AS player_name,
-               SUM(CASE WHEN substr(g.date,1,4)='{_cur_year}'  THEN 1 ELSE 0 END) AS games_cur,
-               SUM(CASE WHEN substr(g.date,1,4)='{_prev_year}' THEN 1 ELSE 0 END) AS games_prev,
-               ROUND(AVG(CASE WHEN substr(g.date,1,4)='{_cur_year}'  THEN gr.profit END), 1) AS avg_cur,
-               ROUND(AVG(CASE WHEN substr(g.date,1,4)='{_prev_year}' THEN gr.profit END), 1) AS avg_prev
-        FROM game_results gr
-        JOIN games g ON g.id = gr.game_id
-        JOIN players p ON p.id = gr.player_id
-        WHERE g.game_type = 'cash'
-        GROUP BY gr.player_id
-        HAVING games_cur >= 3 AND games_prev >= 3
-        """
-    )
-    improved_rows = [dict(r) for r in cur.fetchall()]
-    if scope_pids is not None:
-        improved_rows = [r for r in improved_rows if r["player_id"] in scope_pids]
-    for r in improved_rows:
-        r["delta"] = round((r["avg_cur"] or 0) - (r["avg_prev"] or 0), 1)
-    most_improved = max(improved_rows, key=lambda x: x["delta"], default=None)
-    most_declined = min(improved_rows, key=lambda x: x["delta"], default=None) if len(improved_rows) > 1 else None
-    if most_improved and most_improved["delta"] <= 0:
-        most_improved = None
-    if most_declined and most_declined["delta"] >= 0:
-        most_declined = None
-
-    # ── בית המזל — all active players ────────────────────
-    # active_pids already computed above
-    # Step 2: best location per active player
+    # --- KPI counts ---
     cur.execute("""
-        SELECT gr.player_id, p.name AS player_name, g.location,
-               ROUND(AVG(gr.profit), 0) AS avg_profit, COUNT(*) AS games
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash'
-          AND g.location IS NOT NULL
-          AND TRIM(g.location) != ''
-          AND UPPER(TRIM(g.location)) != 'TH'
-        GROUP BY gr.player_id, g.location
-        HAVING games >= 1
-        ORDER BY gr.player_id, avg_profit DESC
+        SELECT
+            COUNT(CASE WHEN game_type='cash'  THEN 1 END) AS cash_games,
+            COUNT(CASE WHEN game_type='harbo' THEN 1 END) AS harbo_games,
+            COUNT(*) AS total_games
+        FROM games
     """)
-    seen_loc = set()
-    lucky_locations = []
-    for r in cur.fetchall():
-        pid = r["player_id"]
-        if pid in active_pids and pid not in seen_loc:
-            seen_loc.add(pid)
-            lucky_locations.append(dict(r))
-    lucky_locations.sort(key=lambda x: x["avg_profit"], reverse=True)
+    kpi_counts = dict(cur.fetchone())
 
-    # ── בית המנחוס — worst location per active player ────
+    # Unique players who played at least one game
     cur.execute("""
-        SELECT gr.player_id, p.name AS player_name, g.location,
-               ROUND(AVG(gr.profit), 0) AS avg_profit, COUNT(*) AS games
-        FROM game_results gr JOIN games g ON g.id=gr.game_id
-        JOIN players p ON p.id=gr.player_id
-        WHERE g.game_type='cash'
-          AND g.location IS NOT NULL
-          AND TRIM(g.location) != ''
-          AND UPPER(TRIM(g.location)) != 'TH'
-        GROUP BY gr.player_id, g.location
-        HAVING games >= 1
-        ORDER BY gr.player_id, avg_profit ASC
+        SELECT COUNT(DISTINCT player_id) AS total_players
+        FROM game_results
     """)
-    seen_unlucky = set()
-    unlucky_locations = []
-    for r in cur.fetchall():
-        pid = r["player_id"]
-        if pid in active_pids and pid not in seen_unlucky:
-            seen_unlucky.add(pid)
-            unlucky_locations.append(dict(r))
-    unlucky_locations.sort(key=lambda x: x["avg_profit"])
+    kpi_counts["total_players"] = cur.fetchone()["total_players"]
 
-    # ── Charts (always all-time) ──────────────────────────
+    # Avg players per cash game
     cur.execute("""
-        SELECT substr(date,1,4) AS year,
-               COUNT(CASE WHEN game_type='cash'  THEN 1 END) AS cash_count,
-               COUNT(CASE WHEN game_type='harbo' THEN 1 END) AS harbo_count
-        FROM games GROUP BY year ORDER BY year ASC
-    """)
-    yearly_rows = cur.fetchall()
-    chart_years = [r["year"]       for r in yearly_rows]
-    chart_cash  = [r["cash_count"] for r in yearly_rows]
-    chart_harbo = [r["harbo_count"]for r in yearly_rows]
-
-    month_names = ["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"]
-    cur.execute("""
-        SELECT month,
-               ROUND(CAST(COUNT(*) AS REAL) / COUNT(DISTINCT year), 1) AS avg_cnt
+        SELECT ROUND(AVG(cnt), 1) AS avg_players
         FROM (
-            SELECT CAST(substr(date,6,2) AS INTEGER) AS month,
-                   substr(date,1,4) AS year
-            FROM games WHERE game_type='cash'
-              AND date LIKE '____-__-__'
+            SELECT game_id, COUNT(*) AS cnt
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE g.game_type = 'cash'
+            GROUP BY gr.game_id
         )
-        GROUP BY month ORDER BY month ASC
     """)
-    month_raw         = {r["month"]: r["avg_cnt"] for r in cur.fetchall()}
-    chart_months_data = [month_raw.get(i, 0) for i in range(1, 13)]
+    row = cur.fetchone()
+    kpi_counts["avg_players_per_game"] = row["avg_players"] if row else 0
 
+    # Avg buyin per cash game (avg total pot)
     cur.execute("""
-        SELECT substr(g.date,1,4) AS year, ROUND(AVG(sub.cnt),1) AS avg_players
-        FROM (
-            SELECT gr.game_id, COUNT(*) AS cnt
-            FROM game_results gr JOIN games g2 ON g2.id=gr.game_id
-            WHERE g2.game_type='cash' GROUP BY gr.game_id
-        ) sub JOIN games g ON g.id=sub.game_id
-        GROUP BY year ORDER BY year ASC
-    """)
-    trend_rows          = cur.fetchall()
-    chart_trend_years   = [r["year"]        for r in trend_rows]
-    chart_trend_players = [r["avg_players"] for r in trend_rows]
-
-    # Pot by year table (avg pot per game per year)
-    cur.execute("""
-        SELECT substr(g.date,1,4) AS year,
-               COUNT(DISTINCT sub.game_id) AS games,
-               ROUND(AVG(sub.pot), 0) AS avg_pot,
-               ROUND(SUM(sub.pot), 0) AS total_pot
+        SELECT ROUND(AVG(pot), 0) AS avg_pot
         FROM (
             SELECT gr.game_id, SUM(gr.buyin) AS pot
-            FROM game_results gr JOIN games g2 ON g2.id=gr.game_id
-            WHERE g2.game_type='cash' GROUP BY gr.game_id
-        ) sub JOIN games g ON g.id=sub.game_id
-        GROUP BY year ORDER BY year DESC
+            FROM game_results gr
+            JOIN games g ON g.id = gr.game_id
+            WHERE g.game_type = 'cash'
+            GROUP BY gr.game_id
+        )
     """)
-    pot_by_year = [dict(r) for r in cur.fetchall()]
+    row = cur.fetchone()
+    kpi_counts["avg_pot"] = row["avg_pot"] if row and row["avg_pot"] else 0
 
-    # Chart data for pot-by-year
-    _pot_asc = list(reversed(pot_by_year))
-    chart_pot_years = json.dumps([r["year"]      for r in _pot_asc])
-    chart_pot_avg   = json.dumps([r["avg_pot"]   for r in _pot_asc])
-    chart_pot_total = json.dumps([r["total_pot"] for r in _pot_asc])
+    # --- Records ---
+    # Biggest single win (cash)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               gr.profit, g.date, g.id AS game_id
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash' AND gr.profit > 0
+        ORDER BY gr.profit DESC LIMIT 1
+    """)
+    record_win = dict(cur.fetchone()) if cur.rowcount != 0 else None
+    if record_win and record_win.get("date"):
+        d = record_win["date"]
+        record_win["date_il"] = f"{d[8:10]}.{d[5:7]}.{d[2:4]}"
 
-    # Earliest cash game date (for בית המזל note)
-    row = cur.execute(
-        "SELECT MIN(date) AS d FROM games WHERE game_type='cash' AND date LIKE '____-__-__'"
-    ).fetchone()
-    earliest_raw = row["d"] if row and row["d"] else None
-    earliest_date = (
-        f"{earliest_raw[8:10]}.{earliest_raw[5:7]}.{earliest_raw[0:4]}"
-        if earliest_raw else None
-    )
+    # Biggest single loss (cash)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               gr.profit, g.date, g.id AS game_id
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash' AND gr.profit < 0
+        ORDER BY gr.profit ASC LIMIT 1
+    """)
+    record_loss = dict(cur.fetchone()) if cur.rowcount != 0 else None
+    if record_loss and record_loss.get("date"):
+        d = record_loss["date"]
+        record_loss["date_il"] = f"{d[8:10]}.{d[5:7]}.{d[2:4]}"
+
+    # Most active player (most cash games)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               COUNT(*) AS games_count
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.player_id
+        ORDER BY games_count DESC LIMIT 1
+    """)
+    most_active = dict(cur.fetchone()) if cur.rowcount != 0 else None
+
+    # Best overall player (cash, all-time profit)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               ROUND(SUM(gr.profit), 0) AS total_profit
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.player_id
+        ORDER BY total_profit DESC LIMIT 1
+    """)
+    best_player = dict(cur.fetchone()) if cur.rowcount != 0 else None
+
+    # Worst overall player (cash, all-time loss)
+    cur.execute("""
+        SELECT p.name AS player_name, p.id AS player_id,
+               ROUND(SUM(gr.profit), 0) AS total_profit
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        JOIN players p ON p.id = gr.player_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.player_id
+        ORDER BY total_profit ASC LIMIT 1
+    """)
+    worst_player = dict(cur.fetchone()) if cur.rowcount != 0 else None
+
+    # Biggest single pot (cash) - sum of buyins in one game
+    cur.execute("""
+        SELECT g.id AS game_id, g.date, g.location,
+               ROUND(SUM(gr.buyin), 0) AS total_pot,
+               COUNT(*) AS players_count
+        FROM game_results gr
+        JOIN games g ON g.id = gr.game_id
+        WHERE g.game_type = 'cash'
+        GROUP BY gr.game_id
+        ORDER BY total_pot DESC LIMIT 1
+    """)
+    biggest_pot = dict(cur.fetchone()) if cur.rowcount != 0 else None
+    if biggest_pot and biggest_pot.get("date"):
+        d = biggest_pot["date"]
+        biggest_pot["date_il"] = f"{d[8:10]}.{d[5:7]}.{d[2:4]}"
+
+    # --- Chart: games per year (cash + harbo) ---
+    cur.execute("""
+        SELECT substr(date, 1, 4) AS year,
+               COUNT(CASE WHEN game_type='cash'  THEN 1 END) AS cash_count,
+               COUNT(CASE WHEN game_type='harbo' THEN 1 END) AS harbo_count
+        FROM games
+        GROUP BY year
+        ORDER BY year ASC
+    """)
+    yearly_rows = cur.fetchall()
+    chart_years   = [r["year"] for r in yearly_rows]
+    chart_cash    = [r["cash_count"] for r in yearly_rows]
+    chart_harbo   = [r["harbo_count"] for r in yearly_rows]
+
+    # --- Chart: activity by month (1-12, across all years, cash) ---
+    month_names = ["ינו","פבר","מרץ","אפר","מאי","יונ","יול","אוג","ספט","אוק","נוב","דצמ"]
+    cur.execute("""
+        SELECT CAST(substr(date, 6, 2) AS INTEGER) AS month,
+               COUNT(*) AS cnt
+        FROM games
+        WHERE game_type = 'cash'
+        GROUP BY month
+        ORDER BY month ASC
+    """)
+    month_raw = {r["month"]: r["cnt"] for r in cur.fetchall()}
+    chart_months      = month_names
+    chart_months_data = [month_raw.get(i, 0) for i in range(1, 13)]
 
     conn.close()
 
+    # fix fetchone returning None for no-match
+    def _safe(r):
+        return r if r and (isinstance(r, dict) and any(r.values())) else None
+
     return render_template(
         "stats.html",
-        kpi=kpi,
-        scope=scope,
-        year=year,
-        player_year=player_year,
-        current_year=current_year,
-        available_years=available_years,
+        kpi=kpi_counts,
         record_win=record_win,
         record_loss=record_loss,
         most_active=most_active,
         best_player=best_player,
         worst_player=worst_player,
         biggest_pot=biggest_pot,
-        player_stats=player_stats,
-        most_volatile=most_volatile,
-        least_volatile=least_volatile,
-        highest_winrate=highest_winrate,
-        lucky_locations=lucky_locations,
-        unlucky_locations=unlucky_locations,
-        record_win_streak=record_win_streak,
-        record_loss_streak=record_loss_streak,
-        hot_streak=hot_streak,
-        cold_streak=cold_streak,
-        most_improved=most_improved,
-        most_declined=most_declined,
-        pot_by_year=pot_by_year,
-        player_scope=player_scope,
-        chart_pot_years=chart_pot_years,
-        chart_pot_avg=chart_pot_avg,
-        chart_pot_total=chart_pot_total,
         chart_years=json.dumps(chart_years),
         chart_cash=json.dumps(chart_cash),
         chart_harbo=json.dumps(chart_harbo),
-        chart_months=json.dumps(month_names),
+        chart_months=json.dumps(chart_months),
         chart_months_data=json.dumps(chart_months_data),
-        chart_trend_years=json.dumps(chart_trend_years),
-        chart_trend_players=json.dumps(chart_trend_players),
-        earliest_date=earliest_date,
         current_user=get_current_user(),
     )
 
@@ -1555,14 +1302,11 @@ def admin_tools():
         import_count=status["import_count"],
     )
 
-# ------------------------------
-# מחשבון פוקר
-# ------------------------------
+
 @bp.route("/calculator")
 @login_required
 def calculator():
     return render_template("calculator.html", current_user=get_current_user())
-
 
 @bp.route("/players/<int:player_id>")
 @login_required
@@ -1944,4 +1688,33 @@ def player_detail(player_id):
         can_see_private=can_see_private,
         is_own_page=is_own_page,
         is_private=is_private,
-   
+        # year-grouped tables
+        games_cash_grouped=games_cash_grouped,
+        games_harbo_grouped=games_harbo_grouped,
+        games_complete_grouped=games_complete_grouped,
+        # analytics
+        chart_data_json=chart_data_json,
+        monthly_data_json=monthly_data_json,
+        win_rate=win_rate,
+        wins_count=wins_count,
+        games_analytics_count=games_analytics_count,
+        streak_count=streak_count,
+        streak_type=streak_type,
+    )
+
+
+@bp.route("/players/<int:player_id>/privacy", methods=["POST"])
+@login_required
+def player_toggle_privacy(player_id):
+    user = get_current_user()
+    if user is None or user["player_id"] != player_id:
+        abort(403)
+    new_val = 1 if request.form.get("private_stats") == "1" else 0
+    conn = get_db_connection()
+    conn.execute(
+        "UPDATE users SET private_stats = ? WHERE player_id = ?",
+        (new_val, player_id)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("main.player_detail", player_id=player_id))
