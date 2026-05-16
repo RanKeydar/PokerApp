@@ -378,22 +378,28 @@ function setFile(f) {
   currentFile = f;
 
   // preview
-  const url = URL.createObjectURL(f);
-  previewImg.src = url;
-  previewWrap.style.display = '';
+  try {
+    const url = URL.createObjectURL(f);
+    previewImg.src = url;
+    previewWrap.style.display = 'block';   // FIX: was '' which kept display:none
+  } catch(e) { /* preview optional */ }
 
   // status bar
   fileStatusBar.classList.add('visible');
   fileStatusName.textContent = f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
 
-  // hide placeholder text, show upload-area as "has file"
+  // hide placeholder text, mark upload-area
   dropZoneInner.style.display = 'none';
   uploadArea.classList.add('has-file');
 
-  // enable button
+  // enable analyze button — do last, and force it
+  analyzeBtn.removeAttribute('disabled');
   analyzeBtn.disabled = false;
+
   hideError();
   resultsSection.style.display = 'none';
+
+  console.log('setFile OK —', f.name, '| analyzeBtn.disabled =', analyzeBtn.disabled);
 }
 
 // ── איפוס ────────────────────────────
