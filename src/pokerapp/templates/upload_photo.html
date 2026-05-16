@@ -5,94 +5,153 @@
 {% block page_css %}
 <style>
 /* ══════════════════════════════════════════
-   upload_photo.html — page-specific styles
+   upload_photo.html
 ══════════════════════════════════════════ */
 
-/* ── Drop zone ── */
-.drop-zone {
-  position: relative;
+/* ── Upload area ── */
+.upload-area {
   border: 2px dashed #94a3b8;
   border-radius: 16px;
-  padding: 36px 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color .2s, background .2s;
+  padding: 0;
   background: #f8fafc;
+  overflow: hidden;
+  transition: border-color .2s, background .2s;
 }
-.drop-zone:hover,
-.drop-zone.dragover { border-color: #0f766e; background: #f0fdfa; }
-.drop-zone input[type=file] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+.upload-area.has-file {
+  border-color: #0f766e;
+  border-style: solid;
 }
-.drop-icon { font-size: 40px; margin-bottom: 8px; }
-.drop-label { font-size: 15px; font-weight: 600; color: #0f172a; }
-.drop-sub   { font-size: 12px; color: #64748b; margin-top: 4px; }
+.upload-area.dragover {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
 
-/* ── Preview ── */
+/* Drop zone (top half — clickable) */
+.drop-zone-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  cursor: pointer;
+  min-height: 140px;
+  gap: 8px;
+}
+.drop-icon { font-size: 38px; line-height: 1; }
+.drop-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.drop-sub { font-size: 12px; color: #64748b; }
+
+/* File status bar */
+.file-status-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #ecfdf5;
+  border-top: 1px solid #a7f3d0;
+}
+.file-status-bar.visible { display: flex; }
+.file-status-icon { font-size: 20px; flex-shrink: 0; }
+.file-status-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-change-btn {
+  font-size: 12px;
+  color: #0f766e;
+  background: none;
+  border: 1px solid #0f766e;
+  border-radius: 7px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.file-change-btn:hover { background: #f0fdfa; }
+
+/* Preview image */
 #preview-wrap {
   display: none;
-  margin-top: 16px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
   background: #0f172a;
   text-align: center;
+  max-height: 300px;
+  overflow: hidden;
 }
 #preview-img {
   max-width: 100%;
-  max-height: 340px;
+  max-height: 300px;
   object-fit: contain;
   display: block;
   margin: 0 auto;
 }
-.preview-toolbar {
-  display: flex;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #1e293b;
-  justify-content: flex-end;
-}
 
-/* ── Analyze button ── */
+/* Analyze button */
 #analyze-btn {
   width: 100%;
   margin-top: 14px;
   font-size: 15px;
-  padding: 12px;
+  padding: 13px;
 }
-#analyze-btn:disabled { opacity: .5; cursor: not-allowed; }
+#analyze-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
 
-/* ── Spinner ── */
+/* Spinner */
 .spinner {
   display: inline-block;
-  width: 18px; height: 18px;
-  border: 3px solid rgba(255,255,255,.3);
+  width: 16px; height: 16px;
+  border: 2.5px solid rgba(255,255,255,.35);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin .7s linear infinite;
   vertical-align: middle;
-  margin-left: 8px;
+  margin-left: 7px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Results section ── */
-#results-section { display: none; margin-top: 24px; }
+/* Error */
+#error-banner {
+  display: none;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #dc2626;
+  font-size: 14px;
+}
 
-/* ── Editable results table ── */
-.res-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+/* ── Results section ── */
+#results-section { display: none; margin-top: 20px; }
+
+.game-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+@media (max-width: 420px) { .game-meta-grid { grid-template-columns: 1fr; } }
+
+/* Results table */
+.res-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
 .res-table th {
   text-align: right;
   font-size: 12px;
   font-weight: 700;
   color: #475569;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-bottom: 2px solid #e2e8f0;
 }
-.res-table td {
-  padding: 6px 6px;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
-}
+.res-table td { padding: 5px 5px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 .res-table tr:last-child td { border-bottom: none; }
 .res-table input[type=text],
 .res-table input[type=number] {
@@ -109,58 +168,19 @@
 .res-table input::-webkit-outer-spin-button,
 .res-table input::-webkit-inner-spin-button { -webkit-appearance: none; }
 .res-table input:focus { outline: none; border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15,118,110,.12); }
-.res-table .profit-cell {
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  padding-right: 10px;
-}
+.profit-cell { font-size: 13px; font-weight: 600; white-space: nowrap; padding-right: 8px; }
 .profit-pos { color: #059669; }
 .profit-neg { color: #dc2626; }
 .profit-zero { color: #94a3b8; }
-
-/* delete row button */
 .btn-del-row {
   background: none; border: none;
   color: #94a3b8; font-size: 16px;
-  cursor: pointer; padding: 4px 6px;
-  border-radius: 6px; line-height: 1;
+  cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1;
 }
 .btn-del-row:hover { background: #fee2e2; color: #ef4444; }
+#add-row-btn { margin-top: 10px; font-size: 13px; border-radius: 10px; }
 
-/* add row */
-#add-row-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  padding: 8px 14px;
-  font-size: 13px;
-  border-radius: 10px;
-}
-
-/* ── Game details panel (in results section) ── */
-.game-meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-@media (max-width: 420px) { .game-meta-grid { grid-template-columns: 1fr; } }
-
-/* ── Error banner ── */
-#error-banner {
-  display: none;
-  margin-top: 12px;
-  padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  color: #dc2626;
-  font-size: 14px;
-}
-
-/* ── Balance indicator ── */
+/* Balance */
 #balance-row {
   display: flex;
   align-items: center;
@@ -172,18 +192,11 @@
   border: 1px solid #e2e8f0;
   font-size: 13px;
 }
-#balance-status { font-weight: 700; }
-.balance-ok   { color: #059669; }
-.balance-warn { color: #d97706; }
+.balance-ok   { color: #059669; font-weight: 700; }
+.balance-warn { color: #d97706; font-weight: 700; }
 
-/* ── Save button area ── */
-#save-area {
-  margin-top: 18px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
+/* Save area */
+#save-area { margin-top: 18px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 </style>
 {% endblock %}
 
@@ -191,7 +204,6 @@
 <div class="grid games-page">
   <section class="game-card game-card-full">
 
-    <!-- ── Header ── -->
     <div class="game-header">
       <div class="game-title">
         <div class="chip">📷</div>
@@ -207,27 +219,37 @@
 
     <div class="game-body">
 
-      <!-- ─────────────────────────────────────
-           שלב א' — העלאת תמונה
-      ──────────────────────────────────────── -->
+      <!-- ─── שלב א' — בחירת תמונה ─── -->
       <div class="panel" id="upload-panel">
         <h3>העלאת תמונה</h3>
 
-        <div class="drop-zone" id="drop-zone">
-          <input type="file" id="photo-input" accept="image/*" capture="environment">
-          <div class="drop-icon">🖼️</div>
-          <div class="drop-label">לחץ לבחירת תמונה או גרור לכאן</div>
-          <div class="drop-sub">תומך ב-JPG, PNG, WEBP · עד 20MB</div>
+        <!-- אזור העלאה -->
+        <div class="upload-area" id="upload-area">
+
+          <!-- Preview (מוסתר עד שיש תמונה) -->
+          <div id="preview-wrap">
+            <img id="preview-img" src="" alt="תצוגה מקדימה">
+          </div>
+
+          <!-- Drop zone לחיץ -->
+          <div class="drop-zone-inner" id="drop-zone-inner">
+            <div class="drop-icon">🖼️</div>
+            <div class="drop-label">לחץ לבחירת תמונה</div>
+            <div class="drop-sub">או גרור לכאן · JPG, PNG, WEBP · עד 20MB</div>
+          </div>
+
+          <!-- Status bar (מוצג אחרי בחירה) -->
+          <div class="file-status-bar" id="file-status-bar">
+            <span class="file-status-icon">✅</span>
+            <span class="file-status-name" id="file-status-name">—</span>
+            <button type="button" class="file-change-btn" id="file-change-btn">החלף</button>
+          </div>
+
         </div>
 
-        <div id="preview-wrap">
-          <img id="preview-img" src="" alt="תצוגה מקדימה">
-          <div class="preview-toolbar">
-            <button type="button" class="btn ghost" id="change-photo-btn" style="font-size:12px;padding:4px 10px;">
-              החלף תמונה
-            </button>
-          </div>
-        </div>
+        <!-- קלט קובץ מוסתר -->
+        <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp,image/gif"
+               style="display:none">
 
         <div id="error-banner"></div>
 
@@ -236,10 +258,9 @@
         </button>
       </div>
 
-      <!-- ─────────────────────────────────────
-           שלב ב' — עריכה ואישור
-      ──────────────────────────────────────── -->
+      <!-- ─── שלב ב' — עריכה ואישור ─── -->
       <div id="results-section">
+
         <div class="panel" style="margin-top:14px;">
           <h3>פרטי המשחק</h3>
           <div class="game-meta-grid">
@@ -263,9 +284,8 @@
 
         <div class="panel" style="margin-top:12px;">
           <h3>תוצאות — ערוך לפי הצורך</h3>
-
           <div class="table-wrap">
-            <table class="res-table" id="results-table">
+            <table class="res-table">
               <thead>
                 <tr>
                   <th>שם שחקן</th>
@@ -275,17 +295,11 @@
                   <th></th>
                 </tr>
               </thead>
-              <tbody id="results-tbody">
-                <!-- rows injected by JS -->
-              </tbody>
+              <tbody id="results-tbody"></tbody>
             </table>
           </div>
+          <button type="button" class="btn ghost" id="add-row-btn">＋ הוסף שחקן</button>
 
-          <button type="button" class="btn ghost" id="add-row-btn">
-            ＋ הוסף שחקן
-          </button>
-
-          <!-- סיכום יתרה -->
           <div id="balance-row">
             <span>יתרה:</span>
             <span id="balance-status">—</span>
@@ -293,96 +307,122 @@
           </div>
         </div>
 
-        <!-- כפתורי שמירה -->
         <div id="save-area">
-          <button type="button" class="btn primary" id="save-btn">
-            💾 שמור משחק
-          </button>
-          <button type="button" class="btn ghost" id="re-analyze-btn">
-            🔄 נתח מחדש
-          </button>
-          <span id="save-status" style="font-size:13px;color:#64748b;"></span>
+          <button type="button" class="btn primary" id="save-btn">💾 שמור משחק</button>
+          <button type="button" class="btn ghost" id="re-analyze-btn">🔄 נתח מחדש</button>
         </div>
-      </div><!-- /results-section -->
+      </div>
 
-    </div><!-- /game-body -->
+    </div>
   </section>
 </div>
 
+<!-- datalist autocomplete -->
+<datalist id="players-datalist">
+  {% for p in players %}<option value="{{ p.name }}">{% endfor %}
+</datalist>
+
 <script>
-// ══════════════════════════════════════════
-//  upload_photo.js — inline
-// ══════════════════════════════════════════
+// ════════════════════════════════════════
+//  upload_photo.js
+// ════════════════════════════════════════
 
-const CSRF_TOKEN = "{{ csrf_token() }}";
-const ALL_PLAYERS = {{ players | tojson }};
+const CSRF = "{{ csrf_token() }}";
 
-// DOM refs
-const dropZone      = document.getElementById('drop-zone');
-const photoInput    = document.getElementById('photo-input');
-const previewWrap   = document.getElementById('preview-wrap');
-const previewImg    = document.getElementById('preview-img');
-const analyzeBtn    = document.getElementById('analyze-btn');
-const errorBanner   = document.getElementById('error-banner');
-const resultsSection= document.getElementById('results-section');
-const resultsTbody  = document.getElementById('results-tbody');
-const addRowBtn     = document.getElementById('add-row-btn');
-const saveBtn       = document.getElementById('save-btn');
-const reAnalyzeBtn  = document.getElementById('re-analyze-btn');
-const saveStatus    = document.getElementById('save-status');
-const balanceStatus = document.getElementById('balance-status');
-const balanceDetail = document.getElementById('balance-detail');
-const changePhotoBtn= document.getElementById('change-photo-btn');
+// ── DOM refs ──────────────────────────
+const uploadArea     = document.getElementById('upload-area');
+const dropZoneInner  = document.getElementById('drop-zone-inner');
+const previewWrap    = document.getElementById('preview-wrap');
+const previewImg     = document.getElementById('preview-img');
+const fileStatusBar  = document.getElementById('file-status-bar');
+const fileStatusName = document.getElementById('file-status-name');
+const fileChangeBtn  = document.getElementById('file-change-btn');
+const photoInput     = document.getElementById('photo-input');
+const analyzeBtn     = document.getElementById('analyze-btn');
+const errorBanner    = document.getElementById('error-banner');
+const resultsSection = document.getElementById('results-section');
+const resultsTbody   = document.getElementById('results-tbody');
+const addRowBtn      = document.getElementById('add-row-btn');
+const saveBtn        = document.getElementById('save-btn');
+const reAnalyzeBtn   = document.getElementById('re-analyze-btn');
+const balanceStatus  = document.getElementById('balance-status');
+const balanceDetail  = document.getElementById('balance-detail');
 
 let currentFile = null;
 
-// ── drag & drop ──────────────────────────
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  const f = e.dataTransfer.files[0];
+// ── קלט קובץ: פתיחה בלחיצה ──────────
+dropZoneInner.addEventListener('click', () => photoInput.click());
+fileChangeBtn.addEventListener('click', () => photoInput.click());
+
+// ── שינוי קובץ ───────────────────────
+photoInput.addEventListener('change', function() {
+  const f = this.files && this.files[0];
   if (f) setFile(f);
 });
-photoInput.addEventListener('change', () => {
-  if (photoInput.files[0]) setFile(photoInput.files[0]);
+
+// ── Drag & Drop ───────────────────────
+uploadArea.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
 });
-changePhotoBtn.addEventListener('click', () => {
-  photoInput.value = '';
-  photoInput.click();
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) setFile(f);
 });
 
+// ── setFile: פידבק ויזואלי מיידי ─────
 function setFile(f) {
   currentFile = f;
+
+  // preview
   const url = URL.createObjectURL(f);
   previewImg.src = url;
   previewWrap.style.display = '';
+
+  // status bar
+  fileStatusBar.classList.add('visible');
+  fileStatusName.textContent = f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
+
+  // hide placeholder text, show upload-area as "has file"
+  dropZoneInner.style.display = 'none';
+  uploadArea.classList.add('has-file');
+
+  // enable button
   analyzeBtn.disabled = false;
   hideError();
   resultsSection.style.display = 'none';
-  dropZone.style.display = 'none';
 }
 
-// ── analyze ─────────────────────────────
-analyzeBtn.addEventListener('click', runAnalyze);
-reAnalyzeBtn.addEventListener('click', () => {
-  dropZone.style.display = '';
-  previewWrap.style.display = 'none';
-  analyzeBtn.disabled = true;
-  resultsSection.style.display = 'none';
+// ── איפוס ────────────────────────────
+reAnalyzeBtn.addEventListener('click', resetUpload);
+function resetUpload() {
   currentFile = null;
   photoInput.value = '';
-});
+  previewWrap.style.display = 'none';
+  previewImg.src = '';
+  fileStatusBar.classList.remove('visible');
+  dropZoneInner.style.display = '';
+  uploadArea.classList.remove('has-file');
+  analyzeBtn.disabled = true;
+  resultsSection.style.display = 'none';
+  hideError();
+}
+
+// ── נתוח עם Claude ───────────────────
+analyzeBtn.addEventListener('click', runAnalyze);
 
 async function runAnalyze() {
   if (!currentFile) return;
+
   setAnalyzing(true);
   hideError();
 
   const fd = new FormData();
   fd.append('photo', currentFile);
-  fd.append('csrf_token', CSRF_TOKEN);
+  fd.append('csrf_token', CSRF);
 
   try {
     const res = await fetch('/upload-photo/analyze', { method: 'POST', body: fd });
@@ -392,8 +432,17 @@ async function runAnalyze() {
       showError(json.error || 'שגיאה לא ידועה');
       return;
     }
-    renderResults(json.players || []);
+
+    const players = json.players || [];
+    if (!players.length) {
+      showError('Claude לא זיהה שחקנים בתמונה. נסה תמונה ברורה יותר.');
+      return;
+    }
+
+    renderResults(players);
     resultsSection.style.display = '';
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   } catch (err) {
     showError('שגיאת רשת: ' + err.message);
   } finally {
@@ -402,22 +451,20 @@ async function runAnalyze() {
 }
 
 function setAnalyzing(on) {
-  if (on) {
-    analyzeBtn.disabled = true;
-    analyzeBtn.innerHTML = '<span class="spinner"></span> מנתח עם Claude…';
-  } else {
-    analyzeBtn.disabled = false;
-    analyzeBtn.innerHTML = '🔍 נתח עם Claude';
-  }
+  analyzeBtn.disabled = on;
+  analyzeBtn.innerHTML = on
+    ? 'מנתח עם Claude…<span class="spinner"></span>'
+    : '🔍 נתח עם Claude';
 }
 
-// ── render results table ─────────────────
+// ── טבלת תוצאות ──────────────────────
 let rowId = 0;
 
 function renderResults(players) {
   resultsTbody.innerHTML = '';
   rowId = 0;
   players.forEach(p => addRow(p.name, p.buyin, p.cashout));
+  updateBalance();
 }
 
 function addRow(name = '', buyin = 0, cashout = 0) {
@@ -426,81 +473,71 @@ function addRow(name = '', buyin = 0, cashout = 0) {
   tr.dataset.rowId = id;
   tr.innerHTML = `
     <td>
-      <input type="text" class="name-inp" value="${escHtml(name)}"
-             list="players-datalist" placeholder="שם שחקן" autocomplete="off">
+      <input type="text" class="name-inp" value="${esc(name)}"
+             list="players-datalist" placeholder="שם שחקן">
     </td>
     <td>
-      <input type="number" class="buyin-inp" value="${buyin}" min="0" step="1"
-             inputmode="numeric" placeholder="0">
+      <input type="number" class="buyin-inp" value="${buyin}" min="0" step="1" inputmode="numeric" placeholder="0">
     </td>
     <td>
-      <input type="number" class="cashout-inp" value="${cashout}" step="1"
-             inputmode="numeric" placeholder="0">
+      <input type="number" class="cashout-inp" value="${cashout}" step="1" inputmode="numeric" placeholder="0">
     </td>
     <td class="profit-cell"><span class="profit-val">—</span></td>
-    <td><button type="button" class="btn-del-row" title="מחק שורה">✕</button></td>
+    <td><button type="button" class="btn-del-row" title="מחק">✕</button></td>
   `;
   resultsTbody.appendChild(tr);
 
-  // live profit calc
   const buyinInp   = tr.querySelector('.buyin-inp');
   const cashoutInp = tr.querySelector('.cashout-inp');
   const profitSpan = tr.querySelector('.profit-val');
-  const delBtn     = tr.querySelector('.btn-del-row');
 
   function updateProfit() {
-    const b = parseFloat(buyinInp.value)   || 0;
+    const b = parseFloat(buyinInp.value) || 0;
     const c = parseFloat(cashoutInp.value) || 0;
     const p = c - b;
     if (b === 0 && c === 0) {
       profitSpan.textContent = '—';
       profitSpan.className = 'profit-val profit-zero';
     } else {
-      const sign = p >= 0 ? '+' : '';
-      profitSpan.textContent = sign + p;
+      profitSpan.textContent = (p >= 0 ? '+' : '') + p;
       profitSpan.className   = 'profit-val ' + (p > 0 ? 'profit-pos' : p < 0 ? 'profit-neg' : 'profit-zero');
     }
     updateBalance();
   }
-  buyinInp.addEventListener('input',   updateProfit);
-  cashoutInp.addEventListener('input', updateProfit);
-  updateProfit();
 
-  delBtn.addEventListener('click', () => { tr.remove(); updateBalance(); });
+  buyinInp.addEventListener('input', updateProfit);
+  cashoutInp.addEventListener('input', updateProfit);
+  tr.querySelector('.btn-del-row').addEventListener('click', () => { tr.remove(); updateBalance(); });
+  updateProfit();
 }
 
 addRowBtn.addEventListener('click', () => {
   addRow();
-  // focus the last name input
   const inputs = resultsTbody.querySelectorAll('.name-inp');
   if (inputs.length) inputs[inputs.length - 1].focus();
 });
 
-// ── balance check ────────────────────────
 function updateBalance() {
-  let totalBuyin = 0, totalCashout = 0;
+  let b = 0, c = 0;
   resultsTbody.querySelectorAll('tr').forEach(tr => {
-    totalBuyin   += parseFloat(tr.querySelector('.buyin-inp')?.value)   || 0;
-    totalCashout += parseFloat(tr.querySelector('.cashout-inp')?.value) || 0;
+    b += parseFloat(tr.querySelector('.buyin-inp')?.value)   || 0;
+    c += parseFloat(tr.querySelector('.cashout-inp')?.value) || 0;
   });
-  const diff = totalCashout - totalBuyin;
+  const diff = Math.round((c - b) * 100) / 100;
   if (diff === 0) {
     balanceStatus.textContent = '✅ מאוזן';
     balanceStatus.className   = 'balance-ok';
     balanceDetail.textContent = '';
   } else {
-    const sign = diff > 0 ? '+' : '';
-    balanceStatus.textContent = `⚠️ לא מאוזן (${sign}${diff}₪)`;
+    balanceStatus.textContent = `⚠️ לא מאוזן (${diff > 0 ? '+' : ''}${diff}₪)`;
     balanceStatus.className   = 'balance-warn';
-    balanceDetail.textContent = `קנייה: ${totalBuyin}₪ | יציאה: ${totalCashout}₪`;
+    balanceDetail.textContent = `קנייה: ${b}₪  יציאה: ${c}₪`;
   }
 }
 
-// ── save ─────────────────────────────────
+// ── שמירה ────────────────────────────
 saveBtn.addEventListener('click', async () => {
   const entries = [];
-  let valid = true;
-
   resultsTbody.querySelectorAll('tr').forEach(tr => {
     const name    = tr.querySelector('.name-inp').value.trim();
     const buyin   = parseFloat(tr.querySelector('.buyin-inp').value)   || 0;
@@ -509,21 +546,16 @@ saveBtn.addEventListener('click', async () => {
   });
 
   if (!entries.length) { showError('אין שחקנים לשמור'); return; }
-
   const gameDate = document.getElementById('game-date').value;
-  if (!gameDate) { showError('נא לבחור תאריך'); return; }
+  if (!gameDate)       { showError('נא לבחור תאריך'); return; }
 
   saveBtn.disabled = true;
   saveBtn.textContent = 'שומר…';
-  saveStatus.textContent = '';
 
   try {
     const res = await fetch('/upload-photo/save', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': CSRF_TOKEN,
-      },
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
       body: JSON.stringify({
         date:      gameDate,
         location:  document.getElementById('game-location').value.trim() || null,
@@ -532,11 +564,7 @@ saveBtn.addEventListener('click', async () => {
       }),
     });
     const json = await res.json();
-    if (!res.ok || json.error) {
-      showError(json.error || 'שגיאה בשמירה');
-      return;
-    }
-    // redirect to game results
+    if (!res.ok || json.error) { showError(json.error || 'שגיאה בשמירה'); return; }
     window.location.href = `/game/${json.game_id}/results`;
   } catch (err) {
     showError('שגיאת רשת: ' + err.message);
@@ -546,31 +574,19 @@ saveBtn.addEventListener('click', async () => {
   }
 });
 
-// ── error helpers ────────────────────────
+// ── helpers ───────────────────────────
 function showError(msg) {
   errorBanner.textContent = '⚠️ ' + msg;
   errorBanner.style.display = '';
+  errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function hideError() {
   errorBanner.style.display = 'none';
-  errorBanner.textContent   = '';
 }
-
-// ── escape html ──────────────────────────
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
-// ── datalist for player autocomplete ─────
-(function buildDatalist() {
-  const dl = document.createElement('datalist');
-  dl.id = 'players-datalist';
-  ALL_PLAYERS.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.name;
-    dl.appendChild(opt);
-  });
-  document.body.appendChild(dl);
-})();
 </script>
 {% endblock %}
