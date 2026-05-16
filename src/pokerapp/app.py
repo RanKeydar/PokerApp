@@ -2,7 +2,7 @@ import os
 import traceback
 from flask import Flask, jsonify
 from pathlib import Path
-from pokerapp.db.init_db import init_db   # ⬅️ הוספה
+from pokerapp.db.init_db import init_db
 from flask_wtf.csrf import CSRFProtect
 from pokerapp.db.connection import ensure_admin_audit_log_table
 from datetime import datetime
@@ -27,7 +27,6 @@ HEBREW_MONTHS = {
 def format_hebrew_date(date_str):
     if not date_str:
         return "—"
-
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
         return f"{dt.day} ב{HEBREW_MONTHS[dt.month]}, {dt.year}"
@@ -49,7 +48,7 @@ def create_app():
 
     @app.template_filter("ils")
     def ils_filter(value):
-        """Format a number as Hebrew currency: negative → -₪X, positive → ₪X"""
+        """Format a number as Hebrew currency: negative -> -₪X, positive -> ₪X"""
         try:
             v = int(value or 0)
         except (TypeError, ValueError):
@@ -62,20 +61,16 @@ def create_app():
     def hedate_filter(date_value):
         if not date_value:
             return ""
-
         try:
             s = str(date_value).strip()
             if " " in s:
                 s = s.split(" ", 1)[0]
-
             if "T" in s:
                 s = s.split("T", 1)[0]
-
             year, month, day = s.split("-")
             return f"{day}.{month}.{year[-2:]}"
         except Exception:
             return str(date_value)
-
 
     app.config["STATIC_VER"] = 2
 
@@ -101,8 +96,10 @@ def create_app():
 
     from pokerapp.routes.auth import bp as auth_bp
     from pokerapp.routes.main import bp as main_bp
+    from pokerapp.routes.upload_photo import bp_upload
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(bp_upload)
 
     @app.errorhandler(500)
     def internal_error(e):
