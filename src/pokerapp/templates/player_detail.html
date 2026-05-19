@@ -94,8 +94,9 @@
         border-radius: 6px; color: #92400e;
         display: inline-flex; align-items: center; gap: 4px;
     }
-    .game-note-btn.has-note { opacity: 1; background: #fef3c7; }
+    .game-note-btn.has-note { opacity: 1; background: #fef3c7; font-size: 16px; padding: 3px 8px; }
     .game-note-btn:hover { opacity: 1; background: #fef3c7; }
+    .note-eye { font-size: 17px; line-height: 1; }
 
     /* per-game note row */
     .game-note-row td {
@@ -415,7 +416,7 @@
                         <button type="button"
                             class="game-note-btn{% if gnote %} has-note{% endif %}"
                             onclick="toggleGameNote(event, {{ gid }})">
-                            📝 <span>{% if gnote %}צפה בהערה{% else %}הוסף הערה{% endif %}</span>
+                            {% if gnote %}<span class="note-eye">👁</span>{% else %}📝 <span>הוסף הערה</span>{% endif %}
                         </button>
                     </td>
                     {% endif %}
@@ -572,8 +573,14 @@ function saveGameNote(gameId) {
                       .querySelector('.game-note-btn');
         var span = btn ? btn.querySelector('span') : null;
         if (row) row.dataset.hasNote = hasContent ? 'true' : 'false';
-        if (btn) btn.classList.toggle('has-note', hasContent);
-        if (span) span.textContent = hasContent ? 'צפה בהערה' : 'הוסף הערה';
+        if (btn) {
+            btn.classList.toggle('has-note', hasContent);
+            if (hasContent) {
+                btn.innerHTML = '<span class="note-eye">👁</span>';
+            } else {
+                btn.innerHTML = '📝 <span>הוסף הערה</span>';
+            }
+        }
         var textEl = document.getElementById('note-text-' + gameId);
         if (textEl) textEl.textContent = saved;
         var cancelBtn = document.querySelector('#note-edit-' + gameId + ' .note-action-btn.cancel');
@@ -712,14 +719,4 @@ function saveGameNote(gameId) {
                 b.setAttribute('aria-selected', 'false');
             });
             btn.classList.add('active');
-            btn.setAttribute('aria-selected', 'true');
-            switchChart(btn.dataset.chart);
-        });
-    });
-})();
-</script>
-{% endif %}
-
-<a href="#" class="back-to-top-btn" aria-label="חזרה לראש">↑ חזרה למעלה</a>
-
-{% endblock %}
+            btn.set
