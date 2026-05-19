@@ -88,67 +88,57 @@
 
     /* per-game note toggle button */
     .game-note-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 15px;
-        padding: 0 4px;
-        opacity: .45;
-        vertical-align: middle;
-        line-height: 1;
+        background: none; border: none; cursor: pointer;
+        font-size: 13px; padding: 4px 8px; opacity: .5;
+        vertical-align: middle; line-height: 1.3;
+        border-radius: 6px; color: #92400e;
+        display: inline-flex; align-items: center; gap: 4px;
     }
-
-    .game-note-btn.has-note {
-        opacity: 1;
-    }
-
-    .game-note-btn:hover {
-        opacity: 1;
-    }
+    .game-note-btn.has-note { opacity: 1; background: #fef3c7; }
+    .game-note-btn:hover { opacity: 1; background: #fef3c7; }
 
     /* per-game note row */
     .game-note-row td {
         padding: 0 !important;
         background: #fffbeb;
-        border-bottom: 1px solid #fde68a;
+        border-bottom: 2px solid #fde68a;
     }
-
     .game-note-inner {
-        padding: 8px 14px 10px;
-        display: flex;
-        gap: 8px;
-        align-items: flex-start;
-    }
-
-    .game-note-inner textarea {
-        flex: 1;
-        border: 1px solid #fcd34d;
-        border-radius: 8px;
-        padding: 7px 10px;
-        font-size: 14px;
-        font-family: inherit;
+        padding: 10px 14px 12px;
         direction: rtl;
-        resize: none;
-        height: 56px;
-        background: #fff;
-        box-sizing: border-box;
     }
-
-    .game-note-inner textarea:focus {
-        outline: none;
-        border-color: #d97706;
+    /* view mode */
+    .note-view-text {
+        font-size: 14px; line-height: 1.65;
+        color: #1c1917; white-space: pre-wrap;
+        word-break: break-word;
+        background: #fff8e7; border: 1px solid #fde68a;
+        border-radius: 9px; padding: 10px 13px;
+        min-height: 42px; margin-bottom: 8px;
     }
-
-    .game-note-save-lbl {
-        font-size: 10px;
-        color: #6b7280;
-        margin-top: 4px;
-        min-height: 12px;
+    /* edit mode */
+    .note-edit-area {
+        width: 100%; border: 1px solid #fcd34d; border-radius: 9px;
+        padding: 9px 12px; font-size: 14px; font-family: inherit;
+        direction: rtl; resize: vertical; min-height: 72px;
+        background: #fff; box-sizing: border-box; display: block;
+        margin-bottom: 8px;
     }
-
-    .game-note-save-lbl.saved {
-        color: #059669;
+    .note-edit-area:focus { outline: none; border-color: #d97706; }
+    .note-action-row {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     }
+    .note-action-btn {
+        font-size: 13px; padding: 5px 14px; border-radius: 7px;
+        border: 1px solid; cursor: pointer; font-family: inherit;
+        line-height: 1.4;
+    }
+    .note-action-btn.save  { background: #0f766e; color: #fff; border-color: #0f766e; }
+    .note-action-btn.edit  { background: #fff;    color: #0f766e; border-color: #0f766e; }
+    .note-action-btn.cancel{ background: #fff;    color: #64748b; border-color: #cbd5e1; }
+    .note-save-lbl { font-size: 11px; color: #6b7280; }
+    .note-save-lbl.saved { color: #059669; }
+    .note-save-lbl.err   { color: #dc2626; }
 </style>
 {% endblock %}
 
@@ -421,27 +411,49 @@
                     </td>
                     {% endif %}
                     {% if is_own_page %}
-                    <td class="col-note" style="text-align:left;padding:0 6px;white-space:nowrap;">
-                        <button type="button" class="game-note-btn{% if gnote %} has-note{% endif %}" title="הערה למשחק"
-                            onclick="toggleGameNote(event, {{ gid }})">📝 <span style="font-size:12px;vertical-align:middle;">{% if gnote %}ערוך הערה{% else %}הוסף הערה{% endif %}</span></button>
+                    <td class="col-note" style="padding:0 6px;white-space:nowrap;">
+                        <button type="button"
+                            class="game-note-btn{% if gnote %} has-note{% endif %}"
+                            onclick="toggleGameNote(event, {{ gid }})">
+                            📝 <span>{% if gnote %}צפה בהערה{% else %}הוסף הערה{% endif %}</span>
+                        </button>
                     </td>
                     {% endif %}
                 </tr>
                 {% if is_own_page %}
                 <tr class="game-note-row year-rows year-rows-{{ yr }}{% if not is_current %} yr-hidden{% endif %}"
-                    id="note-row-{{ gid }}" style="display:none;">
+                    id="note-row-{{ gid }}" style="display:none;"
+                    data-has-note="{{ 'true' if gnote else 'false' }}">
                     <td colspan="{{ col_count + 1 }}">
                         <div class="game-note-inner">
-                            <div style="flex:1">
-                                <textarea id="note-ta-{{ gid }}" data-game-id="{{ gid }}"
-                                    data-player-id="{{ player.get('id') }}"
-                                    placeholder="הערה למשחק הזה...">{{ gnote }}</textarea>
-                                <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
-                                    <button type="button" class="btn primary" style="font-size:13px;padding:5px 14px;"
-                                        onclick="saveGameNote({{ gid }})">שמור</button>
-                                    <div class="game-note-save-lbl" id="note-lbl-{{ gid }}" style="margin-top:0;"></div>
+
+                            {# VIEW mode #}
+                            <div id="note-view-{{ gid }}"{% if not gnote %} style="display:none"{% endif %}>
+                                <div class="note-view-text" id="note-text-{{ gid }}">{{ gnote }}</div>
+                                <div class="note-action-row">
+                                    <button class="note-action-btn edit"
+                                        onclick="switchNoteMode({{ gid }}, 'edit')">✏️ ערוך</button>
                                 </div>
                             </div>
+
+                            {# EDIT mode #}
+                            <div id="note-edit-{{ gid }}"{% if gnote %} style="display:none"{% endif %}>
+                                <textarea class="note-edit-area"
+                                    id="note-ta-{{ gid }}"
+                                    data-game-id="{{ gid }}"
+                                    data-player-id="{{ player.get('id') }}"
+                                    placeholder="כתוב הערה למשחק הזה...">{{ gnote }}</textarea>
+                                <div class="note-action-row">
+                                    <button class="note-action-btn save"
+                                        onclick="saveGameNote({{ gid }})">שמור</button>
+                                    {% if gnote %}
+                                    <button class="note-action-btn cancel"
+                                        onclick="switchNoteMode({{ gid }}, 'view')">ביטול</button>
+                                    {% endif %}
+                                    <span class="note-save-lbl" id="note-lbl-{{ gid }}"></span>
+                                </div>
+                            </div>
+
                         </div>
                     </td>
                 </tr>
@@ -487,12 +499,31 @@ function toggleGameNote(e, gameId) {
     var hidden = row.style.display === 'none' || !row.style.display;
     row.style.display = hidden ? '' : 'none';
     if (hidden) {
-        var ta = document.getElementById('note-ta-' + gameId);
-        if (ta) { setTimeout(function(){ ta.focus(); }, 50); }
+        var hasNote = row.dataset.hasNote === 'true';
+        if (!hasNote) {
+            switchNoteMode(gameId, 'edit');
+            var ta = document.getElementById('note-ta-' + gameId);
+            if (ta) setTimeout(function(){ ta.focus(); }, 50);
+        }
     }
 }
 
-function saveNote(playerId, gameId, text, statusEl, btnEl) {
+function switchNoteMode(gameId, mode) {
+    var viewDiv = document.getElementById('note-view-' + gameId);
+    var editDiv = document.getElementById('note-edit-' + gameId);
+    if (!viewDiv || !editDiv) return;
+    if (mode === 'edit') {
+        viewDiv.style.display = 'none';
+        editDiv.style.display = '';
+        var ta = document.getElementById('note-ta-' + gameId);
+        if (ta) setTimeout(function(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 30);
+    } else {
+        editDiv.style.display = 'none';
+        viewDiv.style.display = '';
+    }
+}
+
+function saveNote(playerId, gameId, text, statusEl, onSuccess) {
     fetch('/players/' + playerId + '/note', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': _CSRF },
@@ -502,19 +533,16 @@ function saveNote(playerId, gameId, text, statusEl, btnEl) {
     .then(function(data){
         if (statusEl) {
             statusEl.textContent = data.ok ? 'נשמר ✓' : 'שגיאה';
-            statusEl.className = statusEl.className.replace(/\bsaved\b|\berr\b/g,'').trim()
-                + (data.ok ? ' saved' : ' err');
-            setTimeout(function(){ statusEl.textContent = ''; }, 2500);
+            statusEl.className = 'note-save-lbl' + (data.ok ? ' saved' : ' err');
+            setTimeout(function(){ statusEl.textContent = ''; statusEl.className = 'note-save-lbl'; }, 2500);
         }
-        if (data.ok) _updateGeneralNoteDot(gameId === null ? text : null);
-        if (btnEl && data.ok) {
-            var span = btnEl.querySelector('span');
-            btnEl.classList.toggle('has-note', text.trim().length > 0);
-            if (span) span.textContent = text.trim() ? 'ערוך הערה' : 'הוסף הערה';
+        if (data.ok) {
+            _updateGeneralNoteDot(gameId === null ? text : null);
+            if (onSuccess) onSuccess(text);
         }
     })
     .catch(function(){
-        if (statusEl) { statusEl.textContent = 'שגיאה'; statusEl.className += ' err'; }
+        if (statusEl) { statusEl.textContent = 'שגיאה'; statusEl.className = 'note-save-lbl err'; }
     });
 }
 
@@ -534,10 +562,31 @@ function saveGeneralNote() {
 function saveGameNote(gameId) {
     var ta  = document.getElementById('note-ta-' + gameId);
     var lbl = document.getElementById('note-lbl-' + gameId);
-    var btn = ta ? ta.closest('.game-note-row').previousElementSibling
-                     .querySelector('.game-note-btn') : null;
     if (!ta) return;
-    saveNote(parseInt(ta.dataset.playerId), gameId, ta.value, lbl, btn);
+    var pid  = parseInt(ta.dataset.playerId);
+    var text = ta.value;
+    saveNote(pid, gameId, text, lbl, function(saved) {
+        var hasContent = saved.trim().length > 0;
+        var row = document.getElementById('note-row-' + gameId);
+        var btn = document.querySelector('#note-row-' + gameId).previousElementSibling
+                      .querySelector('.game-note-btn');
+        var span = btn ? btn.querySelector('span') : null;
+        if (row) row.dataset.hasNote = hasContent ? 'true' : 'false';
+        if (btn) btn.classList.toggle('has-note', hasContent);
+        if (span) span.textContent = hasContent ? 'צפה בהערה' : 'הוסף הערה';
+        var textEl = document.getElementById('note-text-' + gameId);
+        if (textEl) textEl.textContent = saved;
+        var cancelBtn = document.querySelector('#note-edit-' + gameId + ' .note-action-btn.cancel');
+        if (hasContent && !cancelBtn) {
+            var actRow = document.querySelector('#note-edit-' + gameId + ' .note-action-row');
+            var newCancel = document.createElement('button');
+            newCancel.className = 'note-action-btn cancel';
+            newCancel.textContent = 'ביטול';
+            newCancel.onclick = function(){ switchNoteMode(gameId, 'view'); };
+            if (actRow) actRow.insertBefore(newCancel, actRow.children[1]);
+        }
+        if (hasContent) setTimeout(function(){ switchNoteMode(gameId, 'view'); }, 600);
+    });
 }
 </script>
 {% if can_see_private and chart_data_json and chart_data_json != '[]' %}
@@ -611,90 +660,49 @@ function saveGameNote(gameId) {
         cumulative: {
             labels: rawData.map(function(d){ return fmtDate(d.date); }),
             datasets: [{
-                label: 'רווח מצטבר (₪)',
-                data:  rawData.map(function(d){ return d.cumulative; }),
-                type: 'line',
-                tension: 0.35,
-                borderColor: LINE,
-                backgroundColor: FILL,
-                fill: true,
-                pointRadius: rawData.length > 60 ? 0 : 4,
-                pointHoverRadius: 6,
-                borderWidth: 2.5,
+                data: rawData.map(function(d){ return d.cumulative; }),
+                borderColor: rawData.map(function(d){ return d.cumulative >= 0 ? GREEN : RED; }),
+                backgroundColor: rawData.map(function(d){ return d.cumulative >= 0 ? GREEN_A : RED_A; }),
+                borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3
+            }]
+        },
+        session: {
+            labels: rawData.map(function(d){ return fmtDate(d.date); }),
+            datasets: [{
+                data: rawData.map(function(d){ return d.profit; }),
+                backgroundColor: barColours(rawData.map(function(d){ return d.profit; })),
+                borderWidth: 0
             }]
         },
         monthly: {
-            labels: rawMonthly.map(function(d){ return fmtMonth(d.month); }),
+            labels: rawMonthly.map(function(d){ return d.month; }),
             datasets: [{
-                label: 'רווח חודשי (₪)',
-                data:  rawMonthly.map(function(d){ return d.profit; }),
-                type: 'bar',
+                data: rawMonthly.map(function(d){ return d.profit; }),
                 backgroundColor: barColours(rawMonthly.map(function(d){ return d.profit; })),
-                borderRadius: 5,
-                borderSkipped: false,
+                borderWidth: 0
             }]
         }
     };
 
-    var commonOptions = {
-        responsive: true,
-        maintainAspectRatio: true,
-        animation: { duration: 350 },
-        interaction: {
-            mode: 'index',
-            intersect: false,
-        },
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                rtl: true,
-                displayColors: false,
-                callbacks: {
-                    title: function(items) {
-                        return items[0] ? items[0].label : '';
-                    },
-                    label: function(ctx) {
-                        var v = ctx.parsed.y;
-                        return (v >= 0 ? '+' : '') + v.toLocaleString('he-IL') + ' ₪';
-                    }
+    var currentChart = null;
+    function switchChart(type) {
+        if (currentChart) currentChart.destroy();
+        var ds = datasets[type];
+        var isLine = (type === 'cumulative');
+        currentChart = new Chart(document.getElementById('analyticsChart'), {
+            type: isLine ? 'line' : 'bar',
+            data: ds,
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { maxRotation: 45, font: { size: 10 } } },
+                    y: { ticks: { callback: function(v){ return '₪' + v; } } }
                 }
             }
-        },
-        scales: {
-            x: {
-                ticks: { maxRotation: 45, font: { size: 11 } },
-                grid: { color: GRID }
-            },
-            y: {
-                ticks: {
-                    callback: function(v){ return v.toLocaleString('he-IL') + '₪'; },
-                    font: { size: 11 }
-                },
-                grid: { color: GRID }
-            }
-        }
-    };
-
-    // ── init chart ────────────────────────────────────────────────────
-    var ctx = document.getElementById('analyticsChart').getContext('2d');
-    var chart = new Chart(ctx, {
-        type: 'line',
-        data: datasets['cumulative'],
-        options: commonOptions
-    });
-
-    var activeKey = 'cumulative';
-
-    function switchChart(key) {
-        if (key === activeKey) return;
-        activeKey = key;
-        var d = datasets[key];
-        chart.config.type = d.datasets[0].type;
-        chart.data = d;
-        chart.update();
-        // Zero-line for bar charts
-        chart.options.scales.y.suggestedMin = undefined;
+        });
     }
+    switchChart('cumulative');
 
     // ── tab clicks ────────────────────────────────────────────────────
     document.querySelectorAll('.chart-tab').forEach(function(btn) {
