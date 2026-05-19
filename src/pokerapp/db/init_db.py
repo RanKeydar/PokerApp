@@ -19,14 +19,31 @@ def init_db(db_path: str, schema_path: str) -> None:
 
 def _run_migrations(db_path: Path) -> None:
     """Run all phase migrations in order (each is idempotent)."""
+
+    # ── Phase B: external script (only if present) ─────────────────────
     scripts_dir = Path(__file__).resolve().parent.parent.parent.parent / "scripts"
-    migration_files = [
-        scripts_dir / "migrate_phase_b.py",
-    ]
-    for mig in migration_files:
-        if mig.exists():
-            # Import and run without polluting sys.argv
-            import importlib.util
-            spec = importlib.util.spec_from_file_location("migration", mig)
-            mod = importlib.util.module_from_spec(spec)
-        
+    phase_b = scripts_dir / "migrate_phase_b.py"
+    if phase_b.exists():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("migration", phase_b)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        mod.migrate(db_path)
+
+    # ── Phase C inline migrations (idempotent) ──────────────────────────
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS player_notes (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_id  INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+                game_id    INTEGER REFERENCES games(id) ON DELETE CASCADE,
+                note       TEXT    NOT NULL DEFAULT '',
+                updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_player_notes_player
+                ON player_notes(player_id);
+        """)
+        conn.commit()
+    finally:
+        conn.close()

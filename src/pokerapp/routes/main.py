@@ -1,5 +1,5 @@
 import json
-from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app, session as flask_session
+from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app, session as flask_session, jsonify
 from pokerapp.services.auth import login_required, role_required, get_current_user
 from pokerapp.db.connection import get_db_connection
 from pokerapp.services.game_queries import (
@@ -1843,6 +1843,21 @@ def player_detail(player_id):
     # Is this user the owner of this player page?
     is_own_page = user is not None and user["player_id"] == player_id
 
+    # ── Load private notes (only for own page) ────────────────────────
+    general_note = ""
+    game_notes = {}
+    if is_own_page:
+        conn_n = get_db_connection()
+        notes_rows = conn_n.execute(
+            "SELECT game_id, note FROM player_notes WHERE player_id = ?",
+            (player_id,)
+        ).fetchall()
+        conn_n.close()
+        for row in notes_rows:
+            if row["game_id"] is None:
+                general_note = row["note"]
+            else:
+                game_notes[row["game_id"]] = row["note"]
 
     subtitle = f'{summary["total_games"]} משחקים סה"כ - {summary["year_games"]} משחקים ב-{current_year}'
 
@@ -1947,7 +1962,42 @@ def player_detail(player_id):
         games_analytics_count=games_analytics_count,
         streak_count=streak_count,
         streak_type=streak_type,
+        general_note=general_note,
+        game_notes=game_notes,
     )
+
+
+@bp.route("/players/<int:player_id>/note", methods=["POST"])
+@login_required
+def player_save_note(player_id):
+    """Save (upsert) a private note for a player. Only the owner can write."""
+    user = get_current_user()
+    if user is None or user["player_id"] != player_id:
+        abort(403)
+
+    note = request.get_json(silent=True) or {}
+    text = str(note.get("note", "")).strip()
+    game_id_raw = note.get("game_id")
+    game_id = int(game_id_raw) if game_id_raw is not None else None
+
+    conn = get_db_connection()
+    existing = conn.execute(
+        "SELECT id FROM player_notes WHERE player_id = ? AND game_id IS ?",
+        (player_id, game_id)
+    ).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE player_notes SET note = ?, updated_at = datetime('now') WHERE id = ?",
+            (text, existing["id"])
+        )
+    else:
+        conn.execute(
+            "INSERT INTO player_notes (player_id, game_id, note) VALUES (?, ?, ?)",
+            (player_id, game_id, text)
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 @bp.route("/players/<int:player_id>/privacy", methods=["POST"])
