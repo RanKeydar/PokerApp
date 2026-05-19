@@ -27,32 +27,13 @@ body {
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  /* רקע לבד — CSS טהור, ללא תמונה חיצונית, ללא תפרים */
-  background-color: #0e5c40;
+  /* רקע לבד — SVG fractalNoise, ללא ריבועים */
+  background-color: #1a5e3c;
   background-image:
-    radial-gradient(ellipse 120% 60% at 50% 0%,    rgba(255,255,255,0.045) 0%, transparent 70%),
-    radial-gradient(ellipse 120% 60% at 50% 100%,  rgba(0,0,0,0.30)        0%, transparent 70%),
-    repeating-linear-gradient(
-      57deg,
-      transparent             0px,
-      transparent             3px,
-      rgba(255,255,255,0.013) 3px,
-      rgba(255,255,255,0.013) 4px
-    ),
-    repeating-linear-gradient(
-      -57deg,
-      transparent             0px,
-      transparent             3px,
-      rgba(255,255,255,0.013) 3px,
-      rgba(255,255,255,0.013) 4px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      transparent        0px,
-      transparent        5px,
-      rgba(0,0,0,0.018)  5px,
-      rgba(0,0,0,0.018)  6px
-    );
+    radial-gradient(ellipse 110% 50% at 50% 0%,   rgba(255,255,255,0.06) 0%, transparent 65%),
+    radial-gradient(ellipse 110% 50% at 50% 100%, rgba(0,0,0,0.32)       0%, transparent 65%),
+    radial-gradient(ellipse 88%  88% at 50% 50%,  transparent 52%, rgba(0,0,0,0.22) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72%200.28' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='256' height='256' fill='white' filter='url(%23f)' opacity='0.085'/%3E%3C/svg%3E");
   min-height: 100vh;
   color: var(--ink);
 }
@@ -2674,3 +2655,4 @@ bdo.ils, span.ils, .ils {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+                                                                                                        
