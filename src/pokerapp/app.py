@@ -1,4 +1,10 @@
 import os
+from pathlib import Path as _Path
+try:
+    from dotenv import load_dotenv
+    load_dotenv(_Path(__file__).resolve().parents[2] / ".env", override=True)
+except ImportError:
+    pass
 import traceback
 from flask import Flask, jsonify
 from pathlib import Path
