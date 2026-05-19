@@ -138,6 +138,7 @@
             <div class="privacy-toggle-wrap">
                 {% if is_private %}
                 <form method="POST" action="{{ url_for('main.player_toggle_privacy', player_id=player.get('id')) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="private_stats" value="0">
                     <button type="submit" class="btn ghost privacy-btn" title="נתוניך נראים רק לך">
                         🔒 נתוני גלוי רק לי - לחץ להציג לכולם
@@ -145,6 +146,7 @@
                 </form>
                 {% else %}
                 <form method="POST" action="{{ url_for('main.player_toggle_privacy', player_id=player.get('id')) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="private_stats" value="1">
                     <button type="submit" class="btn ghost privacy-btn" title="נתוניך גלויים לכולם">
                         🔓 נתוני גלויים לכולם - לחץ להסתיר
@@ -266,6 +268,7 @@
       <div class="note-section-header" onclick="toggleNoteSection('general-note-section')">
         <span>📝</span>
         <span>הערה כללית (נראית רק לך)</span>
+        <span id="general-note-dot" style="color:#d97706;font-size:10px;{% if not general_note %} display:none{% endif %}"> ●</span>
         <span class="note-chevron">▼</span>
       </div>
       <div class="note-body">
@@ -399,6 +402,8 @@ function toggleYear(yr) {
 }
 
 /* ── Notes helpers ─────────────────────────────────────────────── */
+var _CSRF = "{{ csrf_token() }}";
+
 function toggleNoteSection(id) {
     var el = document.getElementById(id);
     if (el) el.classList.toggle('open');
@@ -424,7 +429,10 @@ function toggleGameNote(e, gameId) {
 function saveNote(playerId, gameId, text, statusEl, btnEl) {
     fetch('/players/' + playerId + '/note', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': _CSRF
+        },
         body: JSON.stringify({game_id: gameId, note: text})
     })
     .then(function(r){ return r.json(); })
@@ -436,17 +444,4 @@ function saveNote(playerId, gameId, text, statusEl, btnEl) {
             setTimeout(function(){ statusEl.textContent = ''; }, 2500);
         }
         if (btnEl && data.ok) {
-            btnEl.classList.toggle('has-note', text.trim().length > 0);
-        }
-    })
-    .catch(function(){
-        if (statusEl) { statusEl.textContent = 'שגיאה'; statusEl.className += ' err'; }
-    });
-}
-
-/* General note auto-save on blur */
-var _genTa = document.getElementById('general-note-ta');
-if (_genTa) {
-    _genTa.addEventListener('blur', function() {
-        var pid = parseInt(_genTa.dataset.playerId);
-        var st  = document.getElementById(
+            btnEl.classList.toggle('has-note', text.trim().length > 
