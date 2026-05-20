@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}לוג פעילות{% endblock %}
+{% block content %}
+
+<h1>לוג פעילות משתמשים</h1>
+
+<form method="GET" style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:1.5rem;">
+  <select name="user" style="padding:.4rem .7rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+    <option value="">כל המשתמשים</option>
+    {% for u in users %}
+    <option value="{{ u }}" {% if u == filter_user %}selected{% endif %}>{{ u }}</option>
+    {% endfor %}
+  </select>
+  <select name="action" style="padding:.4rem .7rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+    <option value="">כל הפעולות</option>
+    {% for a in actions %}
+    <option value="{{ a }}" {% if a == filter_action %}selected{% endif %}>{{ a }}</option>
+    {% endfor %}
+  </select>
+  <select name="limit" style="padding:.4rem .7rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+    <option value="100"  {% if limit==100  %}selected{% endif %}>100 שורות</option>
+    <option value="200"  {% if limit==200  %}selected{% endif %}>200 שורות</option>
+    <option value="500"  {% if limit==500  %}selected{% endif %}>500 שורות</option>
+    <option value="1000" {% if limit==1000 %}selected{% endif %}>1000 שורות</option>
+  </select>
+  <button type="submit" style="padding:.4rem 1rem; border-radius:6px; background:#2d7a2d; color:#fff; border:none; cursor:pointer;">סנן</button>
+  {% if filter_user or filter_action %}
+  <a href="{{ url_for('main.admin_activity') }}" style="padding:.4rem .8rem; border-radius:6px; background:#555; color:#fff; text-decoration:none;">נקה</a>
+  {% endif %}
+</form>
+
+{% if rows %}
+<table>
+  <thead>
+    <tr>
+      <th>זמן</th>
+      <th>משתמש</th>
+      <th>תפקיד</th>
+      <th>פעולה</th>
+      <th>פרטים</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td style="white-space:nowrap; font-size:.85em; color:#aaa;">{{ r["created_at"][:16] | replace("T"," ") }}</td>
+      <td><strong>{{ r["username"] }}</strong></td>
+      <td><span class="badge {{ r['role'] or '' }}">{{ r["role"] or "—" }}</span></td>
+      <td>
+        {% if r["action"] == "login" %}🔑 כניסה
+        {% elif r["action"] == "logout" %}🚪 יציאה
+        {% elif r["action"] == "view_stats" %}📊 סטטיסטיקות קבוצתיות
+        {% elif r["action"] == "view_player_stats" %}👤 סטטיסטיקות שחקן
+        {% elif r["action"] == "add_game" %}➕ הוסף משחק
+        {% elif r["action"] == "delete_game" %}🗑️ מחק משחק
+        {% elif r["action"] == "save_from_photo" %}📷 שמירה מצילום
+        {% elif r["action"] == "change_password" %}🔒 שינוי סיסמה
+        {% else %}{{ r["action"] }}
+        {% endif %}
+      </td>
+      <td style="color:#aaa;">{{ r["details"] or "" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>אין רשומות.</p>
+{% endif %}
+
+{% endblock %}

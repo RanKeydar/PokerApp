@@ -1,7 +1,7 @@
 import sqlite3
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import check_password_hash, generate_password_hash
-from pokerapp.db.connection import get_db_connection
+from pokerapp.db.connection import get_db_connection, log_activity
 from pokerapp.services.auth import login_required
 
 bp = Blueprint("auth", __name__)
@@ -32,6 +32,7 @@ def login():
             session["role"] = user["role"]
             session["username"] = user["username"]
             session["_ga_login"] = True
+            log_activity("login")
             return redirect(url_for("main.home"))
 
         return render_template("login.html", error="שם משתמש או סיסמה שגויים")
@@ -41,6 +42,7 @@ def login():
 
 @bp.route("/logout")
 def logout():
+    log_activity("logout")
     session.clear()
     return redirect(url_for("auth.login"))
 
@@ -92,7 +94,6 @@ def change_password():
         new_pw   = request.form.get("new_password", "")
         confirm  = request.form.get("confirm_password", "")
 
-        # ── Validation ───────────────────────────────────────────────────────
         if not old_pw or not new_pw or not confirm:
             error = "יש למלא את כל השדות."
         elif new_pw != confirm:
@@ -116,6 +117,7 @@ def change_password():
                     (generate_password_hash(new_pw), session["user_id"])
                 )
                 conn.commit()
+                log_activity("change_password")
                 success = "הסיסמה עודכנה בהצלחה."
             conn.close()
 

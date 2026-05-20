@@ -10,24 +10,15 @@ from flask import Flask, jsonify
 from pathlib import Path
 from pokerapp.db.init_db import init_db
 from flask_wtf.csrf import CSRFProtect
-from pokerapp.db.connection import ensure_admin_audit_log_table
+from pokerapp.db.connection import ensure_admin_audit_log_table, ensure_activity_log_table
 from datetime import datetime
 
 csrf = CSRFProtect()
 
 HEBREW_MONTHS = {
-    1: "ינואר",
-    2: "פברואר",
-    3: "מרץ",
-    4: "אפריל",
-    5: "מאי",
-    6: "יוני",
-    7: "יולי",
-    8: "אוגוסט",
-    9: "ספטמבר",
-    10: "אוקטובר",
-    11: "נובמבר",
-    12: "דצמבר",
+    1: "ינואר", 2: "פברואר", 3: "מרץ", 4: "אפריל",
+    5: "מאי", 6: "יוני", 7: "יולי", 8: "אוגוסט",
+    9: "ספטמבר", 10: "אוקטובר", 11: "נובמבר", 12: "דצמבר",
 }
 
 def format_hebrew_date(date_str):
@@ -54,7 +45,6 @@ def create_app():
 
     @app.template_filter("ils")
     def ils_filter(value):
-        """Format a number as Hebrew currency: negative -> -₪X, positive -> ₪X"""
         try:
             v = int(value or 0)
         except (TypeError, ValueError):
@@ -93,9 +83,9 @@ def create_app():
     schema_path = Path(__file__).resolve().parent / "db" / "schema.sql"
     init_db(app.config["DB_PATH"], str(schema_path))
 
-    from pokerapp.db.connection import ensure_admin_audit_log_table
     with app.app_context():
         ensure_admin_audit_log_table()
+        ensure_activity_log_table()
 
     from pokerapp.db.seed_admin import ensure_admin
     ensure_admin(app.config["DB_PATH"])
@@ -103,9 +93,11 @@ def create_app():
     from pokerapp.routes.auth import bp as auth_bp
     from pokerapp.routes.main import bp as main_bp
     from pokerapp.routes.upload_photo import bp_upload
+    from pokerapp.routes.record import bp_record
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(bp_upload)
+    app.register_blueprint(bp_record)
 
     @app.errorhandler(500)
     def internal_error(e):

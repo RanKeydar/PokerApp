@@ -17,7 +17,7 @@ from pathlib import Path
 import re
 
 from pokerapp.db.backup import backup_database
-from pokerapp.db.connection import log_admin_action
+from pokerapp.db.connection import log_admin_action, log_activity
 from pokerapp.services.admin_tools import get_admin_tools_status, run_backup_now
 from pokerapp.services.import_service import run_import_raw_all, run_import_raw_one 
 
@@ -413,6 +413,7 @@ def add_game():
 
         conn.commit()
         conn.close()
+        log_activity("add_game", f"משחק {game_id} | {game_date} | {game_type}")
         return redirect(url_for("main.game_results", game_id=game_id))
 
     # GET — טען שחקנים פעילים (כאלה שמופיעים ב-game_results)
@@ -556,6 +557,7 @@ def players():
 @bp.route("/stats")
 @login_required
 def stats():
+    log_activity("view_stats", "סטטיסטיקות קבוצתיות")
     from itertools import groupby as _groupby
 
     current_year_int = date.today().year
@@ -1561,6 +1563,7 @@ def delete_game(game_id):
         cur.execute("DELETE FROM games WHERE id = ?;", (game_id,))
 
         conn.commit()
+        log_activity("delete_game", f"משחק {game_id}")
         flash("המשחק נמחק בהצלחה", "ok")
         return redirect(url_for("main.games_list"))
 
@@ -1586,6 +1589,40 @@ def admin_backup_now():
     flash(result["message"], result["flash_category"])
     return redirect(url_for("main.admin_tools"))
     
+@bp.route("/admin/activity")
+@login_required
+@role_required("admin")
+def admin_activity():
+    conn = get_db_connection()
+    filter_user = request.args.get("user", "")
+    filter_action = request.args.get("action", "")
+    limit = int(request.args.get("limit", 200))
+
+    where = "WHERE 1=1"
+    params = []
+    if filter_user:
+        where += " AND username = ?"
+        params.append(filter_user)
+    if filter_action:
+        where += " AND action = ?"
+        params.append(filter_action)
+
+    rows = conn.execute(
+        f"SELECT * FROM user_activity_log {where} ORDER BY created_at DESC LIMIT ?",
+        params + [limit],
+    ).fetchall()
+    users = [r["username"] for r in conn.execute(
+        "SELECT DISTINCT username FROM user_activity_log ORDER BY username"
+    ).fetchall()]
+    actions = [r["action"] for r in conn.execute(
+        "SELECT DISTINCT action FROM user_activity_log ORDER BY action"
+    ).fetchall()]
+    conn.close()
+    return render_template("admin_activity.html",
+        rows=rows, users=users, actions=actions,
+        filter_user=filter_user, filter_action=filter_action, limit=limit)
+
+
 @bp.route("/admin/tools")
 @login_required
 @role_required("admin")
@@ -1645,6 +1682,7 @@ def player_detail(player_id):
         return "השחקן לא נמצא", 404
 
     player = dict(player)
+    log_activity("view_player_stats", player["name"])
 
     cur.execute(
         """
@@ -1949,42 +1987,4 @@ def player_detail(player_id):
         })
 
     _wins = sum(1 for g in _valid if float(g["profit"]) > 0)
-    _total_count = len(_valid)
-    win_rate = round(_wins / _total_count * 100) if _total_count > 0 else 0
-    wins_count = _wins
-    games_analytics_count = _total_count
-
-    # Streak — from the most recent game backwards
-    streak_count = 0
-    streak_type = None
-    for _g in sorted(_valid, key=lambda g: (g.get("date", ""), g.get("game_id", 0)), reverse=True):
-        _p = float(_g["profit"])
-        _gt = "win" if _p > 0 else ("loss" if _p < 0 else None)
-        if _gt is None:
-            continue
-        if streak_type is None:
-            streak_type = _gt
-            streak_count = 1
-        elif _gt == streak_type:
-            streak_count += 1
-        else:
-            break
-
-    # Monthly aggregation
-    _monthly: dict[str, float] = {}
-    for _g in _sorted_asc:
-        _mk = _g["date"][:7]
-        _monthly[_mk] = _monthly.get(_mk, 0.0) + float(_g["profit"])
-    _monthly_data = [
-        {"month": k, "profit": round(float(v))}
-        for k, v in sorted(_monthly.items())
-    ]
-
-    chart_data_json = json.dumps(_chart_data, ensure_ascii=False)
-    monthly_data_json = json.dumps(_monthly_data, ensure_ascii=False)
-    # ── End Analytics ──────────────────────────────────────────────────
-
-    return render_template(
-        "player_detail.html",
-        player=player,
-        summary=summ
+    _total_cou

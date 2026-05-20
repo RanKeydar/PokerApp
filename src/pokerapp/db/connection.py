@@ -50,6 +50,59 @@ def ensure_admin_audit_log_table():
     conn.close()
 
 
+def ensure_activity_log_table():
+    conn = get_db_connection()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_activity_log (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at  TEXT NOT NULL,
+            username    TEXT NOT NULL,
+            role        TEXT,
+            action      TEXT NOT NULL,
+            details     TEXT
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_activity_log_created_at
+        ON user_activity_log (created_at DESC)
+        """
+    )
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_activity_log_username
+        ON user_activity_log (username)
+        """
+    )
+    conn.commit()
+    conn.close()
+
+
+def log_activity(action, details=None):
+    """רישום פעולת משתמש ללוג הפנימי."""
+    try:
+        conn = get_db_connection()
+        conn.execute(
+            """
+            INSERT INTO user_activity_log (created_at, username, role, action, details)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                datetime.now(UTC).isoformat(),
+                session.get("username", "anonymous"),
+                session.get("role"),
+                action,
+                details,
+            ),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass  # לא להפיל את הבקשה בגלל כשל בלוג
+
+
 def log_admin_action(action, status, target_type=None, target_value=None, message=None):
     conn = get_db_connection()
     conn.execute(

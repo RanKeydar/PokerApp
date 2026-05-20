@@ -15,7 +15,7 @@ from pathlib import Path
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 
-from pokerapp.db.connection import get_db_connection
+from pokerapp.db.connection import get_db_connection, log_activity
 from pokerapp.services.auth import get_current_user, login_required, role_required
 
 bp_upload = Blueprint("upload_photo", __name__)
@@ -450,4 +450,5 @@ def save_photo_results():
     finally:
         conn.close()
 
+    log_activity("save_from_photo", f"משחק {game_id}")
     return jsonify({"ok": True, "game_id": game_id})

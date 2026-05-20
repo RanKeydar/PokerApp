@@ -75,6 +75,10 @@
           href="{{ url_for('main.admin_users') }}">
           👥 משתמשים
         </a>
+        <a class="nav-chip nav-chip-accent {% if request.endpoint == 'main.admin_activity' %}active{% endif %}"
+          href="{{ url_for('main.admin_activity') }}">
+          📋 לוג
+        </a>
         {% endif %}
         {% if current_user and current_user["role"] != "magician" %}
         <a class="nav-chip {% if request.endpoint == 'record.record' %}active{% endif %}"
@@ -101,6 +105,4 @@
         {% endif %}
         {% if not current_user %}
         <a class="nav-chip" href="{{ url_for('auth.signup') }}" title="הרשמה">הרשמה</a>
-        <a class="nav-chip" href="{{ url_for('auth.login') }}" title="כניסה">כניסה</a>
-        {% endif %}
-        <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="ה
+        <a class="nav-chip" hr
