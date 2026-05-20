@@ -1083,7 +1083,7 @@ def admin_users():
 
     conn.close()
 
-    return render_template("admin_users.html", pending=pending, active=active, players=players, flash_msg=flash_msg)
+    return render_template("admin_users.html", pending=pending, active=active, players=players, flash_msg=flash_msg, current_user=get_current_user())
 
 @bp.route("/game/<int:game_id>/results", methods=["GET"])
 @login_required
@@ -1620,7 +1620,8 @@ def admin_activity():
     conn.close()
     return render_template("admin_activity.html",
         rows=rows, users=users, actions=actions,
-        filter_user=filter_user, filter_action=filter_action, limit=limit)
+        filter_user=filter_user, filter_action=filter_action, limit=limit,
+        current_user=get_current_user())
 
 
 @bp.route("/admin/tools")
@@ -2103,4 +2104,4 @@ def player_toggle_privacy(player_id):
     )
     conn.commit()
     conn.close()
-    return redirect(url_for("main.player_detail", player_id=player_id))
+    return redirect(url_for("mai
