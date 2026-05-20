@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block title %}הקלטת סשן{% endblock %}
+
+{% block page_css %}
+<style>
+  /* ── Layout ── */
+  .rec-page {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .rec-page h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-align: center; }
+  .rec-subtitle { font-size: 13px; color: #64748b; text-align: center; margin-bottom: 32px; line-height: 1.5; }
+
+  /* ── Screens ── */
+  .screen { width: 100%; display: none; flex-direction: column; align-items: center; gap: 20px; }
+  .screen.active { display: flex; }
+
+  /* ── Big circle button ── */
+  .rec-circle {
+    width: 160px; height: 160px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    font-weight: 800; font-size: 15px; transition: transform .12s, box-shadow .12s;
+    -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 24px rgba(0,0,0,.15);
+  }
+  .rec-circle:active { transform: scale(0.95); }
+  .rec-circle .rec-icon { font-size: 40px; line-height: 1; }
+  .btn-start { background: #16a34a; color: #fff; }
+  .btn-stop  { background: #dc2626; color: #fff; }
+
+  /* ── Pulse ring ── */
+  .pulse-ring { position: relative; display: flex; align-items: center; justify-content: center; }
+  .pulse-ring::before {
+    content: ''; position: absolute; width: 180px; height: 180px; border-radius: 50%;
+    background: rgba(220,38,38,.18); animation: pulse 1.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { transform: scale(.9); opacity: .7; }
+    70%  { transform: scale(1.15); opacity: 0; }
+    100% { transform: scale(.9); opacity: 0; }
+  }
+
+  /* ── Timer & status ── */
+  .rec-timer { font-size: 52px; font-weight: 800; font-variant-numeric: tabular-nums; color: #0f172a; letter-spacing: -1px; }
+  .rec-status { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #dc2626; }
+  .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: #dc2626; animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+  /* ── Camera button ── */
+  .cam-btn {
+    width: 100%; padding: 18px; border-radius: 16px; border: none;
+    background: #1e293b; color: #fff; font-size: 17px; font-weight: 800; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    -webkit-tap-highlight-color: transparent; transition: transform .1s;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  .cam-btn:active { transform: scale(0.97); }
+  .cam-btn .cam-icon { font-size: 26px; }
+
+  /* ── Photo counter ── */
+  .photo-count {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: #475569;
+  }
+  .photo-count-num {
+    background: #0f172a; color: #fff; border-radius: 20px;
+    padding: 2px 10px; font-size: 13px; font-weight: 800;
+  }
+
+  /* ── Camera flash overlay ── */
+  .cam-flash {
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: #000; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+  }
+  .cam-flash.active { display: flex; }
+  .cam-flash video { width: 100%; max-width: 400px; border-radius: 12px; }
+  .cam-flash canvas { display: none; }
+  .cam-flash-label { color: #fff; font-size: 15px; font-weight: 700; text-align: center; }
+  .cam-countdown { color: #fbbf24; font-size: 48px; font-weight: 900; }
+  .cam-flash-ok { background: #16a34a; color: #fff; border: none; border-radius: 12px; padding: 14px 32px; font-size: 16px; font-weight: 800; cursor: pointer; display: none; }
+
+  /* ── Flash white ── */
+  .white-flash {
+    display: none; position: fixed; inset: 0; background: #fff; z-index: 1000; opacity: 0;
+    pointer-events: none; transition: opacity .1s;
+  }
+
+  /* ── Done screen ── */
+  .done-card {
+    width: 100%; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 16px;
+    padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  }
+  .done-icon { font-size: 40px; }
+  .done-title { font-size: 18px; font-weight: 800; color: #14532d; }
+  .done-meta  { font-size: 13px; color: #166534; }
+
+  .btn-download {
+    width: 100%; padding: 16px; border-radius: 14px; border: none; background: #0f172a; color: #fff;
+    font-size: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 10px; -webkit-tap-highlight-color: transparent; text-decoration: none;
+  }
+  .btn-download:active { opacity: .85; }
+  .btn-again {
+    width: 100%; padding: 14px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fff;
+    color: #475569; font-size: 15px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Photo thumbnails (done) ── */
+  .photos-section { width: 100%; }
+  .photos-title { font-size: 13px; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+  .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .photo-thumb {
+    position: relative; border-radius: 8px; overflow: hidden;
+    border: 1.5px solid #e2e8f0; aspect-ratio: 1;
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-thumb-ts {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,.55); color: #fff; font-size: 9px; padding: 2px 4px; text-align: center;
+  }
+  .photo-thumb a {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.35); color: #fff; font-size: 20px; opacity: 0; transition: opacity .15s;
+  }
+  .photo-thumb:hover a { opacity: 1; }
+
+  /* ── Tip box ── */
+  .tip-box {
+    width: 100%; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 12px;
+    padding: 14px 16px; font-size: 12.5px; color: #92400e; line-height: 1.7;
+  }
+  .tip-box strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+  /* ── Error ── */
+  .rec-error {
+    display: none; width: 100%; background: #fef2f2; border: 1px solid #fecaca;
+    border-radius: 12px; padding: 14px 16px; font-size: 13px; color: #991b1b; text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rec-page">
+  <h1>🎙️ הקלטת סשן</h1>
+  <p class="rec-subtitle">הנח את הטלפון על השולחן<br>ולחץ התחל לפני שמתחילים לחלק</p>
+
+  <div class="rec-error" id="rec-error"></div>
+
+  <!-- ══ SCREEN: READY ══ -->
+  <div class="screen active" id="screen-ready">
+    <button class="rec-circle btn-start" onclick="startRec()">
+      <span class="rec-icon">🎙️</span>
+      <span>התחל</span>
+    </button>
+    <div class="tip-box">
+      <strong>💡 לפני שמתחילים</strong>
+      הנח את הטלפון קרוב לאמצע השולחן.<br>
+      כשתרצה לצלם את הקלפים שלך — לחץ על כפתור המצלמה.<br>
+      אל תסגור את הדפדפן בזמן ההקלטה.
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: RECORDING ══ -->
+  <div class="screen" id="screen-recording">
+    <div class="rec-timer" id="timer">00:00:00</div>
+    <div class="rec-status">
+      <div class="rec-dot"></div>
+      <span>מקליט...</span>
+    </div>
+
+    <div class="pulse-ring">
+      <button class="rec-circle btn-stop" onclick="stopRec()">
+        <span class="rec-icon">⏹️</span>
+        <span>סיים</span>
+      </button>
+    </div>
+
+    <!-- Camera button -->
+    <button class="cam-btn" id="cam-btn" onclick="captureCard()">
+      <span class="cam-icon">📸</span>
+      <span>צלם את הקלפים שלי</span>
+    </button>
+
+    <div class="photo-count">
+      <span>קלפים שצולמו:</span>
+      <span class="photo-count-num" id="photo-count-num">0</span>
+    </div>
+
+    <div class="tip-box">
+      <strong>📱 טיפ</strong>
+      לחץ "צלם קלפים" מיד אחרי שתראה את הידיים שלך.<br>
+      לא חייב בכל יד — רק בידיים שרוצים לזכור.
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: DONE ══ -->
+  <div class="screen" id="screen-done">
+    <div class="done-card">
+      <div class="done-icon">✅</div>
+      <div class="done-title">הסשן הסתיים</div>
+      <div class="done-meta" id="done-meta">—</div>
+    </div>
+
+    <a id="btn-download-audio" class="btn-download" download>
+      <span>⬇️</span><span>הורד הקלטת אודיו</span>
+    </a>
+
+    <div class="photos-section" id="photos-section" style="display:none">
+      <div class="photos-title" id="photos-title"></div>
+      <div class="photos-grid" id="photos-grid"></div>
+    </div>
+
+    <button class="btn-again" onclick="resetRec()">🔄 הקלטה חדשה</button>
+
+    <div class="tip-box" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;">
+      <strong>📤 הצעד הבא</strong>
+      שלח את קובץ האודיו (וצילומי הקלפים) לניתוח.
+    </div>
+  </div>
+</div>
+
+<!-- ══ CAMERA OVERLAY ══ -->
+<div class="cam-flash" id="cam-flash">
+  <div class="cam-flash-label" id="cam-label">מרים קלפים לכיוון המצלמה...</div>
+  <div class="cam-countdown" id="cam-countdown"></div>
+  <video id="cam-video" autoplay playsinline muted></video>
+  <canvas id="cam-canvas"></canvas>
+  <button class="cam-flash-ok" id="cam-ok" onclick="camDone()">✓ סגור</button>
+</div>
+<div class="white-flash" id="white-flash"></div>
+
+<script>
+(function () {
+  var mediaRecorder = null;
+  var audioChunks   = [];
+  var photos        = [];          // [{blob, ts, url}]
+  var timerInterval = null;
+  var startTime     = null;
+  var wakeLock      = null;
+  var mimeType      = '';
+  var camStream     = null;
+  var camTimeout    = null;
+
+  /* ── Wake Lock ── */
+  async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  }
+
+  /* ── Timer ── */
+  function fmtTime(ms) {
+    var s = Math.floor(ms/1000), h = Math.floor(s/3600);
+    var m = Math.floor((s%3600)/60), sec = s%60;
+    return pad(h)+':'+pad(m)+':'+pad(sec);
+  }
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+
+  /* ── Screens ── */
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('screen-'+id).classList.add('active');
+  }
+  function showError(msg) {
+    var el = document.getElementById('rec-error');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  /* ── MIME ── */
+  function getBestMime() {
+    var types = ['audio/webm
