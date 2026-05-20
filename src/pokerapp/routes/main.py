@@ -1056,17 +1056,29 @@ def admin_users():
                     flash_msg = "הסיסמה אופסה בהצלחה."
                 else:
                     flash_msg = "חובה להזין סיסמה חדשה."
+            elif action == "link_player":
+                player_id = request.form.get("player_id") or None
+                if player_id == "":
+                    player_id = None
+                cur.execute(
+                    "UPDATE users SET player_id = ? WHERE id = ?;",
+                    (player_id, user_id),
+                )
+                flash_msg = "השחקן קושר בהצלחה."
             conn.commit()
 
     cur.execute("SELECT id, username, role FROM users WHERE is_approved = 0 ORDER BY id DESC;")
     pending = cur.fetchall()
 
-    cur.execute("SELECT id, username, role FROM users WHERE is_approved = 1 ORDER BY username;")
+    cur.execute("SELECT id, username, role, player_id FROM users WHERE is_approved = 1 ORDER BY username;")
     active = cur.fetchall()
+
+    cur.execute("SELECT id, name FROM players ORDER BY name;")
+    players = cur.fetchall()
 
     conn.close()
 
-    return render_template("admin_users.html", pending=pending, active=active, flash_msg=flash_msg)
+    return render_template("admin_users.html", pending=pending, active=active, players=players, flash_msg=flash_msg)
 
 @bp.route("/game/<int:game_id>/results", methods=["GET"])
 @login_required
@@ -1979,19 +1991,4 @@ def player_detail(player_id):
         year=current_year,
         subtitle=subtitle,
         view=view,
-        sort=sort,
-        direction=direction,
-        current_user=user,
-        can_see_private=can_see_private,
-        is_own_page=is_own_page,
-        is_private=is_private,
-        # year-grouped tables
-        games_cash_grouped=games_cash_grouped,
-        games_harbo_grouped=games_harbo_grouped,
-        games_complete_grouped=games_complete_grouped,
-        # analytics
-        chart_data_json=chart_data_json,
-        monthly_data_json=monthly_data_json,
-        win_rate=win_rate,
-        wins_count=wins_count,
-        g
+        sor
