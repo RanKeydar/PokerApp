@@ -43,7 +43,7 @@
   <tbody>
     {% for r in rows %}
     <tr>
-      <td style="white-space:nowrap; font-size:.85em; color:#aaa;">{{ r["created_at"][:16] | replace("T"," ") }}</td>
+      <td style="white-space:nowrap; font-size:.85em; color:#aaa;">{{ r["created_at"] | iltime }}</td>
       <td><strong>{{ r["username"] }}</strong></td>
       <td><span class="badge {{ r['role'] or '' }}">{{ r["role"] or "—" }}</span></td>
       <td>

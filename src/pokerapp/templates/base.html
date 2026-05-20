@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}פוקר אפ{% endblock %}</title>
 
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v='20260515-5') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260515-5') }}">
   {% block page_css %}{% endblock %}
@@ -105,4 +107,44 @@
         {% endif %}
         {% if not current_user %}
         <a class="nav-chip" href="{{ url_for('auth.signup') }}" title="הרשמה">הרשמה</a>
-        <a class="nav-chip" hr
+        <a class="nav-chip" href="{{ url_for('auth.login') }}" title="כניסה">כניסה</a>
+        {% endif %}
+        <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="התנתקות"
+           onclick="gtag('event','logout');">
+          ←
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-stack">
+      {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.matchMedia('(max-width: 900px)').matches) return;
+
+      document.querySelectorAll('.table-wrap').forEach(function (wrap) {
+       
+        if (wrap.scrollLeft === 0) {
+          wrap.scrollLeft = wrap.scrollWidth;
+        }
+      });
+    });
+  </script>
+
+  {% block scripts %}{% endblock %}
+
+</body>
+</html>

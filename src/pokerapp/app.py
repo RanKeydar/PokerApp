@@ -11,7 +11,12 @@ from pathlib import Path
 from pokerapp.db.init_db import init_db
 from flask_wtf.csrf import CSRFProtect
 from pokerapp.db.connection import ensure_admin_audit_log_table, ensure_activity_log_table
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+try:
+    from zoneinfo import ZoneInfo as _ZoneInfo
+    _TZ_IL = _ZoneInfo("Asia/Jerusalem")
+except Exception:
+    _TZ_IL = None  # fallback: UTC+3
 
 csrf = CSRFProtect()
 
@@ -42,6 +47,22 @@ def create_app():
         static_folder=str(project_root / "static"),
         static_url_path="/static"
     )
+
+    @app.template_filter("iltime")
+    def iltime_filter(ts_str):
+        """המרת timestamp UTC לשעון ירושלים."""
+        if not ts_str:
+            return "—"
+        try:
+            s = str(ts_str).strip().replace("T", " ")[:19]
+            dt_utc = datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
+            if _TZ_IL:
+                dt_local = dt_utc.astimezone(_TZ_IL)
+            else:
+                dt_local = dt_utc + timedelta(hours=3)
+            return dt_local.strftime("%d.%m.%y %H:%M")
+        except Exception:
+            return str(ts_str)[:16].replace("T", " ")
 
     @app.template_filter("ils")
     def ils_filter(value):
