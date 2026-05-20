@@ -58,14 +58,16 @@
           🃏 מחשבון
         </a>
 
-        {% if current_user and current_user["role"] in ("admin", "magician") %}
+        {% if current_user and current_user["role"] == "admin" %}
         <a class="nav-chip nav-chip-accent {% if request.endpoint == 'main.add_game' %}active{% endif %}"
           href="{{ url_for('main.add_game') }}">
           הוסף משחק
         </a>
+        {% endif %}
+        {% if current_user and current_user["role"] in ("admin", "magician") %}
         <a class="nav-chip nav-chip-accent {% if request.endpoint == 'upload_photo.upload_photo' %}active{% endif %}"
           href="{{ url_for('upload_photo.upload_photo') }}">
-          📷 מצילום
+          📷 הוסף משחק
         </a>
         {% endif %}
         {% if current_user and current_user["role"] == "admin" %}
@@ -101,8 +103,4 @@
         <a class="nav-chip" href="{{ url_for('auth.signup') }}" title="הרשמה">הרשמה</a>
         <a class="nav-chip" href="{{ url_for('auth.login') }}" title="כניסה">כניסה</a>
         {% endif %}
-        <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="התנתקות"
-           onclick="gtag('event','logout');">
-          ←
-        </a>
-    
+        <a class="icon-circle logout-btn" href="{{ url_for('auth.logout') }}" aria-label="התנתקות" title="ה
