@@ -2104,4 +2104,4 @@ def player_toggle_privacy(player_id):
     )
     conn.commit()
     conn.close()
-    return redirect(url_for("mai
+    return redirect(url_for("main.player_detail", player_id=player_id))
