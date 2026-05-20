@@ -719,4 +719,14 @@ function saveGameNote(gameId) {
                 b.setAttribute('aria-selected', 'false');
             });
             btn.classList.add('active');
-            btn.set
+            btn.setAttribute('aria-selected', 'true');
+            switchChart(btn.dataset.chart);
+        });
+    });
+})();
+</script>
+{% endif %}
+
+<a href="#" class="back-to-top-btn" aria-label="חזרה לראש">↑ חזרה למעלה</a>
+
+{% endblock %}

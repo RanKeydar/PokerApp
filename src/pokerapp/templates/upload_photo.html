@@ -4,270 +4,449 @@
 
 {% block page_css %}
 <style>
-/* ══════════════════════════════════════════
+  /* ══════════════════════════════════════════
    upload_photo.html — mobile-first
 ══════════════════════════════════════════ */
 
-/* ── Upload area ── */
-.upload-area {
-  border: 2px dashed #94a3b8;
-  border-radius: 16px;
-  padding: 0;
-  background: #f8fafc;
-  overflow: hidden;
-  transition: border-color .2s, background .2s;
-}
-.upload-area.has-file { border-color: #0f766e; border-style: solid; }
-.upload-area.dragover  { border-color: #0f766e; background: #f0fdfa; }
+  /* ── Upload area ── */
+  .upload-area {
+    border: 2px dashed #94a3b8;
+    border-radius: 16px;
+    padding: 0;
+    background: #f8fafc;
+    overflow: hidden;
+    transition: border-color .2s, background .2s;
+  }
 
-.drop-zone-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 20px;
-  cursor: pointer;
-  min-height: 130px;
-  gap: 8px;
-}
-.drop-icon  { font-size: 36px; line-height: 1; }
-.drop-label { font-size: 15px; font-weight: 600; color: #0f172a; }
-.drop-sub   { font-size: 12px; color: #64748b; }
+  .upload-area.has-file {
+    border-color: #0f766e;
+    border-style: solid;
+  }
 
-.file-status-bar {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  background: #ecfdf5;
-  border-top: 1px solid #a7f3d0;
-}
-.file-status-bar.visible { display: flex; }
-.file-status-icon { font-size: 20px; flex-shrink: 0; }
-.file-status-name {
-  font-size: 13px; font-weight: 600; color: #065f46;
-  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.file-change-btn {
-  font-size: 12px; color: #0f766e; background: none;
-  border: 1px solid #0f766e; border-radius: 7px;
-  padding: 3px 10px; cursor: pointer; white-space: nowrap;
-}
+  .upload-area.dragover {
+    border-color: #0f766e;
+    background: #f0fdfa;
+  }
 
-#preview-wrap {
-  display: none; background: #0f172a;
-  text-align: center; max-height: 280px; overflow: hidden; position: relative;
-}
-#preview-img {
-  max-width: 100%; max-height: 240px; object-fit: contain;
-  display: block; margin: 0 auto; transition: transform .3s ease;
-}
-#preview-badge {
-  display: none; position: absolute; top: 8px; left: 8px;
-  background: rgba(0,0,0,.65); color: #fff; font-size: 12px;
-  padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(4px);
-}
-#rotate-controls {
-  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-  display: none; gap: 8px; align-items: center;
-}
-.rotate-btn {
-  background: rgba(0,0,0,.6); color: #fff;
-  border: 1px solid rgba(255,255,255,.3); border-radius: 8px;
-  padding: 6px 14px; font-size: 18px; cursor: pointer;
-  backdrop-filter: blur(4px); line-height: 1;
-}
-.rotate-btn:hover { background: rgba(15,118,110,.8); }
-#rotate-hint { color: rgba(255,255,255,.7); font-size: 11px; white-space: nowrap; }
+  .drop-zone-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    cursor: pointer;
+    min-height: 130px;
+    gap: 8px;
+  }
 
-/* ── Collapsed upload strip (after analyze) ── */
-#upload-collapsed {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  background: #f0fdfa;
-  border: 1px solid #a7f3d0;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  font-size: 13px;
-  color: #065f46;
-}
-#upload-collapsed .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#upload-collapsed button {
-  background: none; border: 1px solid #0f766e; color: #0f766e;
-  border-radius: 7px; padding: 4px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;
-}
+  .drop-icon {
+    font-size: 36px;
+    line-height: 1;
+  }
 
-#analyze-btn {
-  width: 100%; margin-top: 14px;
-  font-size: 16px; padding: 14px;
-}
-#analyze-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .drop-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+  }
 
-.spinner {
-  display: inline-block; width: 16px; height: 16px;
-  border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff;
-  border-radius: 50%; animation: spin .7s linear infinite;
-  vertical-align: middle; margin-left: 7px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+  .drop-sub {
+    font-size: 12px;
+    color: #64748b;
+  }
 
-#error-banner {
-  display: none; margin-top: 12px; padding: 12px 16px;
-  background: #fef2f2; border: 1px solid #fecaca;
-  border-radius: 10px; color: #dc2626; font-size: 14px;
-}
+  .file-status-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: #ecfdf5;
+    border-top: 1px solid #a7f3d0;
+  }
 
-/* ── Results section ── */
-#results-section { display: none; margin-top: 12px; }
+  .file-status-bar.visible {
+    display: flex;
+  }
 
-.game-meta-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-@media (max-width: 420px) { .game-meta-grid { grid-template-columns: 1fr; } }
+  .file-status-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
 
-/* ── Player cards ── */
-#results-cards { margin-top: 10px; }
+  .file-status-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #065f46;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.player-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  transition: border-color .15s;
-}
-.player-card.name-missing {
-  border-color: #f59e0b;
-  background: #fffbeb;
-}
-.player-card-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.player-card-top select,
-.player-card-top input[type=text] {
-  flex: 1;
-  padding: 9px 10px;
-  font-size: 16px;        /* prevent iOS zoom */
-  border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f172a;
-  min-width: 0;
-}
-.player-card-top select.unset {
-  border-color: #f59e0b;
-  background: #fffbeb;
-  color: #92400e;
-}
-.name-new-inp {
-  display: none;
-  width: 100%;
-  margin-top: 6px;
-  padding: 9px 10px;
-  font-size: 16px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-}
-.btn-del-row {
-  flex-shrink: 0;
-  background: none; border: none;
-  color: #94a3b8; font-size: 20px;
-  cursor: pointer; padding: 4px 6px;
-  border-radius: 6px; line-height: 1;
-  touch-action: manipulation;
-}
-.btn-del-row:hover, .btn-del-row:active { background: #fee2e2; color: #ef4444; }
+  .file-change-btn {
+    font-size: 12px;
+    color: #0f766e;
+    background: none;
+    border: 1px solid #0f766e;
+    border-radius: 7px;
+    padding: 3px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
 
-.player-card-nums {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 8px;
-  align-items: end;
-}
-.num-field label {
-  display: block;
-  font-size: 11px;
-  color: #64748b;
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-.num-field input[type=number] {
-  width: 100%;
-  padding: 9px 10px;
-  font-size: 17px;        /* bigger for mobile */
-  border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f172a;
-  box-sizing: border-box;
-  -moz-appearance: textfield;
-  text-align: center;
-}
-.num-field input::-webkit-outer-spin-button,
-.num-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.num-field input:focus { outline: none; border-color: #0f766e; box-shadow: 0 0 0 2px rgba(15,118,110,.12); }
+  #preview-wrap {
+    display: none;
+    background: #0f172a;
+    text-align: center;
+    max-height: 280px;
+    overflow: hidden;
+    position: relative;
+  }
 
-.profit-chip {
-  font-size: 14px;
-  font-weight: 700;
-  padding: 5px 8px;
-  border-radius: 8px;
-  white-space: nowrap;
-  background: #f1f5f9;
-  color: #64748b;
-  text-align: center;
-  min-width: 52px;
-}
-.profit-chip.pos { background: #d1fae5; color: #065f46; }
-.profit-chip.neg { background: #fee2e2; color: #991b1b; }
+  #preview-img {
+    max-width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    transition: transform .3s ease;
+  }
 
-#add-row-btn { margin-top: 6px; font-size: 14px; border-radius: 10px; width: 100%; }
+  #preview-badge {
+    display: none;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, .65);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
 
-/* ── Balance ── */
-#balance-row {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin-top: 12px; padding: 10px 14px;
-  border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0;
-  font-size: 13px;
-}
-.balance-ok   { color: #059669; font-weight: 700; }
-.balance-warn { color: #d97706; font-weight: 700; }
+  #rotate-controls {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    gap: 8px;
+    align-items: center;
+  }
 
-/* ── Save area ── */
-#save-area {
-  margin-top: 14px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-#save-btn {
-  font-size: 16px;
-  padding: 14px;
-  border-radius: 12px;
-  width: 100%;
-}
-#re-analyze-btn { white-space: nowrap; }
+  .rotate-btn {
+    background: rgba(0, 0, 0, .6);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 18px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    line-height: 1;
+  }
 
-#pending-names-banner {
-  display: none;
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #fffbeb;
-  border: 1px solid #f59e0b;
-  border-radius: 10px;
-  color: #92400e;
-  font-size: 13px;
-  font-weight: 600;
-}
+  .rotate-btn:hover {
+    background: rgba(15, 118, 110, .8);
+  }
+
+  #rotate-hint {
+    color: rgba(255, 255, 255, .7);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* ── Collapsed upload strip (after analyze) ── */
+  #upload-collapsed {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    background: #f0fdfa;
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #065f46;
+  }
+
+  #upload-collapsed .fname {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #upload-collapsed button {
+    background: none;
+    border: 1px solid #0f766e;
+    color: #0f766e;
+    border-radius: 7px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  #analyze-btn {
+    width: 100%;
+    margin-top: 14px;
+    font-size: 16px;
+    padding: 14px;
+  }
+
+  #analyze-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+    margin-left: 7px;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  #error-banner {
+    display: none;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #dc2626;
+    font-size: 14px;
+  }
+
+  /* ── Results section ── */
+  #results-section {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .game-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 420px) {
+    .game-meta-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── Player cards ── */
+  #results-cards {
+    margin-top: 10px;
+  }
+
+  .player-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    transition: border-color .15s;
+  }
+
+  .player-card.name-missing {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+
+  .player-card-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .player-card-top select,
+  .player-card-top input[type=text] {
+    flex: 1;
+    padding: 9px 10px;
+    font-size: 16px;
+    /* prevent iOS zoom */
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    min-width: 0;
+  }
+
+  .player-card-top select.unset {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .name-new-inp {
+    display: none;
+    width: 100%;
+    margin-top: 6px;
+    padding: 9px 10px;
+    font-size: 16px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+  }
+
+  .btn-del-row {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    line-height: 1;
+    touch-action: manipulation;
+  }
+
+  .btn-del-row:hover,
+  .btn-del-row:active {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+
+  .player-card-nums {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: end;
+  }
+
+  .num-field label {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .num-field input[type=number] {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 17px;
+    /* bigger for mobile */
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    box-sizing: border-box;
+    -moz-appearance: textfield;
+    text-align: center;
+  }
+
+  .num-field input::-webkit-outer-spin-button,
+  .num-field input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .num-field input:focus {
+    outline: none;
+    border-color: #0f766e;
+    box-shadow: 0 0 0 2px rgba(15, 118, 110, .12);
+  }
+
+  .profit-chip {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 5px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    background: #f1f5f9;
+    color: #64748b;
+    text-align: center;
+    min-width: 52px;
+  }
+
+  .profit-chip.pos {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .profit-chip.neg {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  #add-row-btn {
+    margin-top: 6px;
+    font-size: 14px;
+    border-radius: 10px;
+    width: 100%;
+  }
+
+  /* ── Balance ── */
+  #balance-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 13px;
+  }
+
+  .balance-ok {
+    color: #059669;
+    font-weight: 700;
+  }
+
+  .balance-warn {
+    color: #d97706;
+    font-weight: 700;
+  }
+
+  /* ── Save area ── */
+  #save-area {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  #save-btn {
+    font-size: 16px;
+    padding: 14px;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  #re-analyze-btn {
+    white-space: nowrap;
+  }
+
+  #pending-names-banner {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    border-radius: 10px;
+    color: #92400e;
+    font-size: 13px;
+    font-weight: 600;
+  }
 </style>
 {% endblock %}
 
@@ -280,7 +459,7 @@
         <div class="chip">📷</div>
         <div>
           <h2>הזנה מצילום</h2>
-          <div class="note">צלם דף תוצאות — Claude יחלץ מספרים</div>
+          <div class="note">צלם דף תוצאות ופנקס יחלץ מספרים</div>
         </div>
       </div>
       <div class="header-actions">
@@ -385,245 +564,245 @@
 </datalist>
 
 <script>
-// ════════════════════════════════════════
-//  upload_photo.js — mobile-first
-// ════════════════════════════════════════
+  // ════════════════════════════════════════
+  //  upload_photo.js — mobile-first
+  // ════════════════════════════════════════
 
-const CSRF = "{{ csrf_token() }}";
+  const CSRF = "{{ csrf_token() }}";
 
-const uploadPanel    = document.getElementById('upload-panel');
-const uploadCollapsed= document.getElementById('upload-collapsed');
-const collapsedFname = document.getElementById('collapsed-fname');
-const uploadArea     = document.getElementById('upload-area');
-const dropZoneInner  = document.getElementById('drop-zone-inner');
-const previewWrap    = document.getElementById('preview-wrap');
-const previewImg     = document.getElementById('preview-img');
-const fileStatusBar  = document.getElementById('file-status-bar');
-const fileStatusName = document.getElementById('file-status-name');
-const fileChangeBtn  = document.getElementById('file-change-btn');
-const photoInput     = document.getElementById('photo-input');
-const previewBadge   = document.getElementById('preview-badge');
-const rotateControls = document.getElementById('rotate-controls');
-const rotateCCW      = document.getElementById('rotate-ccw');
-const rotateCW       = document.getElementById('rotate-cw');
-const analyzeBtn     = document.getElementById('analyze-btn');
-const errorBanner    = document.getElementById('error-banner');
-const resultsSection = document.getElementById('results-section');
-const resultsCards   = document.getElementById('results-cards');
-const addRowBtn      = document.getElementById('add-row-btn');
-const saveBtn        = document.getElementById('save-btn');
-const reAnalyzeBtn   = document.getElementById('re-analyze-btn');
-const reAnalyzeCollapsed = document.getElementById('re-analyze-collapsed');
-const balanceStatus  = document.getElementById('balance-status');
-const balanceDetail  = document.getElementById('balance-detail');
+  const uploadPanel = document.getElementById('upload-panel');
+  const uploadCollapsed = document.getElementById('upload-collapsed');
+  const collapsedFname = document.getElementById('collapsed-fname');
+  const uploadArea = document.getElementById('upload-area');
+  const dropZoneInner = document.getElementById('drop-zone-inner');
+  const previewWrap = document.getElementById('preview-wrap');
+  const previewImg = document.getElementById('preview-img');
+  const fileStatusBar = document.getElementById('file-status-bar');
+  const fileStatusName = document.getElementById('file-status-name');
+  const fileChangeBtn = document.getElementById('file-change-btn');
+  const photoInput = document.getElementById('photo-input');
+  const previewBadge = document.getElementById('preview-badge');
+  const rotateControls = document.getElementById('rotate-controls');
+  const rotateCCW = document.getElementById('rotate-ccw');
+  const rotateCW = document.getElementById('rotate-cw');
+  const analyzeBtn = document.getElementById('analyze-btn');
+  const errorBanner = document.getElementById('error-banner');
+  const resultsSection = document.getElementById('results-section');
+  const resultsCards = document.getElementById('results-cards');
+  const addRowBtn = document.getElementById('add-row-btn');
+  const saveBtn = document.getElementById('save-btn');
+  const reAnalyzeBtn = document.getElementById('re-analyze-btn');
+  const reAnalyzeCollapsed = document.getElementById('re-analyze-collapsed');
+  const balanceStatus = document.getElementById('balance-status');
+  const balanceDetail = document.getElementById('balance-detail');
 
-let currentFile = null;
-let rotationDeg  = 0;
+  let currentFile = null;
+  let rotationDeg = 0;
 
-// ── קלט קובץ ─────────────────────────
-dropZoneInner.addEventListener('click', () => photoInput.click());
-fileChangeBtn.addEventListener('click', () => photoInput.click());
-photoInput.addEventListener('change', function() {
-  const f = this.files && this.files[0];
-  if (f) setFile(f);
-});
+  // ── קלט קובץ ─────────────────────────
+  dropZoneInner.addEventListener('click', () => photoInput.click());
+  fileChangeBtn.addEventListener('click', () => photoInput.click());
+  photoInput.addEventListener('change', function () {
+    const f = this.files && this.files[0];
+    if (f) setFile(f);
+  });
 
-// ── Drag & Drop ───────────────────────
-uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-uploadArea.addEventListener('drop', e => {
-  e.preventDefault(); uploadArea.classList.remove('dragover');
-  const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-  if (f) setFile(f);
-});
+  // ── Drag & Drop ───────────────────────
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault(); uploadArea.classList.remove('dragover');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
 
-// ── setFile ───────────────────────────
-function setFile(f) {
-  currentFile = f;
-  try {
-    previewImg.src = URL.createObjectURL(f);
-    previewWrap.style.display = 'block';
-  } catch(e) {}
-  fileStatusBar.classList.add('visible');
-  fileStatusName.textContent = f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
-  dropZoneInner.style.display = 'none';
-  uploadArea.classList.add('has-file');
-  rotationDeg = 0;
-  previewImg.style.transform = '';
-  rotateControls.style.display = 'flex';
-  analyzeBtn.disabled = true;
-  analyzeBtn.innerHTML = '⚙️ טוען…';
-  hideError();
-  resultsSection.style.display = 'none';
-  uploadPanel.style.display = '';
-  uploadCollapsed.style.display = 'none';
-  autoPreprocess(f);
-}
+  // ── setFile ───────────────────────────
+  function setFile(f) {
+    currentFile = f;
+    try {
+      previewImg.src = URL.createObjectURL(f);
+      previewWrap.style.display = 'block';
+    } catch (e) { }
+    fileStatusBar.classList.add('visible');
+    fileStatusName.textContent = f.name + ' (' + (f.size / 1024).toFixed(0) + ' KB)';
+    dropZoneInner.style.display = 'none';
+    uploadArea.classList.add('has-file');
+    rotationDeg = 0;
+    previewImg.style.transform = '';
+    rotateControls.style.display = 'flex';
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '⚙️ טוען…';
+    hideError();
+    resultsSection.style.display = 'none';
+    uploadPanel.style.display = '';
+    uploadCollapsed.style.display = 'none';
+    autoPreprocess(f);
+  }
 
-async function autoPreprocess(f) {
-  previewBadge.textContent = '⚙️ מעבד…';
-  previewBadge.style.display = 'inline-block';
-  const fd = new FormData();
-  fd.append('photo', f);
-  fd.append('csrf_token', CSRF);
-  try {
-    const res = await fetch('/upload-photo/preprocess', { method: 'POST', body: fd });
-    const json = await res.json();
-    if (json.image_data) {
-      previewImg.src = json.image_data;
-      previewBadge.textContent = '↺↻ סובב אם צריך';
-      previewBadge.style.display = 'inline-block';
+  async function autoPreprocess(f) {
+    previewBadge.textContent = '⚙️ מעבד…';
+    previewBadge.style.display = 'inline-block';
+    const fd = new FormData();
+    fd.append('photo', f);
+    fd.append('csrf_token', CSRF);
+    try {
+      const res = await fetch('/upload-photo/preprocess', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (json.image_data) {
+        previewImg.src = json.image_data;
+        previewBadge.textContent = '↺↻ סובב אם צריך';
+        previewBadge.style.display = 'inline-block';
+      }
+    } catch (e) { }
+    analyzeBtn.disabled = false;
+    analyzeBtn.innerHTML = '🔍 נתח עם Claude';
+  }
+
+  // ── סיבוב ────────────────────────────
+  rotateCCW.addEventListener('click', () => { rotationDeg = (rotationDeg - 90 + 360) % 360; previewImg.style.transform = rotationDeg ? `rotate(${rotationDeg}deg)` : ''; });
+  rotateCW.addEventListener('click', () => { rotationDeg = (rotationDeg + 90) % 360; previewImg.style.transform = rotationDeg ? `rotate(${rotationDeg}deg)` : ''; });
+
+  // ── איפוס ────────────────────────────
+  function resetUpload() {
+    currentFile = null;
+    photoInput.value = '';
+    previewWrap.style.display = 'none';
+    previewImg.src = '';
+    previewBadge.style.display = 'none';
+    previewBadge.textContent = '';
+    rotateControls.style.display = 'none';
+    rotationDeg = 0;
+    previewImg.style.transform = '';
+    fileStatusBar.classList.remove('visible');
+    dropZoneInner.style.display = '';
+    uploadArea.classList.remove('has-file');
+    analyzeBtn.disabled = true;
+    resultsSection.style.display = 'none';
+    uploadPanel.style.display = '';
+    uploadCollapsed.style.display = 'none';
+    hideError();
+  }
+
+  reAnalyzeBtn.addEventListener('click', () => {
+    resetUpload();
+    setTimeout(() => uploadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  });
+  reAnalyzeCollapsed.addEventListener('click', () => {
+    uploadPanel.style.display = '';
+    uploadCollapsed.style.display = 'none';
+    resultsSection.style.display = 'none';
+    uploadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ── ניתוח ────────────────────────────
+  analyzeBtn.addEventListener('click', runAnalyze);
+
+  async function runAnalyze() {
+    if (!currentFile) return;
+    setAnalyzing(true);
+    hideError();
+
+    let fileToSend = currentFile;
+    if (rotationDeg !== 0) {
+      try { fileToSend = await applyRotationToBlob(currentFile, rotationDeg); } catch (e) { }
     }
-  } catch (e) {}
-  analyzeBtn.disabled = false;
-  analyzeBtn.innerHTML = '🔍 נתח עם Claude';
-}
 
-// ── סיבוב ────────────────────────────
-rotateCCW.addEventListener('click', () => { rotationDeg = (rotationDeg - 90 + 360) % 360; previewImg.style.transform = rotationDeg ? `rotate(${rotationDeg}deg)` : ''; });
-rotateCW.addEventListener('click',  () => { rotationDeg = (rotationDeg + 90) % 360;       previewImg.style.transform = rotationDeg ? `rotate(${rotationDeg}deg)` : ''; });
+    const fd = new FormData();
+    fd.append('photo', fileToSend, currentFile.name);
+    fd.append('csrf_token', CSRF);
 
-// ── איפוס ────────────────────────────
-function resetUpload() {
-  currentFile = null;
-  photoInput.value = '';
-  previewWrap.style.display = 'none';
-  previewImg.src = '';
-  previewBadge.style.display = 'none';
-  previewBadge.textContent = '';
-  rotateControls.style.display = 'none';
-  rotationDeg = 0;
-  previewImg.style.transform = '';
-  fileStatusBar.classList.remove('visible');
-  dropZoneInner.style.display = '';
-  uploadArea.classList.remove('has-file');
-  analyzeBtn.disabled = true;
-  resultsSection.style.display = 'none';
-  uploadPanel.style.display = '';
-  uploadCollapsed.style.display = 'none';
-  hideError();
-}
+    try {
+      const res = await fetch('/upload-photo/analyze', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok || json.error) { showError(json.error || 'שגיאה לא ידועה'); return; }
+      const players = json.players || [];
+      if (!players.length) { showError('Claude לא זיהה עמודות. נסה תמונה ברורה יותר.'); return; }
 
-reAnalyzeBtn.addEventListener('click', () => {
-  resetUpload();
-  setTimeout(() => uploadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-});
-reAnalyzeCollapsed.addEventListener('click', () => {
-  uploadPanel.style.display = '';
-  uploadCollapsed.style.display = 'none';
-  resultsSection.style.display = 'none';
-  uploadPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+      renderResults(players, json.known_names || []);
 
-// ── ניתוח ────────────────────────────
-analyzeBtn.addEventListener('click', runAnalyze);
+      // מקפל את אזור ה-upload ומציג פס קטן
+      uploadPanel.style.display = 'none';
+      collapsedFname.textContent = currentFile.name;
+      uploadCollapsed.style.display = 'flex';
 
-async function runAnalyze() {
-  if (!currentFile) return;
-  setAnalyzing(true);
-  hideError();
-
-  let fileToSend = currentFile;
-  if (rotationDeg !== 0) {
-    try { fileToSend = await applyRotationToBlob(currentFile, rotationDeg); } catch(e) {}
+      resultsSection.style.display = 'block';
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      showError('שגיאת רשת: ' + err.message);
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
-  const fd = new FormData();
-  fd.append('photo', fileToSend, currentFile.name);
-  fd.append('csrf_token', CSRF);
-
-  try {
-    const res  = await fetch('/upload-photo/analyze', { method: 'POST', body: fd });
-    const json = await res.json();
-    if (!res.ok || json.error) { showError(json.error || 'שגיאה לא ידועה'); return; }
-    const players = json.players || [];
-    if (!players.length) { showError('Claude לא זיהה עמודות. נסה תמונה ברורה יותר.'); return; }
-
-    renderResults(players, json.known_names || []);
-
-    // מקפל את אזור ה-upload ומציג פס קטן
-    uploadPanel.style.display = 'none';
-    collapsedFname.textContent = currentFile.name;
-    uploadCollapsed.style.display = 'flex';
-
-    resultsSection.style.display = 'block';
-    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } catch (err) {
-    showError('שגיאת רשת: ' + err.message);
-  } finally {
-    setAnalyzing(false);
+  function setAnalyzing(on) {
+    analyzeBtn.disabled = on;
+    analyzeBtn.innerHTML = on ? 'מנתח…<span class="spinner"></span>' : '🔍 נתח עם Claude';
   }
-}
 
-function setAnalyzing(on) {
-  analyzeBtn.disabled = on;
-  analyzeBtn.innerHTML = on ? 'מנתח…<span class="spinner"></span>' : '🔍 נתח עם Claude';
-}
+  // ── כרטיסי שחקנים ────────────────────
+  let rowId = 0;
+  let _lastKnownNames = [];
 
-// ── כרטיסי שחקנים ────────────────────
-let rowId = 0;
-let _lastKnownNames = [];
+  function renderResults(players, knownNames) {
+    resultsCards.innerHTML = '';
+    rowId = 0;
+    if (knownNames) _lastKnownNames = knownNames;
+    players.forEach(p => addRow(p.name, p.buyin, p.cashout));
+    updateBalance();
+  }
 
-function renderResults(players, knownNames) {
-  resultsCards.innerHTML = '';
-  rowId = 0;
-  if (knownNames) _lastKnownNames = knownNames;
-  players.forEach(p => addRow(p.name, p.buyin, p.cashout));
-  updateBalance();
-}
+  function getSelectedNames() {
+    const names = new Set();
+    resultsCards.querySelectorAll('.player-card').forEach(card => {
+      const sel = card.querySelector('select.name-inp');
+      if (sel && sel.value && sel.value !== '__new__') names.add(sel.value);
+    });
+    return names;
+  }
 
-function getSelectedNames() {
-  const names = new Set();
-  resultsCards.querySelectorAll('.player-card').forEach(card => {
-    const sel = card.querySelector('select.name-inp');
-    if (sel && sel.value && sel.value !== '__new__') names.add(sel.value);
-  });
-  return names;
-}
+  function refreshAllDropdowns() {
+    const selected = getSelectedNames();
+    resultsCards.querySelectorAll('.player-card').forEach(card => {
+      const sel = card.querySelector('select.name-inp');
+      if (!sel) return;
+      const ownVal = sel.value;
+      sel.innerHTML =
+        `<option value="">👤 בחר שחקן</option>` +
+        _lastKnownNames
+          .filter(n => n === ownVal || !selected.has(n))
+          .map(n => `<option value="${esc(n)}"${n === ownVal ? ' selected' : ''}>${esc(n)}</option>`)
+          .join('') +
+        `<option value="__new__">✏️ חדש…</option>`;
+      sel.value = ownVal;
+    });
+  }
 
-function refreshAllDropdowns() {
-  const selected = getSelectedNames();
-  resultsCards.querySelectorAll('.player-card').forEach(card => {
-    const sel = card.querySelector('select.name-inp');
-    if (!sel) return;
-    const ownVal = sel.value;
-    sel.innerHTML =
-      `<option value="">👤 בחר שחקן</option>` +
-      _lastKnownNames
-        .filter(n => n === ownVal || !selected.has(n))
-        .map(n => `<option value="${esc(n)}"${n === ownVal ? ' selected' : ''}>${esc(n)}</option>`)
-        .join('') +
-      `<option value="__new__">✏️ חדש…</option>`;
-    sel.value = ownVal;
-  });
-}
+  function addRow(name = '', buyin = 0, cashout = 0) {
+    const id = ++rowId;
+    const card = document.createElement('div');
+    card.className = 'player-card' + (!name ? ' name-missing' : '');
+    card.dataset.rowId = id;
 
-function addRow(name = '', buyin = 0, cashout = 0) {
-  const id = ++rowId;
-  const card = document.createElement('div');
-  card.className = 'player-card' + (!name ? ' name-missing' : '');
-  card.dataset.rowId = id;
+    const isNew = name && !_lastKnownNames.includes(name);
+    const selected = getSelectedNames();
+    const namesOpts = _lastKnownNames
+      .filter(n => n === name || !selected.has(n))
+      .map(n => `<option value="${esc(n)}"${n === name ? ' selected' : ''}>${esc(n)}</option>`)
+      .join('');
 
-  const isNew = name && !_lastKnownNames.includes(name);
-  const selected = getSelectedNames();
-  const namesOpts = _lastKnownNames
-    .filter(n => n === name || !selected.has(n))
-    .map(n => `<option value="${esc(n)}"${n === name ? ' selected' : ''}>${esc(n)}</option>`)
-    .join('');
-
-  const selectClass = (!name && _lastKnownNames.length) ? 'name-inp unset' : 'name-inp';
-  const nameBlock = _lastKnownNames.length
-    ? `<select class="${selectClass}">
+    const selectClass = (!name && _lastKnownNames.length) ? 'name-inp unset' : 'name-inp';
+    const nameBlock = _lastKnownNames.length
+      ? `<select class="${selectClass}">
          <option value="">👤 בחר שחקן</option>
          ${namesOpts}
          <option value="__new__"${isNew ? ' selected' : ''}>✏️ חדש…</option>
        </select>
        <input type="text" class="name-new-inp" value="${isNew ? esc(name) : ''}" placeholder="שם חדש"
               style="display:${isNew ? 'block' : 'none'}">`
-    : `<input type="text" class="name-inp" value="${esc(name)}" list="players-datalist" placeholder="שם שחקן"
+      : `<input type="text" class="name-inp" value="${esc(name)}" list="players-datalist" placeholder="שם שחקן"
              style="flex:1;padding:9px 10px;font-size:16px;border:1.5px solid #cbd5e1;border-radius:8px;">`;
 
-  card.innerHTML = `
+    card.innerHTML = `
     <div class="player-card-top">
       <div style="flex:1;min-width:0;">${nameBlock}</div>
       <button type="button" class="btn-del-row" title="מחק">✕</button>
@@ -641,207 +820,207 @@ function addRow(name = '', buyin = 0, cashout = 0) {
     </div>
   `;
 
-  const sel    = card.querySelector('select.name-inp');
-  const newInp = card.querySelector('.name-new-inp');
-  if (sel && newInp) {
-    sel.addEventListener('change', () => {
-      newInp.style.display = sel.value === '__new__' ? 'block' : 'none';
-      if (sel.value) {
-        sel.classList.remove('unset');
-        card.classList.remove('name-missing');
+    const sel = card.querySelector('select.name-inp');
+    const newInp = card.querySelector('.name-new-inp');
+    if (sel && newInp) {
+      sel.addEventListener('change', () => {
+        newInp.style.display = sel.value === '__new__' ? 'block' : 'none';
+        if (sel.value) {
+          sel.classList.remove('unset');
+          card.classList.remove('name-missing');
+        }
+        refreshAllDropdowns();
+        updatePendingCount();
+      });
+    }
+
+    const buyinInp = card.querySelector('.buyin-inp');
+    const cashoutInp = card.querySelector('.cashout-inp');
+    const chip = card.querySelector('.profit-chip');
+
+    function updateProfit() {
+      const b = parseFloat(buyinInp.value) || 0;
+      const c = parseFloat(cashoutInp.value) || 0;
+      if (b === 0 && c === 0) {
+        chip.textContent = '—'; chip.className = 'profit-chip';
+      } else {
+        const p = c - b;
+        chip.textContent = (p >= 0 ? '+' : '') + p + '₪';
+        chip.className = 'profit-chip ' + (p > 0 ? 'pos' : p < 0 ? 'neg' : '');
       }
-      refreshAllDropdowns();
-      updatePendingCount();
+      updateBalance();
+    }
+
+    buyinInp.addEventListener('input', updateProfit);
+    cashoutInp.addEventListener('input', updateProfit);
+    card.querySelector('.btn-del-row').addEventListener('click', () => {
+      card.remove(); refreshAllDropdowns(); updateBalance();
+    });
+
+    resultsCards.appendChild(card);
+    updateProfit();
+  }
+
+  addRowBtn.addEventListener('click', () => {
+    addRow();
+    const cards = resultsCards.querySelectorAll('.player-card');
+    const last = cards[cards.length - 1];
+    if (last) {
+      last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const inp = last.querySelector('select.name-inp, input.name-inp');
+      if (inp) setTimeout(() => inp.focus(), 200);
+    }
+  });
+
+  function updateBalance() {
+    let b = 0, c = 0;
+    resultsCards.querySelectorAll('.player-card').forEach(card => {
+      b += parseFloat(card.querySelector('.buyin-inp')?.value) || 0;
+      c += parseFloat(card.querySelector('.cashout-inp')?.value) || 0;
+    });
+    const diff = Math.round((c - b) * 100) / 100;
+    const n = resultsCards.querySelectorAll('.player-card').length;
+    document.getElementById('player-count-badge').textContent = n ? `(${n} שחקנים)` : '';
+    if (diff === 0) {
+      balanceStatus.textContent = '✅ מאוזן'; balanceStatus.className = 'balance-ok';
+      balanceDetail.textContent = '';
+    } else {
+      balanceStatus.textContent = `⚠️ לא מאוזן (${diff > 0 ? '+' : ''}${diff}₪)`;
+      balanceStatus.className = 'balance-warn';
+      balanceDetail.textContent = `קנייה: ${b}₪  יציאה: ${c}₪`;
+    }
+    updatePendingCount();
+  }
+
+  function updatePendingCount() {
+    let pending = 0;
+    resultsCards.querySelectorAll('.player-card').forEach(card => {
+      const sel = card.querySelector('select.name-inp');
+      const inp = card.querySelector('input.name-inp');
+      const hasName = sel
+        ? (sel.value && sel.value !== '__new__') || card.querySelector('.name-new-inp')?.value?.trim()
+        : inp?.value?.trim();
+      if (!hasName) pending++;
+    });
+    const banner = document.getElementById('pending-names-banner');
+    if (pending > 0) {
+      banner.textContent = `👤 ${pending} שחקן${pending > 1 ? 'ים' : ''} ממתינ${pending > 1 ? 'ים' : ''} לבחירת שם`;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  // ── איסוף entries ─────────────────────
+  function collectEntries() {
+    const entries = [];
+    resultsCards.querySelectorAll('.player-card').forEach(card => {
+      const sel = card.querySelector('select.name-inp');
+      let name = '';
+      if (sel) {
+        name = sel.value === '__new__'
+          ? (card.querySelector('.name-new-inp')?.value.trim() || '')
+          : sel.value.trim();
+      } else {
+        name = card.querySelector('input.name-inp')?.value.trim() || '';
+      }
+      const buyin = parseFloat(card.querySelector('.buyin-inp').value) || 0;
+      const cashout = parseFloat(card.querySelector('.cashout-inp').value) || 0;
+      if (name) entries.push({ name, buyin, cashout });
+    });
+    return entries;
+  }
+
+  // ── שמור כדוגמה (שקט) ────────────────
+  async function saveExampleSilently(fileToSend, entries) {
+    try {
+      const fd = new FormData();
+      fd.append('photo', fileToSend, currentFile.name);
+      fd.append('entries', JSON.stringify(entries));
+      fd.append('csrf_token', CSRF);
+      const res = await fetch('/upload-photo/save-example', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (json.ok) {
+        const fb = document.getElementById('example-feedback');
+        if (fb) {
+          fb.textContent = `✅ נשמרה דוגמת אימון #${json.index} (סה"כ ${json.total})`;
+          fb.style.display = 'block';
+          setTimeout(() => { fb.style.display = 'none'; }, 4000);
+        }
+      }
+    } catch (e) { }
+  }
+
+  // ── שמירה ────────────────────────────
+  saveBtn.addEventListener('click', async () => {
+    const entries = collectEntries();
+    if (!entries.length) { showError('אין שחקנים לשמור'); return; }
+    const gameDate = document.getElementById('game-date').value;
+    if (!gameDate) { showError('נא לבחור תאריך'); return; }
+
+    let fileToSend = currentFile;
+    if (rotationDeg !== 0) {
+      try { fileToSend = await applyRotationToBlob(currentFile, rotationDeg); } catch (e) { }
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'שומר…';
+
+    try {
+      const res = await fetch('/upload-photo/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({
+          date: gameDate,
+          location: document.getElementById('game-location').value.trim() || null,
+          game_type: document.getElementById('game-type').value,
+          entries,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) { showError(json.error || 'שגיאה בשמירה'); return; }
+      saveExampleSilently(fileToSend || currentFile, entries);
+      window.location.href = `/game/${json.game_id}/results`;
+    } catch (err) {
+      showError('שגיאת רשת: ' + err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 שמור משחק';
+    }
+  });
+
+  // ── Canvas: סיבוב ────────────────────
+  function applyRotationToBlob(file, deg) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const rad = deg * Math.PI / 180;
+        const swap = deg === 90 || deg === 270;
+        const canvas = document.createElement('canvas');
+        canvas.width = swap ? img.height : img.width;
+        canvas.height = swap ? img.width : img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(rad);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(), 'image/jpeg', 0.92);
+      };
+      img.onerror = reject;
+      img.src = url;
     });
   }
 
-  const buyinInp   = card.querySelector('.buyin-inp');
-  const cashoutInp = card.querySelector('.cashout-inp');
-  const chip       = card.querySelector('.profit-chip');
-
-  function updateProfit() {
-    const b = parseFloat(buyinInp.value) || 0;
-    const c = parseFloat(cashoutInp.value) || 0;
-    if (b === 0 && c === 0) {
-      chip.textContent = '—'; chip.className = 'profit-chip';
-    } else {
-      const p = c - b;
-      chip.textContent = (p >= 0 ? '+' : '') + p + '₪';
-      chip.className = 'profit-chip ' + (p > 0 ? 'pos' : p < 0 ? 'neg' : '');
-    }
-    updateBalance();
+  // ── helpers ───────────────────────────
+  function showError(msg) {
+    errorBanner.textContent = '⚠️ ' + msg;
+    errorBanner.style.display = 'block';
+    errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
-
-  buyinInp.addEventListener('input', updateProfit);
-  cashoutInp.addEventListener('input', updateProfit);
-  card.querySelector('.btn-del-row').addEventListener('click', () => {
-    card.remove(); refreshAllDropdowns(); updateBalance();
-  });
-
-  resultsCards.appendChild(card);
-  updateProfit();
-}
-
-addRowBtn.addEventListener('click', () => {
-  addRow();
-  const cards = resultsCards.querySelectorAll('.player-card');
-  const last = cards[cards.length - 1];
-  if (last) {
-    last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    const inp = last.querySelector('select.name-inp, input.name-inp');
-    if (inp) setTimeout(() => inp.focus(), 200);
+  function hideError() { errorBanner.style.display = 'none'; }
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-});
-
-function updateBalance() {
-  let b = 0, c = 0;
-  resultsCards.querySelectorAll('.player-card').forEach(card => {
-    b += parseFloat(card.querySelector('.buyin-inp')?.value)   || 0;
-    c += parseFloat(card.querySelector('.cashout-inp')?.value) || 0;
-  });
-  const diff = Math.round((c - b) * 100) / 100;
-  const n = resultsCards.querySelectorAll('.player-card').length;
-  document.getElementById('player-count-badge').textContent = n ? `(${n} שחקנים)` : '';
-  if (diff === 0) {
-    balanceStatus.textContent = '✅ מאוזן'; balanceStatus.className = 'balance-ok';
-    balanceDetail.textContent = '';
-  } else {
-    balanceStatus.textContent = `⚠️ לא מאוזן (${diff > 0 ? '+' : ''}${diff}₪)`;
-    balanceStatus.className = 'balance-warn';
-    balanceDetail.textContent = `קנייה: ${b}₪  יציאה: ${c}₪`;
-  }
-  updatePendingCount();
-}
-
-function updatePendingCount() {
-  let pending = 0;
-  resultsCards.querySelectorAll('.player-card').forEach(card => {
-    const sel = card.querySelector('select.name-inp');
-    const inp = card.querySelector('input.name-inp');
-    const hasName = sel
-      ? (sel.value && sel.value !== '__new__') || card.querySelector('.name-new-inp')?.value?.trim()
-      : inp?.value?.trim();
-    if (!hasName) pending++;
-  });
-  const banner = document.getElementById('pending-names-banner');
-  if (pending > 0) {
-    banner.textContent = `👤 ${pending} שחקן${pending > 1 ? 'ים' : ''} ממתינ${pending > 1 ? 'ים' : ''} לבחירת שם`;
-    banner.style.display = 'block';
-  } else {
-    banner.style.display = 'none';
-  }
-}
-
-// ── איסוף entries ─────────────────────
-function collectEntries() {
-  const entries = [];
-  resultsCards.querySelectorAll('.player-card').forEach(card => {
-    const sel = card.querySelector('select.name-inp');
-    let name = '';
-    if (sel) {
-      name = sel.value === '__new__'
-        ? (card.querySelector('.name-new-inp')?.value.trim() || '')
-        : sel.value.trim();
-    } else {
-      name = card.querySelector('input.name-inp')?.value.trim() || '';
-    }
-    const buyin   = parseFloat(card.querySelector('.buyin-inp').value)   || 0;
-    const cashout = parseFloat(card.querySelector('.cashout-inp').value) || 0;
-    if (name) entries.push({ name, buyin, cashout });
-  });
-  return entries;
-}
-
-// ── שמור כדוגמה (שקט) ────────────────
-async function saveExampleSilently(fileToSend, entries) {
-  try {
-    const fd = new FormData();
-    fd.append('photo',      fileToSend, currentFile.name);
-    fd.append('entries',    JSON.stringify(entries));
-    fd.append('csrf_token', CSRF);
-    const res  = await fetch('/upload-photo/save-example', { method: 'POST', body: fd });
-    const json = await res.json();
-    if (json.ok) {
-      const fb = document.getElementById('example-feedback');
-      if (fb) {
-        fb.textContent = `✅ נשמרה דוגמת אימון #${json.index} (סה"כ ${json.total})`;
-        fb.style.display = 'block';
-        setTimeout(() => { fb.style.display = 'none'; }, 4000);
-      }
-    }
-  } catch (e) {}
-}
-
-// ── שמירה ────────────────────────────
-saveBtn.addEventListener('click', async () => {
-  const entries = collectEntries();
-  if (!entries.length) { showError('אין שחקנים לשמור'); return; }
-  const gameDate = document.getElementById('game-date').value;
-  if (!gameDate) { showError('נא לבחור תאריך'); return; }
-
-  let fileToSend = currentFile;
-  if (rotationDeg !== 0) {
-    try { fileToSend = await applyRotationToBlob(currentFile, rotationDeg); } catch(e) {}
-  }
-
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'שומר…';
-
-  try {
-    const res = await fetch('/upload-photo/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
-      body: JSON.stringify({
-        date:      gameDate,
-        location:  document.getElementById('game-location').value.trim() || null,
-        game_type: document.getElementById('game-type').value,
-        entries,
-      }),
-    });
-    const json = await res.json();
-    if (!res.ok || json.error) { showError(json.error || 'שגיאה בשמירה'); return; }
-    saveExampleSilently(fileToSend || currentFile, entries);
-    window.location.href = `/game/${json.game_id}/results`;
-  } catch (err) {
-    showError('שגיאת רשת: ' + err.message);
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = '💾 שמור משחק';
-  }
-});
-
-// ── Canvas: סיבוב ────────────────────
-function applyRotationToBlob(file, deg) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const rad = deg * Math.PI / 180;
-      const swap = deg === 90 || deg === 270;
-      const canvas = document.createElement('canvas');
-      canvas.width  = swap ? img.height : img.width;
-      canvas.height = swap ? img.width  : img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(rad);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
-      canvas.toBlob(blob => blob ? resolve(blob) : reject(), 'image/jpeg', 0.92);
-    };
-    img.onerror = reject;
-    img.src = url;
-  });
-}
-
-// ── helpers ───────────────────────────
-function showError(msg) {
-  errorBanner.textContent = '⚠️ ' + msg;
-  errorBanner.style.display = 'block';
-  errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-function hideError() { errorBanner.style.display = 'none'; }
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 </script>
 {% endblock %}
