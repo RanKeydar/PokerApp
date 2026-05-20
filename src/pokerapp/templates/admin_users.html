@@ -46,4 +46,108 @@
           <input type="hidden" name="action" value="approve">
           <select name="new_role">
             <option value="player" {% if u["role"]=="player" %}selected{% endif %}>player</option>
-            <option value="magician" {%
+            <option value="magician" {% if u["role"]=="magician" %}selected{% endif %}>magician</option>
+            <option value="admin">admin</option>
+          </select>
+          <button type="submit">אשר</button>
+        </form>
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ u['id'] }}">
+          <input type="hidden" name="action" value="reject">
+          <button type="submit" style="color:#f66;">דחה</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>אין בקשות ממתינות.</p>
+{% endif %}
+
+<!-- משתמשים פעילים -->
+<h2>משתמשים פעילים</h2>
+{% if active and active|length > 0 %}
+<table>
+  <thead>
+    <tr>
+      <th>שם משתמש</th>
+      <th>תפקיד</th>
+      <th>שינוי תפקיד</th>
+      <th>שחקן מקושר</th>
+      <th>אפס סיסמה</th>
+      <th>מחיקה</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in active %}
+    <tr>
+      <td>{{ u["username"] }}</td>
+      <td>{{ u["role"] }}</td>
+      <td>
+        {% if u["username"] != "admin" %}
+        <form method="POST" style="display:inline;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ u['id'] }}">
+          <input type="hidden" name="action" value="change_role">
+          <select name="new_role">
+            <option value="player" {% if u["role"]=="player" %}selected{% endif %}>player</option>
+            <option value="magician" {% if u["role"]=="magician" %}selected{% endif %}>magician</option>
+            <option value="admin" {% if u["role"]=="admin" %}selected{% endif %}>admin</option>
+          </select>
+          <button type="submit">שמור</button>
+        </form>
+        {% else %}
+        <span style="color:#888;">—</span>
+        {% endif %}
+      </td>
+      <td>
+        <form method="POST" style="display:inline; white-space:nowrap;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ u['id'] }}">
+          <input type="hidden" name="action" value="link_player">
+          <select name="player_id" style="padding:.3rem .5rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+            <option value="">— ללא —</option>
+            {% for p in players %}
+            <option value="{{ p['id'] }}" {% if u['player_id'] == p['id'] %}selected{% endif %}>{{ p['name'] }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" style="padding:.3rem .6rem; border-radius:6px; background:#555; color:#fff; border:none; cursor:pointer;">קשר</button>
+        </form>
+      </td>
+      <td>
+        {% if u["username"] != "admin" %}
+        <form method="POST" style="display:inline; white-space:nowrap;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ u['id'] }}">
+          <input type="hidden" name="action" value="reset_password">
+          <input type="text" name="new_password" placeholder="סיסמה חדשה" style="width:110px; padding:.3rem .5rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+          <button type="submit" style="padding:.3rem .6rem; border-radius:6px; background:#555; color:#fff; border:none; cursor:pointer;">אפס</button>
+        </form>
+        {% else %}
+        <span style="color:#888;">—</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if u["username"] != "admin" %}
+        <form method="POST" style="display:inline;" data-username="{{ u['username'] }}"
+              onsubmit="return confirm('למחוק את ' + this.dataset.username + '?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="user_id" value="{{ u['id'] }}">
+          <input type="hidden" name="action" value="delete_user">
+          <button type="submit" style="padding:.3rem .6rem; border-radius:6px; background:#7a2d2d; color:#fff; border:none; cursor:pointer;">מחק</button>
+        </form>
+        {% else %}
+        <span style="color:#888;">—</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>אין משתמשים פעילים.</p>
+{% endif %}
+
+{% endblock %}
