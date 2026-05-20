@@ -1056,6 +1056,9 @@ def admin_users():
                     flash_msg = "הסיסמה אופסה בהצלחה."
                 else:
                     flash_msg = "חובה להזין סיסמה חדשה."
+            elif action == "delete_user":
+                cur.execute("DELETE FROM users WHERE id = ? AND username != 'admin';", (user_id,))
+                flash_msg = "המשתמש נמחק."
             elif action == "link_player":
                 player_id = request.form.get("player_id") or None
                 if player_id == "":
@@ -1984,11 +1987,4 @@ def player_detail(player_id):
     return render_template(
         "player_detail.html",
         player=player,
-        summary=summary,
-        games=games,
-        games_2026_cash=games_2026_cash,
-        games_2026_harbo=games_2026_harbo,
-        year=current_year,
-        subtitle=subtitle,
-        view=view,
-        sor
+        summary=summ
