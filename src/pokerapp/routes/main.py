@@ -1640,6 +1640,7 @@ def admin_tools():
 @bp.route("/calculator")
 @login_required
 def calculator():
+    log_activity("view_calculator", "")
     return render_template("calculator.html", current_user=get_current_user())
 
 @bp.route("/players/<int:player_id>")
