@@ -68,6 +68,18 @@
           📷 מצילום
         </a>
         {% endif %}
+        {% if current_user and current_user["role"] == "admin" %}
+        <a class="nav-chip nav-chip-accent {% if request.endpoint == 'main.admin_users' %}active{% endif %}"
+          href="{{ url_for('main.admin_users') }}">
+          👥 משתמשים
+        </a>
+        {% endif %}
+        {% if current_user %}
+        <a class="nav-chip {% if request.endpoint == 'record.record' %}active{% endif %}"
+          href="{{ url_for('record.record') }}">
+          🎙️ הקלטה
+        </a>
+        {% endif %}
       </nav>
 
       <div class="topbar-actions">
@@ -98,10 +110,4 @@
     {% if messages %}
     <div class="flash-stack">
       {% for category, message in messages %}
-      <div class="flash flash-{{ category }}">{{ message }}</div>
-      {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
-
-    {% block content %}{% endblo
+      <div class="flash flash-{{ category }}">{{ message }}</
