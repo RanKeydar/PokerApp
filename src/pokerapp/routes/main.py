@@ -1,6 +1,7 @@
 import json
 from flask import Blueprint, render_template, request, redirect, url_for, abort, flash, current_app, session as flask_session, jsonify
 from pokerapp.services.auth import login_required, role_required, get_current_user
+from werkzeug.security import generate_password_hash
 from pokerapp.db.connection import get_db_connection
 from pokerapp.services.game_queries import (
     get_top_players,
@@ -1006,21 +1007,45 @@ def admin_users():
     conn = get_db_connection()
     cur = conn.cursor()
 
+    flash_msg = None
     if request.method == "POST":
         action = request.form.get("action")
         user_id = request.form.get("user_id")
         new_role = request.form.get("new_role", "player")
+        if new_role not in ("admin", "magician", "player"):
+            new_role = "player"
 
-        if user_id:
+        if action == "create_user":
+            new_username = request.form.get("new_username", "").strip()
+            new_password = request.form.get("new_password", "").strip()
+            if new_username and new_password:
+                existing = cur.execute("SELECT id FROM users WHERE username = ?;", (new_username,)).fetchone()
+                if existing:
+                    flash_msg = f"שם המשתמש '{new_username}' כבר קיים."
+                else:
+                    pw_hash = generate_password_hash(new_password)
+                    cur.execute(
+                        "INSERT INTO users (username, password_hash, role, is_approved) VALUES (?, ?, ?, 1);",
+                        (new_username, pw_hash, new_role),
+                    )
+                    conn.commit()
+                    flash_msg = f"המשתמש '{new_username}' נוצר בהצלחה."
+            else:
+                flash_msg = "חובה למלא שם משתמש וסיסמה."
+
+        elif user_id:
             if action == "approve":
-                if new_role not in ("admin", "magician", "player"):
-                    new_role = "player"
                 cur.execute(
                     "UPDATE users SET is_approved = 1, role = ? WHERE id = ?;",
                     (new_role, user_id),
                 )
             elif action == "reject":
                 cur.execute("DELETE FROM users WHERE id = ?;", (user_id,))
+            elif action == "change_role":
+                cur.execute(
+                    "UPDATE users SET role = ? WHERE id = ? AND username != 'admin';",
+                    (new_role, user_id),
+                )
             conn.commit()
 
     cur.execute("SELECT id, username, role FROM users WHERE is_approved = 0 ORDER BY id DESC;")
@@ -1031,7 +1056,7 @@ def admin_users():
 
     conn.close()
 
-    return render_template("admin_users.html", pending=pending, active=active)
+    return render_template("admin_users.html", pending=pending, active=active, flash_msg=flash_msg)
 
 @bp.route("/game/<int:game_id>/results", methods=["GET"])
 @login_required
@@ -1976,42 +2001,4 @@ def player_save_note(player_id):
         abort(403)
 
     note = request.get_json(silent=True) or {}
-    text = str(note.get("note", "")).strip()
-    game_id_raw = note.get("game_id")
-    game_id = int(game_id_raw) if game_id_raw is not None else None
-
-    conn = get_db_connection()
-    existing = conn.execute(
-        "SELECT id FROM player_notes WHERE player_id = ? AND game_id IS ?",
-        (player_id, game_id)
-    ).fetchone()
-    if existing:
-        conn.execute(
-            "UPDATE player_notes SET note = ?, updated_at = datetime('now') WHERE id = ?",
-            (text, existing["id"])
-        )
-    else:
-        conn.execute(
-            "INSERT INTO player_notes (player_id, game_id, note) VALUES (?, ?, ?)",
-            (player_id, game_id, text)
-        )
-    conn.commit()
-    conn.close()
-    return jsonify({"ok": True})
-
-
-@bp.route("/players/<int:player_id>/privacy", methods=["POST"])
-@login_required
-def player_toggle_privacy(player_id):
-    user = get_current_user()
-    if user is None or user["player_id"] != player_id:
-        abort(403)
-    new_val = 1 if request.form.get("private_stats") == "1" else 0
-    conn = get_db_connection()
-    conn.execute(
-        "UPDATE users SET private_stats = ? WHERE player_id = ?",
-        (new_val, player_id)
-    )
-    conn.commit()
-    conn.close()
-    return redirect(url_for("main.player_detail", player_id=player_id))
+    te

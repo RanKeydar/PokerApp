@@ -1,15 +1,29 @@
 {% extends "base.html" %}
-{% block title %}כותרת הדף{% endblock %}
+{% block title %}ניהול משתמשים{% endblock %}
 {% block content %}
-{% block subtitle %}{% endblock %}
 
 <h1>ניהול משתמשים (Admin)</h1>
 
-<div class="nav">
-  <a href="{{ url_for('main.home') }}">🏠 דף הבית</a>
-  <a href="{{ url_for('auth.logout') }}">🚪 התנתקות</a>
-</div>
+{% if flash_msg %}
+<p style="background:#2a5; color:#fff; padding:.5rem 1rem; border-radius:6px; margin-bottom:1rem;">{{ flash_msg }}</p>
+{% endif %}
 
+<!-- יצירת משתמש חדש -->
+<h2>יצירת משתמש חדש</h2>
+<form method="POST" style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:1.5rem;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="action" value="create_user">
+  <input type="text" name="new_username" placeholder="שם משתמש" required style="padding:.4rem .7rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+  <input type="password" name="new_password" placeholder="סיסמה" required style="padding:.4rem .7rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+  <select name="new_role" style="padding:.4rem .7rem; border-radius:6px; border:1px solid #555; background:#1a2a1a; color:#eee;">
+    <option value="player">player</option>
+    <option value="magician">magician</option>
+    <option value="admin">admin</option>
+  </select>
+  <button type="submit" style="padding:.4rem 1rem; border-radius:6px; background:#2d7a2d; color:#fff; border:none; cursor:pointer;">צור משתמש</button>
+</form>
+
+<!-- בקשות ממתינות לאישור -->
 <h2>בקשות ממתינות לאישור</h2>
 {% if pending and pending|length > 0 %}
 <table>
@@ -32,46 +46,4 @@
           <input type="hidden" name="action" value="approve">
           <select name="new_role">
             <option value="player" {% if u["role"]=="player" %}selected{% endif %}>player</option>
-            <option value="magician" {% if u["role"]=="magician" %}selected{% endif %}>magician</option>
-            <option value="admin">admin</option>
-          </select>
-          <button type="submit">אשר</button>
-        </form>
-
-        <form method="POST" style="display:inline;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="hidden" name="user_id" value="{{ u['id'] }}">
-          <input type="hidden" name="action" value="reject">
-          <button type="submit">דחה</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>אין בקשות ממתינות.</p>
-{% endif %}
-
-<h2>משתמשים פעילים</h2>
-{% if active and active|length > 0 %}
-<table>
-  <thead>
-    <tr>
-      <th>שם משתמש</th>
-      <th>תפקיד</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for u in active %}
-    <tr>
-      <td>{{ u["username"] }}</td>
-      <td>{{ u["role"] }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>אין משתמשים פעילים.</p>
-{% endif %}
-{% endblock %}
+            <option value="magician" {%
