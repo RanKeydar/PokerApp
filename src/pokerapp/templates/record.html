@@ -237,14 +237,17 @@
 <script>
 (function () {
   var mediaRecorder = null;
+  var audioStream   = null;   // FIX: store stream separately so stopRec can reach it
   var audioChunks   = [];
-  var photos        = [];          // [{blob, ts, url}]
+  var photos        = [];
   var timerInterval = null;
   var startTime     = null;
   var wakeLock      = null;
   var mimeType      = '';
   var camStream     = null;
   var camTimeout    = null;
+
+  var CAM_COUNTDOWN = 5;   // seconds before auto-capture
 
   /* ── Wake Lock ── */
   async function acquireWakeLock() {
@@ -270,9 +273,4 @@
   }
   function showError(msg) {
     var el = document.getElementById('rec-error');
-    el.textContent = msg; el.style.display = 'block';
-  }
-
-  /* ── MIME ── */
-  function getBestMime() {
-    var types = ['audio/webm
+    el.textContent = msg; 
