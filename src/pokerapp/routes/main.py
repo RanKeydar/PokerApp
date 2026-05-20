@@ -1987,4 +1987,119 @@ def player_detail(player_id):
         })
 
     _wins = sum(1 for g in _valid if float(g["profit"]) > 0)
-    _total_cou
+    _total_count = len(_valid)
+    win_rate = round(_wins / _total_count * 100) if _total_count > 0 else 0
+    wins_count = _wins
+    games_analytics_count = _total_count
+
+    # Streak — from the most recent game backwards
+    streak_count = 0
+    streak_type = None
+    for _g in sorted(_valid, key=lambda g: (g.get("date", ""), g.get("game_id", 0)), reverse=True):
+        _p = float(_g["profit"])
+        _gt = "win" if _p > 0 else ("loss" if _p < 0 else None)
+        if _gt is None:
+            continue
+        if streak_type is None:
+            streak_type = _gt
+            streak_count = 1
+        elif _gt == streak_type:
+            streak_count += 1
+        else:
+            break
+
+    # Monthly aggregation
+    _monthly: dict[str, float] = {}
+    for _g in _sorted_asc:
+        _mk = _g["date"][:7]
+        _monthly[_mk] = _monthly.get(_mk, 0.0) + float(_g["profit"])
+    _monthly_data = [
+        {"month": k, "profit": round(float(v))}
+        for k, v in sorted(_monthly.items())
+    ]
+
+    chart_data_json = json.dumps(_chart_data, ensure_ascii=False)
+    monthly_data_json = json.dumps(_monthly_data, ensure_ascii=False)
+    # ── End Analytics ──────────────────────────────────────────────────
+
+    return render_template(
+        "player_detail.html",
+        player=player,
+        summary=summary,
+        games=games,
+        games_2026_cash=games_2026_cash,
+        games_2026_harbo=games_2026_harbo,
+        year=current_year,
+        subtitle=subtitle,
+        view=view,
+        sort=sort,
+        direction=direction,
+        current_user=user,
+        can_see_private=can_see_private,
+        is_own_page=is_own_page,
+        is_private=is_private,
+        # year-grouped tables
+        games_cash_grouped=games_cash_grouped,
+        games_harbo_grouped=games_harbo_grouped,
+        games_complete_grouped=games_complete_grouped,
+        # analytics
+        chart_data_json=chart_data_json,
+        monthly_data_json=monthly_data_json,
+        win_rate=win_rate,
+        wins_count=wins_count,
+        games_analytics_count=games_analytics_count,
+        streak_count=streak_count,
+        streak_type=streak_type,
+        general_note=general_note,
+        game_notes=game_notes,
+    )
+
+
+@bp.route("/players/<int:player_id>/note", methods=["POST"])
+@login_required
+def player_save_note(player_id):
+    """Save (upsert) a private note for a player. Only the owner can write."""
+    user = get_current_user()
+    if user is None or user["player_id"] != player_id:
+        abort(403)
+
+    note = request.get_json(silent=True) or {}
+    text = str(note.get("note", "")).strip()
+    game_id_raw = note.get("game_id")
+    game_id = int(game_id_raw) if game_id_raw is not None else None
+
+    conn = get_db_connection()
+    existing = conn.execute(
+        "SELECT id FROM player_notes WHERE player_id = ? AND game_id IS ?",
+        (player_id, game_id)
+    ).fetchone()
+    if existing:
+        conn.execute(
+            "UPDATE player_notes SET note = ?, updated_at = datetime('now') WHERE id = ?",
+            (text, existing["id"])
+        )
+    else:
+        conn.execute(
+            "INSERT INTO player_notes (player_id, game_id, note) VALUES (?, ?, ?)",
+            (player_id, game_id, text)
+        )
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@bp.route("/players/<int:player_id>/privacy", methods=["POST"])
+@login_required
+def player_toggle_privacy(player_id):
+    user = get_current_user()
+    if user is None or user["player_id"] != player_id:
+        abort(403)
+    new_val = 1 if request.form.get("private_stats") == "1" else 0
+    conn = get_db_connection()
+    conn.execute(
+        "UPDATE users SET private_stats = ? WHERE player_id = ?",
+        (new_val, player_id)
+    )
+    conn.commit()
+    conn.close()
+    return redirect(url_for("main.player_detail", player_id=player_id))
