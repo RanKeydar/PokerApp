@@ -1046,6 +1046,16 @@ def admin_users():
                     "UPDATE users SET role = ? WHERE id = ? AND username != 'admin';",
                     (new_role, user_id),
                 )
+            elif action == "reset_password":
+                new_pw = request.form.get("new_password", "").strip()
+                if new_pw:
+                    cur.execute(
+                        "UPDATE users SET password_hash = ? WHERE id = ? AND username != 'admin';",
+                        (generate_password_hash(new_pw), user_id),
+                    )
+                    flash_msg = "הסיסמה אופסה בהצלחה."
+                else:
+                    flash_msg = "חובה להזין סיסמה חדשה."
             conn.commit()
 
     cur.execute("SELECT id, username, role FROM users WHERE is_approved = 0 ORDER BY id DESC;")
@@ -1984,21 +1994,4 @@ def player_detail(player_id):
         monthly_data_json=monthly_data_json,
         win_rate=win_rate,
         wins_count=wins_count,
-        games_analytics_count=games_analytics_count,
-        streak_count=streak_count,
-        streak_type=streak_type,
-        general_note=general_note,
-        game_notes=game_notes,
-    )
-
-
-@bp.route("/players/<int:player_id>/note", methods=["POST"])
-@login_required
-def player_save_note(player_id):
-    """Save (upsert) a private note for a player. Only the owner can write."""
-    user = get_current_user()
-    if user is None or user["player_id"] != player_id:
-        abort(403)
-
-    note = request.get_json(silent=True) or {}
-    te
+        g
