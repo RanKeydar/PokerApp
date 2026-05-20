@@ -74,7 +74,7 @@
           👥 משתמשים
         </a>
         {% endif %}
-        {% if current_user %}
+        {% if current_user and current_user["role"] != "magician" %}
         <a class="nav-chip {% if request.endpoint == 'record.record' %}active{% endif %}"
           href="{{ url_for('record.record') }}">
           🎙️ הקלטה
@@ -105,8 +105,4 @@
            onclick="gtag('event','logout');">
           ←
         </a>
-      </div>
-    </div>
-  </header>
-
-  <mai
+    
