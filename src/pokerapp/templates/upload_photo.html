@@ -219,7 +219,8 @@
     }
   }
 
-  #error-banner {
+  #error-banner,
+  #save-error-banner {
     display: none;
     margin-top: 12px;
     padding: 12px 16px;
@@ -228,6 +229,7 @@
     border-radius: 10px;
     color: #dc2626;
     font-size: 14px;
+    font-weight: 600;
   }
 
   /* ── Results section ── */
@@ -506,11 +508,12 @@
 
         <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">
         <div id="error-banner"></div>
-        <button type="button" class="btn primary" id="analyze-btn" disabled>🔍 נתח עם Claude</button>
+        <button type="button" class="btn primary" id="analyze-btn" disabled>⚙️ עבד תוצאות</button>
       </div>
 
       <!-- ─── שלב ב' — עריכה ושמירה ─── -->
       <div id="results-section">
+        <div id="save-error-banner"></div>
 
         <div class="panel" style="margin-top:10px;">
           <h3>פרטי המשחק</h3>
@@ -587,6 +590,7 @@
   const rotateCW = document.getElementById('rotate-cw');
   const analyzeBtn = document.getElementById('analyze-btn');
   const errorBanner = document.getElementById('error-banner');
+  const saveErrorBanner = document.getElementById('save-error-banner');
   const resultsSection = document.getElementById('results-section');
   const resultsCards = document.getElementById('results-cards');
   const addRowBtn = document.getElementById('add-row-btn');
@@ -655,7 +659,7 @@
       }
     } catch (e) { }
     analyzeBtn.disabled = false;
-    analyzeBtn.innerHTML = '🔍 נתח עם Claude';
+    analyzeBtn.innerHTML = '⚙️ עבד תוצאות';
   }
 
   // ── סיבוב ────────────────────────────
@@ -736,7 +740,7 @@
 
   function setAnalyzing(on) {
     analyzeBtn.disabled = on;
-    analyzeBtn.innerHTML = on ? 'מנתח…<span class="spinner"></span>' : '🔍 נתח עם Claude';
+    analyzeBtn.innerHTML = on ? 'מעבד…<span class="spinner"></span>' : '⚙️ עבד תוצאות';
   }
 
   // ── כרטיסי שחקנים ────────────────────
@@ -953,10 +957,11 @@
 
   // ── שמירה ────────────────────────────
   saveBtn.addEventListener('click', async () => {
+    hideSaveError();
     const entries = collectEntries();
-    if (!entries.length) { showError('אין שחקנים לשמור'); return; }
+    if (!entries.length) { showSaveError('אין שחקנים לשמור — ודא שכל שחקן מקושר לשם'); return; }
     const gameDate = document.getElementById('game-date').value;
-    if (!gameDate) { showError('נא לבחור תאריך'); return; }
+    if (!gameDate) { showSaveError('נא לבחור תאריך'); return; }
 
     let fileToSend = currentFile;
     if (rotationDeg !== 0) {
@@ -977,12 +982,13 @@
           entries,
         }),
       });
-      const json = await res.json();
-      if (!res.ok || json.error) { showError(json.error || 'שגיאה בשמירה'); return; }
-      saveExampleSilently(fileToSend || currentFile, entries);
+      let json;
+      try { json = await res.json(); } catch(e) { throw new Error('תגובת שרת לא תקינה (HTTP ' + res.status + ')'); }
+      if (!res.ok || json.error) { showSaveError(json.error || 'שגיאה בשמירה (HTTP ' + res.status + ')'); return; }
+      if (currentFile) saveExampleSilently(fileToSend || currentFile, entries);
       window.location.href = `/game/${json.game_id}/results`;
     } catch (err) {
-      showError('שגיאת רשת: ' + err.message);
+      showSaveError('שגיאת רשת: ' + err.message);
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = '💾 שמור משחק';
@@ -1013,14 +1019,4 @@
   }
 
   // ── helpers ───────────────────────────
-  function showError(msg) {
-    errorBanner.textContent = '⚠️ ' + msg;
-    errorBanner.style.display = 'block';
-    errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-  function hideError() { errorBanner.style.display = 'none'; }
-  function esc(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-</script>
-{% endblock %}
+  function sho
